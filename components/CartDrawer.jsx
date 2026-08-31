@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { X, Trash2, Plus, Minus, Send, ShoppingBag, MapPin, Compass } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const NARSIPATNAM_AREAS = [
-  "Near Abes Centre",
+  "Near Abes Centre (Main Road)",
   "Beside Himalaya Juice Center",
   "Near RTC Bus Stand",
   "Peddaboddepalli",
   "Balighattam",
-  "College Road",
-  "Tagarapu Veedhi"
+  "Lingarajupeta",
+  "College Road / Station Road",
+  "Tagarapu Veedhi",
+  "Other Narsipatnam Area"
 ];
 
 export default function CartDrawer() {
@@ -21,19 +23,14 @@ export default function CartDrawer() {
   const [orderType, setOrderType] = useState('takeaway'); // 'takeaway' or 'delivery'
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
+  
+  const [selectedArea, setSelectedArea] = useState('Near Abes Centre (Main Road)');
+  const [streetAddress, setStreetAddress] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
 
   const [isLocating, setIsLocating] = useState(false);
   const [locError, setLocError] = useState('');
   const [gpsCoords, setGpsCoords] = useState(null);
-
-  // Automatically fetch customer location when opening cart drawer / switching to delivery
-  useEffect(() => {
-    if (isCartOpen && orderType === 'delivery' && !deliveryAddress && !isLocating) {
-      handleDetectLocation();
-    }
-  }, [isCartOpen, orderType]);
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -45,71 +42,20 @@ export default function CartDrawer() {
     setLocError('');
 
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
+      (position) => {
         const { latitude, longitude } = position.coords;
         setGpsCoords({ lat: latitude, lon: longitude });
-
-        let address = '';
-
-        // Provider 1: BigDataCloud Reverse Geocoding (Client-Side, Highly Accurate in India)
-        try {
-          const bdcRes = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-          );
-          const bdcData = await bdcRes.json();
-
-          if (bdcData) {
-            const locality = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
-            const subLocality = bdcData.localityInfo?.informative?.find(i => i.order === 4 || i.order === 5)?.name || '';
-            const city = bdcData.city || 'Narsipatnam';
-            const postcode = bdcData.postcode ? `PIN: ${bdcData.postcode}` : '';
-
-            const parts = [subLocality, locality, city, postcode].filter(Boolean);
-            if (parts.length > 0) {
-              address = parts.join(', ');
-            }
-          }
-        } catch (e) {
-          // Ignore & fallback
-        }
-
-        // Provider 2: Nominatim OpenStreetMap Fallback
-        if (!address) {
-          try {
-            const osmRes = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-            );
-            const osmData = await osmRes.json();
-            if (osmData && osmData.address) {
-              const parts = [
-                osmData.address.road || osmData.address.suburb || osmData.address.neighbourhood,
-                osmData.address.village || osmData.address.town || osmData.address.city || 'Narsipatnam',
-                osmData.address.postcode ? `PIN: ${osmData.address.postcode}` : ''
-              ].filter(Boolean);
-              address = parts.join(', ');
-            }
-          } catch (e) {
-            // Ignore & fallback
-          }
-        }
-
-        // Final fallback to GPS coordinates
-        if (!address) {
-          address = `Narsipatnam Area (GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-        }
-
-        setDeliveryAddress(address);
         setIsLocating(false);
       },
       (error) => {
         setIsLocating(false);
         if (error.code === error.PERMISSION_DENIED) {
-          setLocError('Location permission denied. Select your Narsipatnam area below.');
+          setLocError('Location permission denied. Please select your area below.');
         } else {
-          setLocError('GPS signal weak. Pick your area below or type address.');
+          setLocError('GPS signal weak. Select your area below.');
         }
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -126,9 +72,10 @@ export default function CartDrawer() {
     text += `📞 *Phone:* ${customerPhone || 'Not specified'}\n`;
     text += `🚚 *Order Type:* ${orderType === 'delivery' ? 'Local Door Delivery' : 'Counter Takeaway Pickup'}\n`;
     if (orderType === 'delivery') {
-      text += `📍 *Delivery Address:* ${deliveryAddress}\n`;
+      const fullAddress = `${streetAddress ? `${streetAddress}, ` : ''}${selectedArea}, Narsipatnam, AP (531116)`;
+      text += `📍 *Delivery Address:* ${fullAddress}\n`;
       if (gpsCoords) {
-        text += `🗺️ *Live GPS Maps Link:* https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lon}\n`;
+        text += `🗺️ *Live GPS Pin Link:* https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lon}\n`;
       }
     }
     text += `⏰ *Requested Timing:* ${deliveryTime}\n`;
@@ -270,76 +217,53 @@ export default function CartDrawer() {
                   required
                 />
               {orderType === 'delivery' && (
-                <div className="auto-location-banner">
-                  <div className="location-banner-icon">
-                    <MapPin size={16} className={isLocating ? 'spin-icon' : ''} />
-                  </div>
-                  <div className="location-banner-text">
-                    <span className="location-banner-label">Delivering To</span>
-                    <span className="location-banner-value">
-                      {isLocating ? 'Detecting live location...' : (deliveryAddress || 'Detecting location...')}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="location-banner-change"
-                    onClick={handleDetectLocation}
-                    disabled={isLocating}
-                  >
-                    {isLocating ? '...' : 'Refresh'}
-                  </button>
-                </div>
-              )}
-
-              {orderType === 'delivery' && (
-                <div className="form-group">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Delivery Address & Landmark *</label>
+                <>
+                  <div className="auto-location-banner">
+                    <div className="location-banner-icon">
+                      <MapPin size={16} />
+                    </div>
+                    <div className="location-banner-text">
+                      <span className="location-banner-label">Delivery Town</span>
+                      <span className="location-banner-value">Narsipatnam Town (Local Delivery)</span>
+                    </div>
                     <button
                       type="button"
-                      className="detect-loc-btn"
+                      className="location-banner-change"
                       onClick={handleDetectLocation}
                       disabled={isLocating}
                     >
                       <Compass size={12} className={isLocating ? 'spin-icon' : ''} />
-                      {isLocating ? 'Detecting Location...' : '📍 Auto-Detect Location'}
+                      {isLocating ? 'Pinning...' : (gpsCoords ? '✓ GPS Pinned' : '📍 Add GPS Pin')}
                     </button>
                   </div>
-                  <textarea
-                    rows={2}
-                    placeholder="House no, Street, Landmark in Narsipatnam"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    required
-                  ></textarea>
 
-                  {/* 1-Tap Narsipatnam Local Area Selector */}
-                  <div className="narsipatnam-areas-list">
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', width: '100%' }}>
-                      Quick Narsipatnam Area Select:
-                    </span>
-                    {NARSIPATNAM_AREAS.map((area) => (
-                      <button
-                        key={area}
-                        type="button"
-                        className="area-pill-btn"
-                        onClick={() => {
-                          setDeliveryAddress((prev) => {
-                            if (!prev) return `${area}, Narsipatnam`;
-                            if (prev.includes(area)) return prev;
-                            return `${area}, ${prev}`;
-                          });
-                        }}
-                      >
-                        + {area}
-                      </button>
-                    ))}
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Select Narsipatnam Area / Landmark *</label>
+                    <select
+                      value={selectedArea}
+                      onChange={(e) => setSelectedArea(e.target.value)}
+                      style={{ fontWeight: '600', color: '#1e293b' }}
+                    >
+                      {NARSIPATNAM_AREAS.map((area) => (
+                        <option key={area} value={area}>📍 {area}</option>
+                      ))}
+                    </select>
                   </div>
 
+                  <div className="form-group">
+                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>House / Door No & Street Details *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Door No 4-12, Main Road, Beside SBI ATM"
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      required
+                    />
+                  </div>
                   {locError && (
-                    <span style={{ fontSize: '0.75rem', color: '#e11d48', marginTop: '4px', display: 'block' }}>{locError}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#e11d48', marginBottom: '8px', display: 'block' }}>{locError}</span>
                   )}
-                </div>
+                </>
               )}
 
               <div className="form-group">
