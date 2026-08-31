@@ -252,9 +252,9 @@ button, input, select, textarea {
 
 .hero-glow-ring {
   position: absolute;
-  width: 92%;
-  height: 92%;
-  border-radius: 50%;
+  width: 96%;
+  height: 96%;
+  border-radius: 24px;
   background: radial-gradient(circle, rgba(225,29,72,0.22) 0%, rgba(147,51,234,0.15) 70%, transparent 100%);
   filter: blur(24px);
   z-index: 0;
@@ -262,16 +262,16 @@ button, input, select, textarea {
 
 .hero-cake-img {
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   object-position: center top;
-  border-radius: 50%; /* Perfect round circle shape */
-  box-shadow: 0 20px 60px rgba(225,29,72,0.22), 0 10px 30px rgba(0,0,0,0.08);
+  border-radius: 24px; /* Clean modern square shape */
+  box-shadow: 0 20px 60px rgba(225,29,72,0.2), 0 10px 30px rgba(0,0,0,0.08);
   position: relative;
   z-index: 1;
-  border: 6px solid #ffffff;
-  outline: 2px solid rgba(225, 29, 72, 0.18);
+  border: 4px solid #ffffff;
+  outline: 1.5px solid rgba(225, 29, 72, 0.18);
 }
 
 /* Mobile Responsive Hero */
@@ -333,8 +333,8 @@ button, input, select, textarea {
   .hero-cake-img {
     height: auto;
     aspect-ratio: 1 / 1;
-    max-width: 270px;
-    border-radius: 50%;
+    max-width: 290px;
+    border-radius: 18px;
   }
 }
 
