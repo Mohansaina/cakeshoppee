@@ -134,26 +134,6 @@ export default function ProductCatalog({ selectedCat, setSelectedCat }) {
                     style={{ objectFit: 'cover' }}
                   />
                   
-                  <div
-                    className={`diet-badge ${product.eggless ? 'eggless' : 'egg'}`}
-                    title={product.eggless ? '100% Eggless' : 'Contains Egg'}
-                  >
-                    <span className="diet-badge-dot"></span>
-                  </div>
-
-                  {product.tag && (
-                    <span className="product-tag">{product.tag}</span>
-                  )}
-
-                  <button
-                    className="quick-view-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setQuickViewProduct(product);
-                    }}
-                  >
-                    <Eye size={14} /> Quick View
-                  </button>
                 </div>
 
                 <div className="product-details">

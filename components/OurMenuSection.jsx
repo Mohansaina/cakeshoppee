@@ -207,26 +207,7 @@ export default function OurMenuSection({ onSelectCategory }) {
                     style={{ objectFit: "cover" }}
                   />
 
-                  <div
-                    className={"diet-badge " + (product.eggless ? "eggless" : "egg")}
-                    title={product.eggless ? "100% Eggless" : "Contains Egg"}
-                  >
-                    <span className="diet-badge-dot" />
-                  </div>
-
-                  {product.tag && (
-                    <span className="product-tag">{product.tag}</span>
-                  )}
-
-                  <button
-                    className="quick-view-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setQuickViewProduct(product);
-                    }}
-                  >
-                    <Eye size={14} /> Quick View
-                  </button>
+                  {/* Clean product photo without overlay badges */}
                 </div>
 
                 <div className="product-details">
