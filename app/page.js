@@ -7,9 +7,7 @@ import EditorialCakesGrid from '@/components/EditorialCakesGrid';
 import OurMenuSection from '@/components/OurMenuSection';
 import BestsellerProductsRow from '@/components/BestsellerProductsRow';
 import OccasionTreatsSection from '@/components/OccasionTreatsSection';
-import CelebrationCombos from '@/components/CelebrationCombos';
 import CustomCakeBuilder from '@/components/CustomCakeBuilder';
-import StoreGallery from '@/components/StoreGallery';
 import Testimonials from '@/components/Testimonials';
 import FAQSection from '@/components/FAQSection';
 import StoreLocator from '@/components/StoreLocator';
@@ -47,14 +45,8 @@ export default function HomePage() {
         onSearch={setSearchQuery}
       />
 
-      {/* 9. Party Celebration Combos — 3 bundle cards */}
-      <CelebrationCombos />
-
       {/* 10. Custom Cake Builder — quote form + WhatsApp */}
       <CustomCakeBuilder />
-
-      {/* 11. Store & Creations Gallery — filterable photo grid */}
-      <StoreGallery />
 
       {/* 12. Customer Testimonials */}
       <Testimonials />
