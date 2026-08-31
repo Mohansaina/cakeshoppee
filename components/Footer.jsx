@@ -106,8 +106,15 @@ export default function Footer({ onSelectCategory }) {
               </p>
             </div>
             <div className="mgn-ftr-socials">
-              <a href="#" aria-label="Instagram" className="mgn-ftr-social-icon"><Instagram size={18} /></a>
-              <a href="#" aria-label="Facebook" className="mgn-ftr-social-icon"><Facebook size={18} /></a>
+              <a
+                href="https://www.instagram.com/cakeshoppee__narsipatnam/?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="mgn-ftr-social-icon"
+              >
+                <Instagram size={18} />
+              </a>
             </div>
           </div>
 
