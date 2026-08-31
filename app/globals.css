@@ -6407,3 +6407,29 @@ main {
   cursor: pointer;
   white-space: nowrap;
 }
+
+/* 1-Tap Narsipatnam Local Area Selector Pills */
+.narsipatnam-areas-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.area-pill-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.area-pill-btn:hover {
+  border-color: #e11d48;
+  color: #e11d48;
+  background: #fff5f7;
+}

@@ -5,6 +5,16 @@ import Image from 'next/image';
 import { X, Trash2, Plus, Minus, Send, ShoppingBag, MapPin, Compass } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
+const NARSIPATNAM_AREAS = [
+  "Near Abes Centre",
+  "Beside Himalaya Juice Center",
+  "Near RTC Bus Stand",
+  "Peddaboddepalli",
+  "Balighattam",
+  "College Road",
+  "Tagarapu Veedhi"
+];
+
 export default function CartDrawer() {
   const { cartItems = [], isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, cartTotal = 0 } = useCart();
   
@@ -39,43 +49,67 @@ export default function CartDrawer() {
         const { latitude, longitude } = position.coords;
         setGpsCoords({ lat: latitude, lon: longitude });
 
-        try {
-          // Reverse geocoding via OpenStreetMap API
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
-          );
-          const data = await response.json();
-          
-          let address = '';
-          if (data && data.address) {
-            const parts = [
-              data.address.road || data.address.suburb || data.address.neighbourhood,
-              data.address.village || data.address.town || data.address.city || 'Narsipatnam',
-              data.address.postcode ? `PIN: ${data.address.postcode}` : ''
-            ].filter(Boolean);
-            address = parts.join(', ');
-          }
-          
-          if (!address) {
-            address = `Location Near GPS (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-          }
+        let address = '';
 
-          setDeliveryAddress(address);
-          setIsLocating(false);
-        } catch (err) {
-          setDeliveryAddress(`GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-          setIsLocating(false);
+        // Provider 1: BigDataCloud Reverse Geocoding (Client-Side, Highly Accurate in India)
+        try {
+          const bdcRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+          );
+          const bdcData = await bdcRes.json();
+
+          if (bdcData) {
+            const locality = bdcData.locality || bdcData.city || bdcData.principalSubdivision;
+            const subLocality = bdcData.localityInfo?.informative?.find(i => i.order === 4 || i.order === 5)?.name || '';
+            const city = bdcData.city || 'Narsipatnam';
+            const postcode = bdcData.postcode ? `PIN: ${bdcData.postcode}` : '';
+
+            const parts = [subLocality, locality, city, postcode].filter(Boolean);
+            if (parts.length > 0) {
+              address = parts.join(', ');
+            }
+          }
+        } catch (e) {
+          // Ignore & fallback
         }
+
+        // Provider 2: Nominatim OpenStreetMap Fallback
+        if (!address) {
+          try {
+            const osmRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+            );
+            const osmData = await osmRes.json();
+            if (osmData && osmData.address) {
+              const parts = [
+                osmData.address.road || osmData.address.suburb || osmData.address.neighbourhood,
+                osmData.address.village || osmData.address.town || osmData.address.city || 'Narsipatnam',
+                osmData.address.postcode ? `PIN: ${osmData.address.postcode}` : ''
+              ].filter(Boolean);
+              address = parts.join(', ');
+            }
+          } catch (e) {
+            // Ignore & fallback
+          }
+        }
+
+        // Final fallback to GPS coordinates
+        if (!address) {
+          address = `Narsipatnam Area (GPS: ${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+        }
+
+        setDeliveryAddress(address);
+        setIsLocating(false);
       },
       (error) => {
         setIsLocating(false);
         if (error.code === error.PERMISSION_DENIED) {
-          setLocError('Location access denied by browser. Please type address below.');
+          setLocError('Location permission denied. Select your Narsipatnam area below.');
         } else {
-          setLocError('Unable to fetch GPS. Please enter address manually.');
+          setLocError('GPS signal weak. Pick your area below or type address.');
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   };
 
@@ -278,8 +312,32 @@ export default function CartDrawer() {
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     required
                   ></textarea>
+
+                  {/* 1-Tap Narsipatnam Local Area Selector */}
+                  <div className="narsipatnam-areas-list">
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600', width: '100%' }}>
+                      Quick Narsipatnam Area Select:
+                    </span>
+                    {NARSIPATNAM_AREAS.map((area) => (
+                      <button
+                        key={area}
+                        type="button"
+                        className="area-pill-btn"
+                        onClick={() => {
+                          setDeliveryAddress((prev) => {
+                            if (!prev) return `${area}, Narsipatnam`;
+                            if (prev.includes(area)) return prev;
+                            return `${area}, ${prev}`;
+                          });
+                        }}
+                      >
+                        + {area}
+                      </button>
+                    ))}
+                  </div>
+
                   {locError && (
-                    <span style={{ fontSize: '0.75rem', color: '#e11d48', marginTop: '2px' }}>{locError}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#e11d48', marginTop: '4px', display: 'block' }}>{locError}</span>
                   )}
                 </div>
               )}
