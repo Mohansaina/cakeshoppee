@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Trash2, Plus, Minus, Send, ShoppingBag, MapPin, Compass } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -17,6 +17,13 @@ export default function CartDrawer() {
   const [isLocating, setIsLocating] = useState(false);
   const [locError, setLocError] = useState('');
   const [gpsCoords, setGpsCoords] = useState(null);
+
+  // Automatically fetch customer location when opening cart drawer / switching to delivery
+  useEffect(() => {
+    if (isCartOpen && orderType === 'delivery' && !deliveryAddress && !isLocating) {
+      handleDetectLocation();
+    }
+  }, [isCartOpen, orderType]);
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -228,7 +235,27 @@ export default function CartDrawer() {
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   required
                 />
-              </div>
+              {orderType === 'delivery' && (
+                <div className="auto-location-banner">
+                  <div className="location-banner-icon">
+                    <MapPin size={16} className={isLocating ? 'spin-icon' : ''} />
+                  </div>
+                  <div className="location-banner-text">
+                    <span className="location-banner-label">Delivering To</span>
+                    <span className="location-banner-value">
+                      {isLocating ? 'Detecting live location...' : (deliveryAddress || 'Detecting location...')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="location-banner-change"
+                    onClick={handleDetectLocation}
+                    disabled={isLocating}
+                  >
+                    {isLocating ? '...' : 'Refresh'}
+                  </button>
+                </div>
+              )}
 
               {orderType === 'delivery' && (
                 <div className="form-group">
