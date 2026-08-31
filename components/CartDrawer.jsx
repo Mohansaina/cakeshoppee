@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { X, Trash2, Plus, Minus, Send, ShoppingBag } from 'lucide-react';
+import { X, Trash2, Plus, Minus, Send, ShoppingBag, MapPin, Compass } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function CartDrawer() {
@@ -13,6 +13,64 @@ export default function CartDrawer() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
+
+  const [isLocating, setIsLocating] = useState(false);
+  const [locError, setLocError] = useState('');
+  const [gpsCoords, setGpsCoords] = useState(null);
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      setLocError('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocating(true);
+    setLocError('');
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setGpsCoords({ lat: latitude, lon: longitude });
+
+        try {
+          // Reverse geocoding via OpenStreetMap API
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          
+          let address = '';
+          if (data && data.address) {
+            const parts = [
+              data.address.road || data.address.suburb || data.address.neighbourhood,
+              data.address.village || data.address.town || data.address.city || 'Narsipatnam',
+              data.address.postcode ? `PIN: ${data.address.postcode}` : ''
+            ].filter(Boolean);
+            address = parts.join(', ');
+          }
+          
+          if (!address) {
+            address = `Location Near GPS (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
+          }
+
+          setDeliveryAddress(address);
+          setIsLocating(false);
+        } catch (err) {
+          setDeliveryAddress(`GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocError('Location access denied by browser. Please type address below.');
+        } else {
+          setLocError('Unable to fetch GPS. Please enter address manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
 
   if (!isCartOpen) return null;
 
@@ -28,6 +86,9 @@ export default function CartDrawer() {
     text += `🚚 *Order Type:* ${orderType === 'delivery' ? 'Local Door Delivery' : 'Counter Takeaway Pickup'}\n`;
     if (orderType === 'delivery') {
       text += `📍 *Delivery Address:* ${deliveryAddress}\n`;
+      if (gpsCoords) {
+        text += `🗺️ *Live GPS Maps Link:* https://www.google.com/maps?q=${gpsCoords.lat},${gpsCoords.lon}\n`;
+      }
     }
     text += `⏰ *Requested Timing:* ${deliveryTime}\n`;
     text += `------------------------------------\n`;
@@ -171,7 +232,18 @@ export default function CartDrawer() {
 
               {orderType === 'delivery' && (
                 <div className="form-group">
-                  <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Delivery Address & Landmark *</label>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Delivery Address & Landmark *</label>
+                    <button
+                      type="button"
+                      className="detect-loc-btn"
+                      onClick={handleDetectLocation}
+                      disabled={isLocating}
+                    >
+                      <Compass size={12} className={isLocating ? 'spin-icon' : ''} />
+                      {isLocating ? 'Detecting Location...' : '📍 Auto-Detect Location'}
+                    </button>
+                  </div>
                   <textarea
                     rows={2}
                     placeholder="House no, Street, Landmark in Narsipatnam"
@@ -179,6 +251,9 @@ export default function CartDrawer() {
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     required
                   ></textarea>
+                  {locError && (
+                    <span style={{ fontSize: '0.75rem', color: '#e11d48', marginTop: '2px' }}>{locError}</span>
+                  )}
                 </div>
               )}
 
