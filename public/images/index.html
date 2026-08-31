@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cake Shoppee | Artisan Bakery & Cafe in Narsipatnam</title>
+  <meta name="description" content="Cake Shoppee in Narsipatnam - Artisan birthday cakes, custom theme cakes, gourmet pizzas, crispy burgers, grilled sandwiches, and thickshakes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #c9933e;
+      --primary-hover: #e3ae56;
+      --primary-glow: rgba(201, 147, 62, 0.35);
+      --bg-dark: #120c0e;
+      --bg-surface: #1c1417;
+      --bg-card: rgba(36, 26, 30, 0.7);
+      --card-border: rgba(201, 147, 62, 0.22);
+      --text-main: #fcf9f5;
+      --text-muted: #c9b9b4;
+      --accent-badge: #d49a45;
+      --font-heading: 'Cinzel', serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Navigation */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(18px);
+      background: rgba(18, 12, 14, 0.82);
+      border-bottom: 1px solid rgba(201, 147, 62, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      text-decoration: none;
+    }
+
+    .brand-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--primary);
+      box-shadow: 0 0 16px var(--primary-glow);
+      transition: transform 0.3s ease;
+    }
+
+    .brand-wrap:hover .brand-logo {
+      transform: scale(1.05) rotate(3deg);
+    }
+
+    .brand-text h1 {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      color: var(--text-main);
+      letter-spacing: 1.5px;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      font-size: 0.76rem;
+      color: var(--primary);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.25s ease;
+    }
+
+    nav a:hover {
+      color: var(--primary-hover);
+    }
+
+    .btn-cta {
+      background: linear-gradient(135deg, #c9933e, #e8ba67);
+      color: #1a0f07;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-decoration: none;
+      box-shadow: 0 4px 18px rgba(201, 147, 62, 0.4);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(201, 147, 62, 0.6);
+      filter: brightness(1.06);
+    }
+
+    /* Hero Section with Video */
+    .hero {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 120px 5% 60px;
+      overflow: hidden;
+    }
+
+    .hero-video-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .hero-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.62) contrast(1.08);
+      transform: scale(1.02);
+      transition: filter 0.5s ease;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(18, 12, 14, 0.45) 0%, rgba(18, 12, 14, 0.85) 90%),
+                  linear-gradient(to top, #120c0e 0%, transparent 40%),
+                  linear-gradient(to bottom, rgba(18, 12, 14, 0.8) 0%, transparent 30%);
+      z-index: 2;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      max-width: 900px;
+      text-align: center;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(201, 147, 62, 0.15);
+      border: 1px solid var(--card-border);
+      padding: 8px 22px;
+      border-radius: 30px;
+      color: #f7d794;
+      font-size: 0.88rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+      line-height: 1.15;
+      color: #fffaf2;
+      margin-bottom: 20px;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #f7d794, #c9933e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: #e3d5ce;
+      max-width: 740px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Video controls badge */
+    .video-control-pill {
+      position: absolute;
+      bottom: 24px;
+      right: 5%;
+      z-index: 20;
+      background: rgba(20, 14, 16, 0.75);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .video-control-pill button {
+      background: none;
+      border: none;
+      color: #f7d794;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .video-control-pill button:hover {
+      transform: scale(1.2);
+    }
+
+    /* Highlights ribbon */
+    .highlights-strip {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--card-border);
+      border-bottom: 1px solid var(--card-border);
+      padding: 32px 5%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 24px;
+    }
+
+    .highlight-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .highlight-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(201, 147, 62, 0.12);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .highlight-info h4 {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .highlight-info p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+    }
+
+    /* Menu Section */
+    .menu-section {
+      padding: 90px 5%;
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header .sub-badge {
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .section-header p {
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 44px;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(201, 147, 62, 0.2);
+      color: var(--text-muted);
+      padding: 10px 22px;
+      border-radius: 25px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--primary);
+      color: #120c0e;
+      border-color: var(--primary);
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    /* Menu Grid */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 26px;
+    }
+
+    .menu-card {
+      background: var(--bg-card);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(12px);
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 30px rgba(201, 147, 62, 0.2);
+    }
+
+    .card-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      overflow: hidden;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .menu-card:hover .card-img {
+      transform: scale(1.08);
+    }
+
+    .card-category-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: rgba(18, 12, 14, 0.85);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(6px);
+      color: #f7d794;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+
+    .card-content {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.12rem;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      flex-grow: 1;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 12px;
+    }
+
+    .fresh-tag {
+      font-size: 0.78rem;
+      color: #a8e6cf;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-card-order {
+      background: rgba(201, 147, 62, 0.18);
+      color: #f7d794;
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-card-order:hover {
+      background: var(--primary);
+      color: #120c0e;
+    }
+
+    /* About & Location Section */
+    .info-section {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--card-border);
+      padding: 80px 5%;
+    }
+
+    .info-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .info-img-box {
+      position: relative;
+      text-align: center;
+    }
+
+    .info-logo-big {
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--primary);
+      box-shadow: 0 0 35px var(--primary-glow);
+    }
+
+    .info-text h3 {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      color: #fff;
+      margin-bottom: 18px;
+      line-height: 1.2;
+    }
+
+    .info-text p {
+      color: var(--text-muted);
+      margin-bottom: 22px;
+      font-size: 0.98rem;
+    }
+
+    .info-details {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: #f7d794;
+      font-size: 0.95rem;
+    }
+
+    /* Footer */
+    footer {
+      background: #0d080a;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 40px 5%;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    footer p {
+      margin-bottom: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      nav { display: none; }
+      .info-container { grid-template-columns: 1fr; text-align: center; }
+      .info-item { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="brand-wrap">
+      <img src="cake_shoppee_logo.jpg" alt="Cake Shoppee Logo" class="brand-logo" />
+      <div class="brand-text">
+        <h1>Cake Shoppee</h1>
+        <span>Narsipatnam</span>
+      </div>
+    </a>
+
+    <nav>
+      <a href="#hero">Home</a>
+      <a href="#menu">Our Menu</a>
+      <a href="#about">About Bakery</a>
+      <a href="#contact">Contact & Order</a>
+    </nav>
+
+    <a href="https://wa.me/?text=Hello%20Cake%20Shoppee%20Narsipatnam,%20I%20would%20like%20to%20order!" target="_blank" class="btn-cta">
+      <span>Order Online</span>
+      <span>→</span>
+    </a>
+  </header>
+
+  <!-- Hero Section with Background Video -->
+  <section id="hero" class="hero">
+    <div class="hero-video-container">
+      <video
+        id="bgHeroVideo"
+        class="hero-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        poster="hero_poster.jpg"
+      >
+        <source src="hero_video.mp4" type="video/mp4" />
+        Your browser does not support HTML5 video.
+      </video>
+    </div>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content">
+      <div class="hero-pill">✦ Handcrafted in Narsipatnam ✦</div>
+      <h2 class="hero-title">
+        Irresistible Cakes & <span>Savory Delights</span>
+      </h2>
+      <p class="hero-sub">
+        Welcome to Cake Shoppee — Narsipatnam's favorite destination for artisan celebration cakes, stone-baked pizzas, crispy burgers, grilled sandwiches, and thickshakes.
+      </p>
+      <div class="hero-actions">
+        <a href="#menu" class="btn-cta">Explore Menu & Delights</a>
+        <a href="#about" class="btn-secondary">Visit Our Bakery</a>
+      </div>
+    </div>
+
+    <!-- Video control toggle -->
+    <div class="video-control-pill">
+      <span>Hero Video:</span>
+      <button id="videoToggleBtn" title="Play/Pause Hero Video">⏸</button>
+      <button id="videoMuteBtn" title="Mute/Unmute Video">🔇</button>
+    </div>
+  </section>
+
+  <!-- Bakery Highlights Strip -->
+  <div class="highlights-strip">
+    <div class="highlight-card">
+      <div class="highlight-icon">🎂</div>
+      <div class="highlight-info">
+        <h4>Artisan Cakes</h4>
+        <p>Custom birthday & celebration designs</p>
+      </div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-icon">🍕</div>
+      <div class="highlight-info">
+        <h4>Stone-Baked Pizzas</h4>
+        <p>Fresh dough, gourmet toppings & cheese</p>
+      </div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-icon">🍔</div>
+      <div class="highlight-info">
+        <h4>Juicy Burgers & Subs</h4>
+        <p>Crispy patties with signature sauces</p>
+      </div>
+    </div>
+    <div class="highlight-card">
+      <div class="highlight-icon">🥤</div>
+      <div class="highlight-info">
+        <h4>Thick Milkshakes</h4>
+        <p>Pure ice cream blend with rich flavors</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Section -->
+  <section id="menu" class="menu-section">
+    <div class="section-header">
+      <span class="sub-badge">Taste The Perfection</span>
+      <h2>Our Complete Bakery Menu</h2>
+      <p>Every item is baked fresh daily using premium ingredients to guarantee exceptional flavor in every bite.</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button class="tab-btn active" data-filter="all">All Items</button>
+      <button class="tab-btn" data-filter="cake">Cakes & Pastries</button>
+      <button class="tab-btn" data-filter="pizza">Pizzas</button>
+      <button class="tab-btn" data-filter="burger">Burgers</button>
+      <button class="tab-btn" data-filter="sandwich">Sandwiches</button>
+      <button class="tab-btn" data-filter="shake">Milkshakes</button>
+      <button class="tab-btn" data-filter="snack">Snacks & Sides</button>
+    </div>
+
+    <!-- Dynamic Menu Grid -->
+    <div class="menu-grid" id="menuContainer">
+      <!-- Cards rendered via Javascript -->
+    </div>
+  </section>
+
+  <!-- About & Contact Section -->
+  <section id="about" class="info-section">
+    <div class="info-container">
+      <div class="info-img-box">
+        <img src="cake_shoppee_logo.jpg" alt="Cake Shoppee Emblem" class="info-logo-big" />
+      </div>
+      <div class="info-text">
+        <h3>Crafting Sweet Celebrations in Narsipatnam</h3>
+        <p>
+          At <strong>Cake Shoppee</strong>, baking is our true passion. From classic birthday favorites like Black Forest and Red Velvet, to custom tiered celebration cakes, gourmet pizzas, crispy burgers, and frosty thickshakes, we bring you fresh bakes made with high quality ingredients and genuine affection.
+        </p>
+        <div class="info-details">
+          <div class="info-item">
+            <span>📍</span>
+            <span>Located at: Main Road, Narsipatnam, Andhra Pradesh</span>
+          </div>
+          <div class="info-item">
+            <span>⏰</span>
+            <span>Open Everyday: 9:00 AM – 10:00 PM</span>
+          </div>
+          <div class="info-item">
+            <span>🎉</span>
+            <span>Specialty: Custom Birthday, Anniversary & Event Cakes</span>
+          </div>
+          <div class="info-item">
+            <span>🛵</span>
+            <span>Dine-In, Takeaway & Local Delivery Available</span>
+          </div>
+        </div>
+        <a href="https://wa.me/?text=Hi%20Cake%20Shoppee%20Narsipatnam,%20I%20want%20to%20place%20an%20order" target="_blank" class="btn-cta">
+          Order for Your Celebration
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer id="contact">
+    <p><strong>Cake Shoppee</strong> — Narsipatnam • Fresh Bakes & Delights</p>
+    <p>© 2026 Cake Shoppee. All Rights Reserved.</p>
+  </footer>
+
+  <script>
+    // Menu items dataset using local images
+    const menuData = [
+      // Cakes & Pastries
+      { title: "Classic Black Forest Cake", category: "cake", catName: "Cake", img: "blackforest.jpg", desc: "Layers of chocolate sponge, fresh whipped cream and cherries." },
+      { title: "Royal Red Velvet Cake", category: "cake", catName: "Cake", img: "redvalvet.jpg", desc: "Velvety crimson sponge with rich cream cheese frosting." },
+      { title: "White Forest Cake", category: "cake", catName: "Cake", img: "whiteforst.jpg", desc: "Vanilla sponge with white chocolate flakes and sweet cherries." },
+      { title: "Exotic Fresh Fruit Cake", category: "cake", catName: "Cake", img: "freshfruit.jpg", desc: "Loaded with fresh seasonal sliced fruits and vanilla cream." },
+      { title: "Choco Almond Pastry", category: "cake", catName: "Pastry", img: "chocoalmond.jpg", desc: "Rich chocolate ganache pastry topped with roasted almonds." },
+      { title: "Choco Chips Cake", category: "cake", catName: "Cake", img: "chocochips.jpg", desc: "Decadent chocolate cake loaded with crispy chocolate chips." },
+      { title: "Blueberry Delight", category: "cake", catName: "Pastry", img: "blueberry.jpg", desc: "Soft sponge glazed with wild blueberry compote." },
+      { title: "Butterscotch Cake", category: "cake", catName: "Cake", img: "butterscoth.jpg", desc: "Crunchy praline butterscotch cake with caramel drizzle." },
+      { title: "Blackcurrant Pastry", category: "cake", catName: "Pastry", img: "balckcurrent.jpg", desc: "Zesty blackcurrant flavor layered with luscious cream." },
+      { title: "Pineapple Treat Cake", category: "cake", catName: "Cake", img: "pineapple.jpg", desc: "Refreshing pineapple chunks folded into whipped cream layers." },
+      { title: "Strawberry Cream Cake", category: "cake", catName: "Cake", img: "strawbeery.jpg", desc: "Sweet strawberry infused sponge with strawberry glaze." },
+      { title: "Litchi Blossom Pastry", category: "cake", catName: "Pastry", img: "Litchi.jpg", desc: "Delicate and fragrant litchi cream layered pastry." },
+      { title: "Royal Pastry Special", category: "cake", catName: "Pastry", img: "pasatary18.jpg", desc: "Multi-layered chef's special dessert pastry slice." },
+
+      // Pizzas
+      { title: "Chicken Tikka Pizza", category: "pizza", catName: "Pizza", img: "chcikentikkapizza.jpg", desc: "Tandoori chicken cubes, capsicum, onions and mozzarella." },
+      { title: "Chicken Supreme Pizza", category: "pizza", catName: "Pizza", img: "chickensuprempizza.jpg", desc: "Loaded with seasoned chicken, olives, peppers and extra cheese." },
+      { title: "Classic Chicken Pizza", category: "pizza", catName: "Pizza", img: "chickenpizza.jpg", desc: "Tender chicken bits baked to perfection on a golden crust." },
+      { title: "Paneer Tikka Pizza", category: "pizza", catName: "Pizza", img: "pannerpizza.jpg", desc: "Marinated cottage cheese cubes with aromatic spices and herbs." },
+      { title: "Mushroom Fiesta Pizza", category: "pizza", catName: "Pizza", img: "mushroompizza.jpg", desc: "Fresh button mushrooms, herb garlic sauce and melted cheese." },
+      { title: "Veg Supreme Pizza", category: "pizza", catName: "Pizza", img: "vegsuprempizza.jpg", desc: "Colorful bell peppers, sweet corn, olives and signature sauce." },
+      { title: "Cheese & Chilli Pizza", category: "pizza", catName: "Pizza", img: "chessesandchillipizza.jpg", desc: "Double cheese blend with spicy green chillies and oregano." },
+      { title: "Golden Babycorn Pizza", category: "pizza", catName: "Pizza", img: "babycornpizza.jpg", desc: "Crunchy sweet babycorn chunks with creamy cheese sauce." },
+      { title: "Fresh Tomato Herb Pizza", category: "pizza", catName: "Pizza", img: "tomatopizza.jpg", desc: "Juicy ripe tomatoes, basil seasoning and mozzarella." },
+      { title: "Special Garden Veg Pizza", category: "pizza", catName: "Pizza", img: "vegpizza.jpg", desc: "Fresh farm vegetables baked crisp on a hand-tossed base." },
+
+      // Burgers
+      { title: "Chicken Tikka Burger", category: "burger", catName: "Burger", img: "chicekntikkaburger.jpg", desc: "Spiced chicken patty, tangy mint mayo and crispy onions." },
+      { title: "Chicken Cheese Burger", category: "burger", catName: "Burger", img: "chicen chessesburger.jpg", desc: "Juicy chicken patty crowned with melted cheddar cheese." },
+      { title: "Classic Chicken Burger", category: "burger", catName: "Burger", img: "chickenburger.jpg", desc: "Crispy fried chicken patty with fresh lettuce and secret dressing." },
+      { title: "Paneer Delight Burger", category: "burger", catName: "Burger", img: "paneerburger.jpg", desc: "Crispy spiced paneer patty with spicy herb sauce." },
+      { title: "Fresh Veggie Burger", category: "burger", catName: "Burger", img: "vegburger.jpg", desc: "Crisp mixed vegetable patty layered with creamy garlic mayo." },
+
+      // Sandwiches
+      { title: "Chicken Cheese Sandwich", category: "sandwich", catName: "Sandwich", img: "chcikenchessesandwich.jpg", desc: "Toasted golden brown with shredded spiced chicken and melted cheese." },
+      { title: "Chicken Tikka Sandwich", category: "sandwich", catName: "Sandwich", img: "chickentikkasandwich.jpg", desc: "Grilled sandwich stuffed with smoky chicken tikka and peppers." },
+      { title: "Grilled Paneer Sandwich", category: "sandwich", catName: "Sandwich", img: "pannersandwhich.jpg", desc: "Marinated paneer slices grilled with green chutney and butter." },
+      { title: "Veg Cheese Sandwich", category: "sandwich", catName: "Sandwich", img: "vegchesesandwich.jpg", desc: "Fresh cucumbers, tomatoes and a generous slice of cheese." },
+      { title: "Classic Veg Sandwich", category: "sandwich", catName: "Sandwich", img: "vegsandwhich.jpg", desc: "Lightly toasted butter bread with fresh crunchy garden veggies." },
+
+      // Milkshakes
+      { title: "Chocolate Thickshake", category: "shake", catName: "Shake", img: "chocolatemilkshake.jpg", desc: "Rich Dutch cocoa blended with dairy ice cream and fudge." },
+      { title: "Oreo Crunch Thickshake", category: "shake", catName: "Shake", img: "oreomilkshake.jpg", desc: "Blended with crispy Oreo biscuits, topped with cookie crumble." },
+      { title: "Strawberry Milkshake", category: "shake", catName: "Shake", img: "strawberrymilkshake.jpg", desc: "Sweet, fruity strawberry shake crowned with strawberry drizzle." },
+      { title: "Kulfi Shahi Milkshake", category: "shake", catName: "Shake", img: "kulfimilkshake.jpg", desc: "Traditional cardamom and pistachio kulfi blended smoothly." },
+      { title: "Blackberry Milkshake", category: "shake", catName: "Shake", img: "blackberrymilkshake.jpg", desc: "Exotic wild blackberry flavor blended into thick ice cream." },
+
+      // Snacks
+      { title: "Crispy French Fries", category: "snack", catName: "Snack", img: "frenchfries.jpg", desc: "Golden salted fries, crispy on the outside, fluffy inside." },
+      { title: "Crispy Chicken Nuggets", category: "snack", catName: "Snack", img: "chickennuggets.jpg", desc: "Golden-crumbed tender chicken nuggets served with dip." },
+      { title: "Crispy Veg Nuggets", category: "snack", catName: "Snack", img: "vegnuggets.jpg", desc: "Bite-sized seasoned vegetable nuggets, crunchy and hot." },
+      { title: "Seasoned Potato Chips", category: "snack", catName: "Snack", img: "potatochips.jpg", desc: "Crunchy potato wafers seasoned with bakery spices." }
+    ];
+
+    const menuContainer = document.getElementById("menuContainer");
+    const tabBtns = document.querySelectorAll(".tab-btn");
+
+    function renderMenu(filter = "all") {
+      menuContainer.innerHTML = "";
+      const filtered = filter === "all" ? menuData : menuData.filter(item => item.category === filter);
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "menu-card";
+        card.innerHTML = `
+          <div class="card-img-wrap">
+            <img src="${item.img}" alt="${item.title}" class="card-img" loading="lazy" />
+            <span class="card-category-tag">${item.catName}</span>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">${item.title}</h3>
+            <p class="card-desc">${item.desc}</p>
+            <div class="card-footer">
+              <span class="fresh-tag">✦ Fresh Daily</span>
+              <a href="https://wa.me/?text=Hello%20Cake%20Shoppee%20Narsipatnam,%20I%20want%20to%20order:%20${encodeURIComponent(item.title)}" target="_blank" class="btn-card-order">Order Now</a>
+            </div>
+          </div>
+        `;
+        menuContainer.appendChild(card);
+      });
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderMenu(btn.dataset.filter);
+      });
+    });
+
+    // Initial render
+    renderMenu("all");
+
+    // Video play/pause toggle
+    const heroVid = document.getElementById("bgHeroVideo");
+    const toggleBtn = document.getElementById("videoToggleBtn");
+    const muteBtn = document.getElementById("videoMuteBtn");
+
+    toggleBtn.addEventListener("click", () => {
+      if (heroVid.paused) {
+        heroVid.play();
+        toggleBtn.textContent = "⏸";
+      } else {
+        heroVid.pause();
+        toggleBtn.textContent = "▶";
+      }
+    });
+
+    muteBtn.addEventListener("click", () => {
+      heroVid.muted = !heroVid.muted;
+      muteBtn.textContent = heroVid.muted ? "🔇" : "🔊";
+    });
+  </script>
+</body>
+</html>

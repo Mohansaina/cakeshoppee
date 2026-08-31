@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cake Shopee | Live Cakes, Pastries & Bakery in Narsipatnam</title>
+  <meta name="description" content="Cake Shopee - Premium Live Cakes, Cheesecakes, Pastries, Pizzas, Burgers & Snacks on Complex Road, opp. Naidu Jewellers, Narsipatnam. Open till 10 PM. Order online for delivery 10 AM - 5 PM.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <div class="announcement-content">
+      <span class="offer-tag">🎉 SPECIAL OFFER</span>
+      <span class="announcement-text">Get 15% OFF on your first order! Use code <strong class="code-pill">FIRST15</strong> | Fresh Live Cakes & Daily Local Delivery in Narsipatnam</span>
+      <a href="#menu" class="announcement-link">Order Now &rarr;</a>
+    </div>
+  </div>
+
+  <!-- Header Navigation -->
+  <header class="main-header" id="header">
+    <div class="container header-container">
+      
+      <!-- Mobile Hamburger -->
+      <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+
+      <!-- Logo -->
+      <a href="#" class="brand-logo">
+        <div class="logo-icon">🍰</div>
+        <div class="logo-text">
+          <span class="brand-name">Cake Shopee</span>
+          <span class="brand-tagline">Live Cakes & Bakery</span>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="nav-menu" id="navMenu">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#about" class="nav-link">About Us</a>
+        <a href="#menu" class="nav-link">Menu & Products</a>
+        <a href="#custom-cake" class="nav-link highlight-link">Custom Live Cakes</a>
+        <a href="#gallery" class="nav-link">Our Shop Gallery</a>
+        <a href="#find-us" class="nav-link">Find Us</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="header-actions">
+        <!-- Store Status Pill -->
+        <div class="store-status-pill" id="storeStatusBadge">
+          <span class="status-dot online"></span>
+          <span class="status-text">Open • Closes 10 PM</span>
+        </div>
+
+        <!-- Phone Link -->
+        <a href="tel:7660948403" class="header-phone-btn" title="Call Store">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          <span class="phone-number">7660948403</span>
+        </a>
+
+        <!-- Cart Trigger -->
+        <button class="cart-trigger-btn" id="cartBtn" aria-label="Shopping Cart">
+          <div class="cart-icon-wrapper">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="cart-count-badge" id="cartCount">0</span>
+          </div>
+          <span class="cart-btn-label">Cart</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Hero Carousel Section -->
+  <section class="hero-section" id="hero">
+    <div class="hero-slider" id="heroSlider">
+      
+      <!-- Slide 1 -->
+      <div class="hero-slide active">
+        <div class="hero-image-bg">
+          <img src="images/image4.jpg" alt="Fresh Cream Cakes at Cake Shopee Narsipatnam">
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container hero-container">
+          <div class="hero-content">
+            <span class="hero-subtitle">✨ Freshly Baked Daily in Narsipatnam</span>
+            <h1 class="hero-title">Fresh Cream Cakes & <span class="highlight-text">Desserts</span> Daily!</h1>
+            <p class="hero-description">Black Forest, Pineapple Delight, Chocolate Truffle & Mango Drizzle cakes baked fresh at our shop on Complex Road, opp. Naidu Jewellers.</p>
+            <div class="hero-actions">
+              <a href="#menu" class="btn btn-primary btn-lg">Order Online Now &rarr;</a>
+              <a href="#custom-cake" class="btn btn-secondary btn-lg">Custom Cake Request</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="hero-slide">
+        <div class="hero-image-bg">
+          <img src="images/image2.ong" alt="Customised Live Birthday Cakes at Cake Shopee">
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="container hero-container">
+          <div class="hero-content">
+            <span class="hero-subtitle">🎂 Custom Live Cake Counter</span>
+            <h1 class="hero-title">Your Dream Cake, <span class="highlight-text">Crafted Live</span> Before Your Eyes!</h1>
+            <p class="hero-description">From 2-tier theme birthday cakes to anniversary specials, we bake and design customized cakes fresh on demand.</p>
+            <div class="hero-actions">
+              <a href="#custom-cake" class="btn btn-primary btn-lg">Design Your Cake &rarr;</a>
+              <a href="tel:7660948403" class="btn btn-outline-light btn-lg">Call Us: 7660948403</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="hero-slide">
+        <div class="hero-image-bg">
+          <img src="images/image1.png" alt="Visit Cake Shopee on Complex Road Narsipatnam">
+        </div>
+        <div class="hero-overlay dark"></div>
+        <div class="container hero-container">
+          <div class="hero-content">
+            <span class="hero-subtitle">📍 Visit Our Bakery in Narsipatnam</span>
+            <h1 class="hero-title">Come For The Bakery, <span class="highlight-text">Stay For The Pastry!</span></h1>
+            <p class="hero-description">Cakes, Hot Pizzas, Juicy Burgers, Thick Milkshakes, Chinese Snacks & Party Supplies under one roof.</p>
+            <div class="hero-actions">
+              <a href="#find-us" class="btn btn-primary btn-lg">Find Our Store &rarr;</a>
+              <a href="#menu" class="btn btn-secondary btn-lg">Explore Menu</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Slider Controls -->
+    <div class="slider-controls">
+      <button class="slider-prev" id="slidePrev" aria-label="Previous slide">&#10094;</button>
+      <div class="slider-dots" id="sliderDots">
+        <span class="dot active" data-slide="0"></span>
+        <span class="dot" data-slide="1"></span>
+        <span class="dot" data-slide="2"></span>
+      </div>
+      <button class="slider-next" id="slideNext" aria-label="Next slide">&#10095;</button>
+    </div>
+  </section>
+
+  <!-- Value Highlights Bar -->
+  <section class="value-bar">
+    <div class="container">
+      <div class="value-grid">
+        
+        <div class="value-card">
+          <div class="value-icon">🎂</div>
+          <div class="value-info">
+            <h4>Custom Live Cakes</h4>
+            <p>Freshly decorated live in-store to your exact theme & flavor</p>
+          </div>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">🚀</div>
+          <div class="value-info">
+            <h4>Fast Delivery</h4>
+            <p>Local door delivery in Narsipatnam (10:00 AM – 5:00 PM)</p>
+          </div>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">⏰</div>
+          <div class="value-info">
+            <h4>Open Daily till 10 PM</h4>
+            <p>Visit us on Complex Road opp. Naidu Jewellers anytime</p>
+          </div>
+        </div>
+
+        <div class="value-card">
+          <div class="value-icon">🍕</div>
+          <div class="value-info">
+            <h4>Cakes, Savouries & More</h4>
+            <p>Pizzas, burgers, milkshakes, pastries & party items</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Spotlight Grid -->
+  <section class="section categories-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-badge">EXPLORE CATEGORIES</span>
+        <h2 class="section-title">What Are You Craving Today?</h2>
+        <p class="section-subtitle">From celebration cakes to evening snacks, discovered our freshly prepared delicacies.</p>
+      </div>
+
+      <div class="categories-grid">
+        
+        <div class="category-card" data-category="cakes">
+          <div class="category-image">
+            <img src="images/image4.jpg" alt="Signature Cakes">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Fresh Daily</span>
+            <h3>Signature Fresh Cakes</h3>
+            <p>Black Forest, Chocolate Truffle, Mango Drizzle, Butterscotch</p>
+            <span class="cat-link">Explore Cakes &rarr;</span>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="custom">
+          <div class="category-image">
+            <img src="images/image2.ong" alt="Custom Live Celebration Cakes">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Theme Specials</span>
+            <h3>Customised Live Cakes</h3>
+            <p>Tier cakes, cartoon themes, photo cakes, customized for your event</p>
+            <span class="cat-link">Design Yours &rarr;</span>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="pastries">
+          <div class="category-image">
+            <img src="images/image5.png" alt="Fresh Pastries & Cheesecakes">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Fresh Daily</span>
+            <h3>Pastries & Slices</h3>
+            <p>Single slice delights, red velvet pasties, brownies & rolls</p>
+            <span class="cat-link">View Slices &rarr;</span>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="savouries">
+          <div class="category-image">
+            <img src="images/image3.jpg" alt="Savouries, Pizzas & Burgers">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Hot & Fresh</span>
+            <h3>Savouries & Fast Food</h3>
+            <p>Veg/Chicken Puffs, Pizzas, Juicy Burgers, Chinese Snacks</p>
+            <span class="cat-link">View Savouries &rarr;</span>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="shakes">
+          <div class="category-image">
+            <img src="images/image6.jpg" alt="Cold Milkshakes & Beverages">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Ice Cold</span>
+            <h3>Milkshakes & Drinks</h3>
+            <p>Thick Oreo shakes, chocolate indulgence, cold coffee & sodas</p>
+            <span class="cat-link">View Shakes &rarr;</span>
+          </div>
+        </div>
+
+        <div class="category-card" data-category="party">
+          <div class="category-image">
+            <img src="images/image7.jpg" alt="Party Supplies & Chocolates">
+          </div>
+          <div class="category-content">
+            <span class="cat-count">Party Essentials</span>
+            <h3>Party Props & Sweets</h3>
+            <p>Birthday candles, party poppers, snow sprays, chocolates</p>
+            <span class="cat-link">View Party Items &rarr;</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Menu & Product Catalog Section -->
+  <section class="section menu-section" id="menu">
+    <div class="container">
+      
+      <div class="section-header text-center">
+        <span class="section-badge">OUR MENU & ONLINE ORDERING</span>
+        <h2 class="section-title">Order Fresh Delights Online</h2>
+        <p class="section-subtitle">Select your favorite treats and get them prepared fresh for takeaway or local delivery.</p>
+      </div>
+
+      <!-- Controls & Filters Toolbar -->
+      <div class="menu-toolbar">
+        
+        <!-- Category Filter Pills -->
+        <div class="filter-pills" id="categoryFilters">
+          <button class="filter-btn active" data-filter="all">All Delights</button>
+          <button class="filter-btn" data-filter="cakes">Cakes (500g/1kg)</button>
+          <button class="filter-btn" data-filter="pastries">Pastries & Slices</button>
+          <button class="filter-btn" data-filter="savouries">Pizzas, Burgers & Puffs</button>
+          <button class="filter-btn" data-filter="shakes">Milkshakes & Drinks</button>
+          <button class="filter-btn" data-filter="party">Party Essentials</button>
+        </div>
+
+        <!-- Search & Toggles -->
+        <div class="toolbar-search-row">
+          <div class="search-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" placeholder="Search cakes, pizzas, milkshakes...">
+          </div>
+
+          <div class="toggle-group">
+            <label class="toggle-switch">
+              <input type="checkbox" id="egglessToggle">
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">🌱 100% Eggless Only</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Product Cards Grid -->
+      <div class="products-grid" id="productsGrid">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Custom Cake Builder Section -->
+  <section class="section custom-cake-section" id="custom-cake">
+    <div class="container">
+      <div class="custom-cake-wrapper">
+        
+        <div class="custom-cake-info">
+          <span class="section-badge light">LIVE CAKE SPECIALISTS</span>
+          <h2 class="custom-cake-title">Have a Specific Theme or Design in Mind?</h2>
+          <p>At Cake Shopee, we specialize in **Customised Live Cakes**. Tell us your theme, weight, and favorite flavor—or upload your reference photo—and our master bakers will create it fresh for your celebration!</p>
+          
+          <ul class="custom-features-list">
+            <li>
+              <span class="feature-icon">✨</span>
+              <div>
+                <strong>Live Decorating Counter</strong>
+                <p>Watch your cake get frosted & decorated live at our Narsipatnam shop.</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon">🍓</span>
+              <div>
+                <strong>Premium Fresh Ingredients</strong>
+                <p>Real whipped cream, rich chocolate, fresh fruits, and eggless choices.</p>
+              </div>
+            </li>
+            <li>
+              <span class="feature-icon">🚚</span>
+              <div>
+                <strong>Scheduled Delivery Slot</strong>
+                <p>Delivered safely to your home between 10:00 AM – 5:00 PM.</p>
+              </div>
+            </li>
+          </ul>
+
+          <div class="custom-contact-quick">
+            <span>Direct Custom Order Helpline:</span>
+            <a href="https://wa.me/917660948403?text=Hi%20Cake%20Shopee,%20I%20want%20to%20order%20a%20custom%20theme%20cake!" class="whatsapp-direct-btn" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.964 9.964 0 001.333 4.993L2 22l5.233-1.237a9.96 9.96 0 004.779 1.217h.004c5.505 0 9.988-4.478 9.989-9.984 0-2.669-1.038-5.176-2.925-7.062A9.925 9.925 0 0012.012 2z"/></svg>
+              Chat on WhatsApp: 7660948403
+            </a>
+          </div>
+        </div>
+
+        <!-- Custom Order Configurator Form -->
+        <div class="custom-cake-card">
+          <h3 class="form-card-title">🎂 Request Custom Cake Quote</h3>
+          <form id="customCakeForm" class="custom-cake-form">
+            
+            <div class="form-group">
+              <label for="customerName">Your Name *</label>
+              <input type="text" id="customerName" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="customerPhone">Phone Number *</label>
+                <input type="tel" id="customerPhone" placeholder="10-digit mobile number" required pattern="[0-9]{10}">
+              </div>
+
+              <div class="form-group">
+                <label for="cakeOccasion">Occasion</label>
+                <select id="cakeOccasion">
+                  <option value="Birthday">Birthday</option>
+                  <option value="Anniversary">Anniversary</option>
+                  <option value="1st Birthday Theme">1st Birthday / Baby Shower</option>
+                  <option value="Wedding / Engagement">Wedding / Engagement</option>
+                  <option value="Custom Party">Custom Celebration</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="cakeFlavor">Preferred Flavor *</label>
+                <select id="cakeFlavor" required>
+                  <option value="Chocolate Truffle">Chocolate Truffle / Fudge</option>
+                  <option value="Black Forest">Black Forest Classic</option>
+                  <option value="Pineapple Delight">Pineapple Delight</option>
+                  <option value="Red Velvet Cream Cheese">Red Velvet Cream Cheese</option>
+                  <option value="Butterscotch Crunch">Butterscotch Crunch</option>
+                  <option value="Mango / Strawberry Drizzle">Mango / Strawberry Drizzle</option>
+                  <option value="Other Custom Flavor">Other Custom Flavor</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cakeWeight">Cake Weight *</label>
+                <select id="cakeWeight" required>
+                  <option value="0.5 kg (Serves 4-6)">0.5 kg (Serves 4-6)</option>
+                  <option value="1 kg (Serves 8-12)">1 kg (Serves 8-12)</option>
+                  <option value="1.5 kg (Serves 12-16)">1.5 kg (Serves 12-16)</option>
+                  <option value="2 kg Tier Cake (Serves 18-24)">2 kg Tier Cake (Serves 18-24)</option>
+                  <option value="3+ kg Grand Event Cake">3+ kg Grand Event Cake</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="dietaryPref">Dietary Preference</label>
+                <select id="dietaryPref">
+                  <option value="100% Eggless">🌱 100% Eggless</option>
+                  <option value="Contains Egg">Contains Egg</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="deliveryDate">Event / Delivery Date *</label>
+                <input type="date" id="deliveryDate" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="cakeMessage">Message Written on Cake</label>
+              <input type="text" id="cakeMessage" placeholder="e.g. Happy 1st Birthday Shanmuka!">
+            </div>
+
+            <div class="form-group">
+              <label for="specialInstructions">Design Description & Special Requests</label>
+              <textarea id="specialInstructions" rows="3" placeholder="Describe theme colors, topper details, or design ideas..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">
+              Send Custom Cake Request via WhatsApp &rarr;
+            </button>
+
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Real Store Tour & Photo Gallery Section -->
+  <section class="section gallery-section" id="gallery">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-badge">REAL STORE EXPERIENCE</span>
+        <h2 class="section-title">Step Inside Cake Shopee Narsipatnam</h2>
+        <p class="section-subtitle">Take a glance at our live cake counters, fresh pastry displays, party supplies, and ambient seating area.</p>
+      </div>
+
+      <div class="gallery-grid">
+        
+        <div class="gallery-item" data-img="images/image1.png" data-title="Cake Shopee Storefront & Entrance">
+          <img src="images/image1.png" alt="Cake Shopee Storefront Narsipatnam">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Storefront & Signboard</span>
+            <h4>Cake Shopee Entrance</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image2.ong" data-title="Custom 2-Tier Teddy Theme Cake">
+          <img src="images/image2.ong" alt="Custom 2-Tier Teddy Theme Cake">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Custom Live Creation</span>
+            <h4>Theme 1st Birthday Cake</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image3.jpg" data-title="Fresh Baked Pastry & Snack Display">
+          <img src="images/image3.jpg" alt="Fresh Baked Pastry & Snack Display">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Live Display Counter</span>
+            <h4>Fresh Bakery Counter</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image4.jpg" data-title="Refrigerated Fresh Cream Cake Counter">
+          <img src="images/image4.jpg" alt="Refrigerated Fresh Cream Cake Counter">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Signature Cakes</span>
+            <h4>Chilled Cake Display</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image5.png" data-title="Black Forest Cream Cake Special">
+          <img src="images/image5.png" alt="Black Forest Cream Cake Special">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Customer Favorite</span>
+            <h4>Black Forest Special</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image6.jpg" data-title="Cold Drinks, Pastries & Ice Creams">
+          <img src="images/image6.jpg" alt="Cold Drinks, Pastries & Ice Creams">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Beverages & Chilled Desserts</span>
+            <h4>Beverage Display</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image7.jpg" data-title="Party Props, Chocolates & Billing">
+          <img src="images/image7.jpg" alt="Party Props, Chocolates & Billing">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Party Essentials</span>
+            <h4>Candles, Caps & Sweets</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+        <div class="gallery-item" data-img="images/image8.jpg" data-title="Clean Store Seating & Ambiance">
+          <img src="images/image8.jpg" alt="Clean Store Seating & Ambiance">
+          <div class="gallery-overlay">
+            <span class="gallery-category">Dine-In Space</span>
+            <h4>Cozy Seating Area</h4>
+            <span class="view-btn">🔍 View Full Image</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Store Location & Hours Section -->
+  <section class="section find-us-section" id="find-us">
+    <div class="container">
+      <div class="find-us-grid">
+        
+        <!-- Location Details Card -->
+        <div class="location-card">
+          <span class="section-badge light">STORE LOCATOR & TIMINGS</span>
+          <h2 class="location-title">Visit Cake Shopee in Narsipatnam</h2>
+          
+          <div class="location-info-block">
+            <div class="info-icon">📍</div>
+            <div class="info-details">
+              <h5>Store Address</h5>
+              <p><strong>Complex road, opp. Naidu Jewellers</strong><br>Narsipatnam, Andhra Pradesh 531116</p>
+            </div>
+          </div>
+
+          <div class="location-info-block">
+            <div class="info-icon">🕒</div>
+            <div class="info-details">
+              <h5>Opening Hours</h5>
+              <p><strong>Every Day:</strong> 10:00 AM – 10:00 PM<br><span class="status-highlight">🟢 Currently Open Today</span></p>
+            </div>
+          </div>
+
+          <div class="location-info-block">
+            <div class="info-icon">🚚</div>
+            <div class="info-details">
+              <h5>Local Delivery Window</h5>
+              <p><strong>10:00 AM – 5:00 PM</strong> (Daily local delivery within Narsipatnam radius)</p>
+            </div>
+          </div>
+
+          <div class="location-info-block">
+            <div class="info-icon">📞</div>
+            <div class="info-details">
+              <h5>Contact & Order Desk</h5>
+              <div class="phone-links">
+                <a href="tel:7660948403" class="phone-chip">📞 7660948403</a>
+                <a href="tel:8019104562" class="phone-chip">📞 8019104562</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="location-actions">
+            <a href="https://maps.google.com/?q=Complex+road,+opp.+Naidu+Jewellers,+Narsipatnam,+Andhra+Pradesh+531116" target="_blank" rel="noopener" class="btn btn-primary">
+              🗺️ Open Directions on Google Maps
+            </a>
+          </div>
+        </div>
+
+        <!-- Interactive Map Visual -->
+        <div class="map-card">
+          <div class="map-container">
+            <iframe 
+              title="Cake Shopee Location Map"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15217.291771120286!2d82.60741295!3d17.67035515!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a39e3381a179577%3A0xc4ad44d41eb31a89!2sNarsipatnam%2C%20Andhra%20Pradesh%20531116!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
+              width="100%" 
+              height="100%" 
+              style="border:0;" 
+              allowfullscreen="" 
+              loading="lazy" 
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
+          <div class="map-footer-badge">
+            <span>📍 Landmark: Opp. Naidu Jewellers, Complex Road</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Customer Testimonials Section -->
+  <section class="section testimonials-section">
+    <div class="container">
+      <div class="section-header text-center">
+        <span class="section-badge">CUSTOMER LOVE</span>
+        <h2 class="section-title">Loved by Narsipatnam Families</h2>
+        <p class="section-subtitle">Here is what our delighted customers say about our live cakes & pastries.</p>
+      </div>
+
+      <div class="testimonials-grid">
+        
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p class="review-text">"Ordered a customized 2-tier teddy cake for my son Shanmuka's 1st birthday. It tasted super fresh and looked exact to the reference image! Best live cake shop in Narsipatnam."</p>
+          <div class="reviewer">
+            <strong>- Rajesh M.</strong>
+            <span>Verified Local Buyer</span>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p class="review-text">"Cake Shopee is my go-to spot on Complex Road! Their eggless chocolate truffle pastry and evening hot chicken puffs are top class. Very clean ambience too."</p>
+          <div class="reviewer">
+            <strong>- Swathi K.</strong>
+            <span>Local Resident</span>
+          </div>
+        </div>
+
+        <div class="testimonial-card">
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+          <p class="review-text">"The live cake concept is awesome! You can see them decorate fresh cream cakes right in front of you. Quick home delivery between 10 AM and 5 PM as well."</p>
+          <div class="reviewer">
+            <strong>- Prasad V.</strong>
+            <span>Regular Customer</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-grid">
+        
+        <div class="footer-col brand-col">
+          <div class="brand-logo footer-logo">
+            <div class="logo-icon">🍰</div>
+            <div class="logo-text">
+              <span class="brand-name">Cake Shopee</span>
+              <span class="brand-tagline">Live Cakes & Bakery</span>
+            </div>
+          </div>
+          <p class="footer-desc">Narsipatnam's favorite destination for live celebration cakes, fresh cream pastries, hot savouries, pizzas, burgers, milkshakes, and party props.</p>
+          <div class="footer-socials">
+            <span class="social-icon">📸 Instagram</span>
+            <span class="social-icon">👍 Facebook</span>
+            <span class="social-icon">💬 WhatsApp</span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Quick Links</h4>
+          <ul class="footer-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#menu">Full Menu & Pricing</a></li>
+            <li><a href="#custom-cake">Custom Live Cake Request</a></li>
+            <li><a href="#gallery">Bakery Tour & Photos</a></li>
+            <li><a href="#find-us">Store Location & Directions</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Categories</h4>
+          <ul class="footer-links">
+            <li><a href="#menu" data-cat="cakes">Signature Birthday Cakes</a></li>
+            <li><a href="#menu" data-cat="pastries">Fresh Pastries & Cheesecakes</a></li>
+            <li><a href="#menu" data-cat="savouries">Pizzas, Burgers & Puffs</a></li>
+            <li><a href="#menu" data-cat="shakes">Milkshakes & Beverages</a></li>
+            <li><a href="#menu" data-cat="party">Party Candles & Props</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col contact-col">
+          <h4 class="footer-heading">Contact Store</h4>
+          <p class="footer-address">📍 Complex road, opp. Naidu Jewellers, Narsipatnam, Andhra Pradesh 531116</p>
+          <p class="footer-phone">📞 7660948403 / 8019104562</p>
+          <p class="footer-hours">🕒 Open Daily: 10:00 AM – 10:00 PM</p>
+          <p class="footer-delivery">🚚 Delivery: 10:00 AM – 5:00 PM</p>
+        </div>
+
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Cake Shopee Narsipatnam. All Rights Reserved. Crafted with care for sweet celebrations.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Slide-out Shopping Cart Drawer -->
+  <div class="cart-drawer-backdrop" id="cartBackdrop"></div>
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <div class="drawer-title">
+        <span class="drawer-icon">🛒</span>
+        <h3>Your Shopping Bag</h3>
+      </div>
+      <button class="cart-close-btn" id="cartCloseBtn">&times;</button>
+    </div>
+
+    <div class="cart-drawer-body" id="cartBody">
+      <!-- Cart items rendered dynamically -->
+    </div>
+
+    <div class="cart-drawer-footer">
+      
+      <!-- Promo Code Section -->
+      <div class="promo-box">
+        <input type="text" id="promoInput" placeholder="Enter Promo Code (e.g. FIRST15)">
+        <button id="applyPromoBtn">Apply</button>
+      </div>
+      <div id="promoMessage" class="promo-message"></div>
+
+      <!-- Delivery Slot Option -->
+      <div class="delivery-slot-box">
+        <label for="deliverySlotSelect">Select Delivery / Pickup Slot:</label>
+        <select id="deliverySlotSelect">
+          <option value="Today (10 AM - 1 PM)">Today (10:00 AM - 1:00 PM)</option>
+          <option value="Today (1 PM - 5 PM)">Today (1:00 PM - 5:00 PM)</option>
+          <option value="Tomorrow (10 AM - 5 PM)">Tomorrow Slot (10:00 AM - 5:00 PM)</option>
+        </select>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary-box">
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span id="cartSubtotal">₹0</span>
+        </div>
+        <div class="summary-line discount-line hidden" id="discountRow">
+          <span>Discount (FIRST15)</span>
+          <span id="cartDiscount">-₹0</span>
+        </div>
+        <div class="summary-line">
+          <span>Estimated Delivery</span>
+          <span class="free-badge">FREE (Narsipatnam)</span>
+        </div>
+        <div class="summary-line total-line">
+          <strong>Grand Total</strong>
+          <strong id="cartTotal">₹0</strong>
+        </div>
+      </div>
+
+      <!-- Checkout Actions -->
+      <div class="checkout-actions">
+        <button class="btn btn-primary btn-block btn-lg" id="whatsappCheckoutBtn">
+          <span>📲 Order via WhatsApp Now</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Quick View Product Modal -->
+  <div class="modal-backdrop" id="productModalBackdrop"></div>
+  <div class="modal-card" id="productModal">
+    <button class="modal-close-btn" id="productModalClose">&times;</button>
+    <div class="modal-body" id="productModalContent">
+      <!-- Dynamically filled -->
+    </div>
+  </div>
+
+  <!-- Image Lightbox Modal for Gallery -->
+  <div class="lightbox-backdrop" id="lightboxModal">
+    <button class="lightbox-close">&times;</button>
+    <div class="lightbox-content">
+      <img id="lightboxImg" src="" alt="Enlarged view">
+      <h4 id="lightboxTitle"></h4>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
