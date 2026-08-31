@@ -1,8 +1,11 @@
 import React from 'react';
 import { TESTIMONIALS } from '@/data/products';
-import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 export default function Testimonials() {
+  // Duplicate reviews for seamless continuous scroll loop
+  const marqueeReviews = [...TESTIMONIALS, ...TESTIMONIALS];
+
   return (
     <section className="section testimonials-section" id="reviews">
       <div className="container">
@@ -17,9 +20,13 @@ export default function Testimonials() {
           </p>
         </div>
 
-        <div className="testimonials-grid">
-          {TESTIMONIALS.map((review) => (
-            <div key={review.id} className="testimonial-card">
+      </div>
+
+      {/* Single Row Moving Horizontal Marquee Slider */}
+      <div className="testimonials-marquee-wrap">
+        <div className="testimonials-marquee-track">
+          {marqueeReviews.map((review, idx) => (
+            <div key={`${review.id}-${idx}`} className="testimonial-card marquee-card">
               
               <div className="testimonial-stars">
                 {"★".repeat(review.rating)}
@@ -41,7 +48,6 @@ export default function Testimonials() {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );
