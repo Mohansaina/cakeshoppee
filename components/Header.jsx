@@ -40,12 +40,12 @@ export default function Header({ onSelectCategory, onSearch }) {
         {/* ── Logo ── */}
         <Link href="/" className="mgn-hdr-logo" onClick={() => setActive('')}>
           <Image
-            src="/images/cake-shopee-logo.png"
-            alt="Cake Shopee"
-            width={48}
-            height={48}
+            src="/images/logo.png"
+            alt="Cake Shopee Logo"
+            width={44}
+            height={44}
             priority
-            style={{ borderRadius: '50%', objectFit: 'cover' }}
+            style={{ objectFit: 'contain' }}
           />
           <div className="mgn-hdr-logo-text">
             <span className="mgn-hdr-logo-name">Cake Shopee</span>
