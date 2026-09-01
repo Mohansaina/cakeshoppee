@@ -30,9 +30,9 @@ export const metadata = {
     images: ['/images/hero-custom-wedding-cake.jpg'],
   },
   icons: {
-    icon: '/favicon.png?v=2',
-    shortcut: '/favicon.ico?v=2',
-    apple: '/favicon.png?v=2',
+    icon: '/favicon.png?v=3',
+    shortcut: '/favicon.ico?v=3',
+    apple: '/apple-touch-icon.png?v=3',
   },
 };
 
@@ -64,9 +64,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.png?v=2" type="image/png" />
-        <link rel="shortcut icon" href="/favicon.ico?v=2" />
-        <link rel="apple-touch-icon" href="/favicon.png?v=2" />
+        <link rel="icon" href="/favicon.png?v=3" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico?v=3" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
