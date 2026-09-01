@@ -74,11 +74,54 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
         <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: `
+              function googleTranslateElementInit() {
+                new google.translate.TranslateElement({
+                  pageLanguage: 'en',
+                  includedLanguages: 'en,te',
+                  autoDisplay: false
+                }, 'google_translate_element');
+              }
+
+              function toggleTeluguLanguage() {
+                var currentLang = localStorage.getItem('preferredLanguage') || 'en';
+                var nextLang = currentLang === 'te' ? 'en' : 'te';
+                setLanguage(nextLang);
+              }
+
+              function setLanguage(lang) {
+                var select = document.querySelector('.goog-te-combo');
+                if (select) {
+                  select.value = lang;
+                  select.dispatchEvent(new Event('change'));
+                  localStorage.setItem('preferredLanguage', lang);
+                  updateLangBtnUI(lang);
+                } else {
+                  setTimeout(function() { setLanguage(lang); }, 300);
+                }
+              }
+
+              function updateLangBtnUI(lang) {
+                var labels = document.querySelectorAll('.lang-label');
+                labels.forEach(function(lbl) {
+                  lbl.innerText = lang === 'te' ? 'English' : 'తెలుగు';
+                });
+              }
+
+              document.addEventListener('DOMContentLoaded', function() {
+                var savedLang = localStorage.getItem('preferredLanguage');
+                if (savedLang === 'te') {
+                  setTimeout(function() { setLanguage('te'); }, 1000);
+                }
+              });
+            `
+          }}
         />
+        <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
       </head>
       <body>
+        <div id="google_translate_element" style={{ display: 'none' }}></div>
         <CartProvider>
           {children}
         </CartProvider>

@@ -6433,3 +6433,54 @@ main {
   color: #e11d48;
   background: #fff5f7;
 }
+
+/* ==========================================================================
+   Language Toggle & Google Translate Styles
+   ========================================================================== */
+.goog-te-banner-frame,
+.skiptranslate,
+#goog-gt-tt,
+.goog-te-balloon-frame {
+  display: none !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+.goog-tooltip,
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #c88a4c 0%, #a06730 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(200, 138, 76, 0.3);
+  transition: all 0.25s ease;
+  user-select: none;
+  font-family: inherit;
+  margin-left: 8px;
+}
+
+.lang-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(200, 138, 76, 0.45);
+  background: linear-gradient(135deg, #b0753b 0%, #8d5624 100%);
+}
+
+.lang-toggle-btn .lang-icon {
+  font-size: 14px;
+}
+
