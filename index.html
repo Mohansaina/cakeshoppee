@@ -54,12 +54,6 @@
 
       <!-- Action Buttons -->
       <div class="header-actions">
-        <!-- 1-Click Telugu Language Toggle -->
-        <button id="langToggleBtn" class="lang-toggle-btn" onclick="toggleTeluguLanguage()" title="Switch Language / భాషను మార్చండి">
-          <span class="lang-icon">🌐</span>
-          <span class="lang-label">తెలుగు</span>
-        </button>
-
         <!-- Store Status Pill -->
         <div class="store-status-pill" id="storeStatusBadge">
           <span class="status-dot online"></span>
@@ -820,6 +814,14 @@
       <img id="lightboxImg" src="" alt="Enlarged view">
       <h4 id="lightboxTitle"></h4>
     </div>
+  <!-- Floating Action Dock with 1-Click Telugu Toggle -->
+  <div class="floating-action-dock">
+    <button type="button" class="floating-lang-btn" onclick="toggleTeluguLanguage()" title="Switch Language / భాషను మార్చండి">
+      🌐 <span class="lang-label">తెలుగు</span>
+    </button>
+    <a href="https://wa.me/917660948403?text=Hi%20Cake%20Shopee,%20I%20would%20like%20to%20place%20an%20order!" class="floating-whatsapp-btn" target="_blank" rel="noopener noreferrer">
+      💬 <span>WhatsApp Order</span>
+    </a>
   </div>
 
   <div id="google_translate_element" style="display:none;"></div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { ShoppingBag, MessageSquare } from 'lucide-react';
+import { ShoppingBag, MessageSquare, Globe } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 export default function FloatingActionDock() {
@@ -9,7 +9,20 @@ export default function FloatingActionDock() {
 
   return (
     <div className="floating-action-dock">
-      
+      <button
+        type="button"
+        className="floating-lang-btn"
+        onClick={() => {
+          if (typeof window !== 'undefined' && window.toggleTeluguLanguage) {
+            window.toggleTeluguLanguage();
+          }
+        }}
+        title="Switch Language / భాషను మార్చండి"
+      >
+        <Globe size={16} />
+        <span className="lang-label">తెలుగు</span>
+      </button>
+
       <a
         href="https://wa.me/917660948403?text=Hi%20Cake%20Shopee,%20I%20would%20like%20to%20place%20an%20order%20or%20inquire%20about%20cakes!"
         className="floating-whatsapp-btn"

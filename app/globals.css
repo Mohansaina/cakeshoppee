@@ -3226,6 +3226,29 @@ button, input, select, textarea {
   gap: 10px;
 }
 
+.floating-lang-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #c88a4c 0%, #a06730 100%);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(200, 138, 76, 0.4);
+  transition: all 0.25s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.floating-lang-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(200, 138, 76, 0.55);
+}
+
 .floating-whatsapp-btn {
   display: flex;
   align-items: center;
@@ -3267,6 +3290,10 @@ button, input, select, textarea {
     bottom: max(14px, env(safe-area-inset-bottom, 14px));
     right: 14px;
     gap: 8px;
+  }
+  .floating-lang-btn {
+    padding: 8px 12px;
+    font-size: 0.76rem;
   }
   .floating-whatsapp-btn {
     padding: 8px 14px;

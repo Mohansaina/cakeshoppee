@@ -70,21 +70,6 @@ export default function Header({ onSelectCategory, onSearch }) {
 
         {/* ── Right Actions ── */}
         <div className="mgn-hdr-right">
-          {/* 1-Click Telugu Toggle */}
-          <button
-            type="button"
-            className="lang-toggle-btn"
-            onClick={() => {
-              if (typeof window !== 'undefined' && window.toggleTeluguLanguage) {
-                window.toggleTeluguLanguage();
-              }
-            }}
-            title="Switch Language / భాషను మార్చండి"
-          >
-            <span className="lang-icon">🌐</span>
-            <span className="lang-label">తెలుగు</span>
-          </button>
-
           {/* Pink pill CTA — matches Magnolia "ORDER ASAP" */}
           <a href="tel:7660948403" className="mgn-hdr-cta">Order Now</a>
 
