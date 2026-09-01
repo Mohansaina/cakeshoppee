@@ -3,21 +3,21 @@ import { CartProvider } from '@/context/CartContext';
 
 export const metadata = {
   title: 'Cake Shopee | Authentic Live Bakery & Pastry Shop in Narsipatnam',
-  description: 'Cake Shopee - Freshly baked live cakes, warm puffs, cheesecakes, burgers & shakes. Near Abes centre, beside Himalaya juice center, Narsipatnam Main Road. Open till 10 PM daily.',
+  description: 'Cake Shopee Narsipatnam - 📍 Near Abes centre, beside Himalaya juice center, Main Road. Freshly baked live cakes, warm puffs, cheesecakes, burgers & shakes. Open daily till 10 PM.',
   keywords: ['Cake Shopee', 'Narsipatnam Bakery', 'Live Bakery Narsipatnam', 'Custom Cakes Narsipatnam', 'Birthday Cakes Narsipatnam', 'Eggless Cakes'],
   authors: [{ name: 'Cake Shopee' }],
   metadataBase: new URL('https://cakeshoppee.vercel.app'),
   openGraph: {
-    title: 'Cake Shopee | Live Bakery & Pastry Shop in Narsipatnam',
-    description: 'Freshly baked live cakes, warm puffs, cheesecakes, burgers & shakes. Near Abes centre, beside Himalaya juice center, Narsipatnam Main Road.',
+    title: 'Cake Shopee Narsipatnam | Live Bakery & Custom Cakes',
+    description: '📍 Near Abes centre, beside Himalaya juice center, Narsipatnam Main Road. Fresh live cakes, warm puffs, cheesecakes, burgers & shakes. Open till 10 PM daily.',
     url: 'https://cakeshoppee.vercel.app',
     siteName: 'Cake Shopee Narsipatnam',
     images: [
       {
-        url: '/images/hero-custom-wedding-cake.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'Cake Shopee Narsipatnam',
+        url: 'https://cakeshoppee.vercel.app/images/og-share-card.png',
+        width: 512,
+        height: 512,
+        alt: 'Cake Shopee Narsipatnam Logo',
       },
     ],
     locale: 'en_IN',
@@ -26,8 +26,8 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Cake Shopee Narsipatnam',
-    description: 'Freshly baked live cakes, warm puffs & custom celebration cakes in Narsipatnam.',
-    images: ['/images/hero-custom-wedding-cake.jpg'],
+    description: '📍 Narsipatnam Main Road. Freshly baked live cakes, warm puffs & custom celebration cakes in Narsipatnam.',
+    images: ['https://cakeshoppee.vercel.app/images/og-share-card.png'],
   },
   icons: {
     icon: '/favicon.png?v=4',
@@ -67,6 +67,16 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/favicon.png?v=4" type="image/png" />
         <link rel="shortcut icon" href="/favicon.ico?v=4" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Cake Shopee Narsipatnam" />
+        <meta property="og:title" content="Cake Shopee Narsipatnam | Live Bakery & Custom Cakes" />
+        <meta property="og:description" content="📍 Narsipatnam Main Road (Near Abes centre, beside Himalaya juice center). Fresh live cakes, warm puffs, cheesecakes, burgers & shakes. Open daily till 10 PM." />
+        <meta property="og:image" content="https://cakeshoppee.vercel.app/images/og-share-card.png" />
+        <meta property="og:image:secure_url" content="https://cakeshoppee.vercel.app/images/og-share-card.png" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="512" />
+        <meta property="og:image:height" content="512" />
+        <meta property="og:url" content="https://cakeshoppee.vercel.app" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
