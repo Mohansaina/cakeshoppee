@@ -88,10 +88,10 @@ export default function Header({ onSelectCategory, onSearch }) {
           {/* Pink pill CTA — matches Magnolia "ORDER ASAP" */}
           <a href="tel:7660948403" className="mgn-hdr-cta">Order Now</a>
 
-          <button className="mgn-hdr-icon" aria-label="Search">
+          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Search">
             <Search size={18} />
           </button>
-          <button className="mgn-hdr-icon" aria-label="Account">
+          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Account">
             <User size={18} />
           </button>
           <button className="mgn-hdr-icon" aria-label="Cart">

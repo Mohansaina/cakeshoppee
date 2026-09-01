@@ -813,3 +813,31 @@ body {
   font-size: 14px;
 }
 
+@media (max-width: 640px) {
+  .header-container {
+    padding: 0 10px;
+    height: 58px;
+  }
+  .brand-tagline {
+    display: none;
+  }
+  .store-status-pill {
+    display: none;
+  }
+  .header-actions {
+    gap: 4px;
+  }
+  .header-phone-btn {
+    padding: 6px 10px;
+    font-size: 0.72rem;
+  }
+  .cart-trigger-btn {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+  }
+  .cart-btn-label {
+    display: none;
+  }
+}
+
+
