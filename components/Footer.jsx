@@ -58,6 +58,21 @@ export default function Footer({ onSelectCategory }) {
             >
               <MessageSquare size={15} /> WhatsApp Us
             </a>
+
+            {/* Website QR Code Card */}
+            <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.06)', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <Image
+                src="/images/cakeshoppee-qr.png"
+                alt="Cake Shopee Website QR Code"
+                width={70}
+                height={70}
+                style={{ borderRadius: '8px', background: '#fff', padding: '4px' }}
+              />
+              <div>
+                <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#fff', display: 'block' }}>📱 Scan to Visit & Order</span>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', display: 'block', marginTop: '2px' }}>Scan with mobile camera to open & share our website</span>
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}

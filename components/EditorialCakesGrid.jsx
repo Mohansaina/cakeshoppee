@@ -37,8 +37,37 @@ export default function EditorialCakesGrid() {
   };
 
   return (
-    <section className="bloom-gallery-strip-section" id="curated-showcase">
-      <div className="bloom-gallery-inner">
+    <section className="bloom-gallery-strip-section" id="curated-showcase" style={{ padding: '60px 0 40px' }}>
+      <div className="bloom-gallery-inner" style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <span style={{ 
+            display: 'inline-block',
+            background: 'linear-gradient(135deg, #fdf0ed 0%, #fbe3dc 100%)',
+            color: '#c88a4c',
+            fontSize: '12px',
+            fontWeight: '700',
+            letterSpacing: '0.12em',
+            padding: '6px 16px',
+            borderRadius: '50px',
+            textTransform: 'uppercase',
+            marginBottom: '10px'
+          }}>
+            ✨ ARTISANAL MASTERPIECES
+          </span>
+          <h2 style={{ 
+            fontFamily: "'Playfair Display', Georgia, serif", 
+            fontSize: '2rem', 
+            fontWeight: '700', 
+            color: '#2c1a11',
+            margin: '6px 0 8px'
+          }}>
+            Signature Handcrafted Live Cakes
+          </h2>
+          <p style={{ color: '#6e5f58', fontSize: '0.95rem', maxWidth: '650px', margin: '0 auto' }}>
+            Explore our custom theme cake creations freshly designed & decorated live for your special celebrations.
+          </p>
+        </div>
+
         <div className="bloom-gallery-grid">
           {SHOWCASE_CAKES.map((cake) => (
             <div 
