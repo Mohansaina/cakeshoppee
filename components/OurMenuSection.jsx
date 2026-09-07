@@ -285,6 +285,32 @@ export default function OurMenuSection({ onSelectCategory }) {
           )}
         </div>
 
+        {/* Red Note Banner at Menu Bottom matching shop menu board */}
+        <div style={{
+          marginTop: '32px',
+          padding: '20px 24px',
+          background: '#09090b',
+          border: '2px solid #ef4444',
+          borderRadius: '16px',
+          textAlign: 'center',
+          boxShadow: '0 8px 25px rgba(239, 68, 68, 0.25)'
+        }}>
+          <h4 style={{
+            color: '#ef4444',
+            fontFamily: 'var(--font-outfit)',
+            fontSize: '1.75rem',
+            fontWeight: '900',
+            letterSpacing: '1px',
+            textTransform: 'lowercase',
+            margin: 0
+          }}>
+            eggless extra 100
+          </h4>
+          <p style={{ color: '#f87171', fontSize: '0.9rem', margin: '6px 0 0 0', fontWeight: '600' }}>
+            (For 100% Pure Eggless cake preparation, extra ₹100 charge applies)
+          </p>
+        </div>
+
       </div>
     </section>
   );

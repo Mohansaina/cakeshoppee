@@ -29,8 +29,11 @@ export default function CartDrawer() {
   const [cakeMessage, setCakeMessage] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
 
+  const [isEgglessRequested, setIsEgglessRequested] = useState(false);
+
   const deliveryCharge = orderType === 'delivery' ? (selectedArea.includes('Other') ? 50 : 30) : 0;
-  const grandTotalWithDelivery = cartTotal + deliveryCharge;
+  const egglessFee = isEgglessRequested ? 100 : 0;
+  const grandTotalWithDelivery = cartTotal + deliveryCharge + egglessFee;
 
   if (!isCartOpen) return null;
 
@@ -53,6 +56,10 @@ export default function CartDrawer() {
       text += `🏠 *House/Door No & Street:* ${streetAddress || 'Not specified'}\n`;
     }
 
+    if (isEgglessRequested) {
+      text += `🌱 *Eggless Special:* 100% Pure Eggless (+₹100)\n`;
+    }
+
     if (cakeMessage) {
       text += `🎂 *Message on Cake:* "${cakeMessage}"\n`;
     }
@@ -67,6 +74,9 @@ export default function CartDrawer() {
 
     text += `------------------------------------\n`;
     text += `📦 *Items Subtotal:* ₹${cartTotal}\n`;
+    if (isEgglessRequested) {
+      text += `🌱 *Eggless Extra Charge:* +₹100\n`;
+    }
     text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE (Counter Takeaway)'}\n`;
     text += `💰 *TOTAL PAYABLE:* ₹${grandTotalWithDelivery}\n`;
     text += `------------------------------------\n`;
@@ -117,6 +127,7 @@ export default function CartDrawer() {
             <strong>Type:</strong> ${orderType === 'delivery' ? 'DOOR DELIVERY' : 'COUNTER TAKEAWAY'}<br>
             <strong>Customer:</strong> ${customerName || 'Walk-in Customer'}<br>
             <strong>Phone:</strong> ${customerPhone || 'N/A'}<br>
+            ${isEgglessRequested ? `<strong>Diet:</strong> 100% PURE EGGLESS (+₹100)<br>` : ''}
             ${orderType === 'delivery' ? `<strong>Address:</strong> ${selectedArea}, ${streetAddress}<br>` : ''}
             ${cakeMessage ? `<strong>Cake Text:</strong> "${cakeMessage}"<br>` : ''}
           </div>
@@ -136,6 +147,7 @@ export default function CartDrawer() {
           <div class="divider"></div>
           <div style="font-size:12px; margin-top:6px;">
             <div style="display:flex; justify-content:space-between;"><span>Items Subtotal:</span><span>₹${cartTotal}</span></div>
+            ${isEgglessRequested ? `<div style="display:flex; justify-content:space-between;"><span>Eggless Fee:</span><span>+ ₹100</span></div>` : ''}
             <div style="display:flex; justify-content:space-between;"><span>Delivery Fee (${orderType === 'delivery' ? 'Local' : 'Takeaway'}):</span><span>${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE'}</span></div>
           </div>
           <div class="divider"></div>
@@ -252,6 +264,19 @@ export default function CartDrawer() {
                 </div>
               </div>
 
+              {/* Eggless Option Toggle Box */}
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff1f2', border: '1px solid #fda4af', borderRadius: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.86rem', fontWeight: '700', color: '#e11d48' }}>
+                  <input
+                    type="checkbox"
+                    checked={isEgglessRequested}
+                    onChange={(e) => setIsEgglessRequested(e.target.checked)}
+                    style={{ width: '16px', height: '16px', accentColor: '#e11d48' }}
+                  />
+                  <span>🌱 Prepare Cake 100% Eggless (+₹100)</span>
+                </label>
+              </div>
+
               {/* Customer Details Form */}
               <div className="form-group" style={{ marginTop: '12px' }}>
                 <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Your Full Name *</label>
@@ -345,6 +370,13 @@ export default function CartDrawer() {
               <span>Items Subtotal ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
               <span>₹{cartTotal}</span>
             </div>
+
+            {isEgglessRequested && (
+              <div className="cart-summary-row" style={{ fontSize: '0.86rem', color: '#e11d48', fontWeight: '600' }}>
+                <span>Eggless Charge</span>
+                <span>+ ₹100</span>
+              </div>
+            )}
             
             <div className="cart-summary-row" style={{ fontSize: '0.86rem', color: orderType === 'delivery' ? '#15803d' : '#64748b', fontWeight: '600' }}>
               <span>Delivery Fee ({orderType === 'delivery' ? 'Local Narsipatnam' : 'Takeaway'})</span>
