@@ -31,7 +31,7 @@ export default function CartDrawer() {
 
   const [isEgglessRequested, setIsEgglessRequested] = useState(false);
 
-  const deliveryCharge = orderType === 'delivery' ? (selectedArea.includes('Other') ? 50 : 30) : 0;
+  const deliveryCharge = orderType === 'delivery' ? 50 : 0;
   const egglessFee = isEgglessRequested ? 100 : 0;
   const grandTotalWithDelivery = cartTotal + deliveryCharge + egglessFee;
 
@@ -77,7 +77,7 @@ export default function CartDrawer() {
     if (isEgglessRequested) {
       text += `🌱 *Eggless Extra Charge:* +₹100\n`;
     }
-    text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE (Counter Takeaway)'}\n`;
+    text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹50` : 'FREE (Counter Takeaway)'}\n`;
     text += `💰 *TOTAL PAYABLE:* ₹${grandTotalWithDelivery}\n`;
     text += `------------------------------------\n`;
     if (orderType === 'delivery') {
@@ -148,7 +148,7 @@ export default function CartDrawer() {
           <div style="font-size:12px; margin-top:6px;">
             <div style="display:flex; justify-content:space-between;"><span>Items Subtotal:</span><span>₹${cartTotal}</span></div>
             ${isEgglessRequested ? `<div style="display:flex; justify-content:space-between;"><span>Eggless Fee:</span><span>+ ₹100</span></div>` : ''}
-            <div style="display:flex; justify-content:space-between;"><span>Delivery Fee (${orderType === 'delivery' ? 'Local' : 'Takeaway'}):</span><span>${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE'}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Delivery Fee (${orderType === 'delivery' ? 'Local' : 'Takeaway'}):</span><span>${orderType === 'delivery' ? `₹50` : 'FREE'}</span></div>
           </div>
           <div class="divider"></div>
           <div class="total">TOTAL PAYABLE: ₹${grandTotalWithDelivery}</div>
@@ -252,7 +252,7 @@ export default function CartDrawer() {
                     className={`order-type-btn ${orderType === 'delivery' ? 'active' : ''}`}
                     onClick={() => setOrderType('delivery')}
                   >
-                    🚚 Door Delivery (+₹30)
+                    🚚 Door Delivery (+₹50)
                   </button>
                   <button
                     type="button"
