@@ -36,13 +36,13 @@ export default function Footer({ onSelectCategory }) {
             <div className="mgn-ftr-logo">
               <Image
                 src="/images/cake-shopee-logo.png"
-                alt="Cake Shopee"
+                alt="Cake Shoppee"
                 width={52}
                 height={52}
                 style={{ borderRadius: '50%', objectFit: 'cover' }}
               />
               <div>
-                <div className="mgn-ftr-logo-name">Cake Shopee</div>
+                <div className="mgn-ftr-logo-name">Cake Shoppee</div>
                 <div className="mgn-ftr-logo-sub">Artisanal Live Bakery</div>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function Footer({ onSelectCategory }) {
             <div style={{ marginTop: '20px', background: 'rgba(255,255,255,0.06)', padding: '12px 16px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
               <Image
                 src="/images/cakeshoppee-qr.png"
-                alt="Cake Shopee Website QR Code"
+                alt="Cake Shoppee Website QR Code"
                 width={70}
                 height={70}
                 style={{ borderRadius: '8px', background: '#fff', padding: '4px' }}
@@ -138,7 +138,7 @@ export default function Footer({ onSelectCategory }) {
 
       {/* ── Bottom bar ── */}
       <div className="mgn-ftr-bottom">
-        <p>© {new Date().getFullYear()} Cake Shopee Narsipatnam. Handcrafted for sweet celebrations.</p>
+        <p>© {new Date().getFullYear()} Cake Shoppee Narsipatnam. Handcrafted for sweet celebrations.</p>
         <p className="mgn-ftr-pay">UPI · GPay · PhonePe · Cash</p>
       </div>
 

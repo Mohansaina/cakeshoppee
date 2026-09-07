@@ -63,7 +63,7 @@ export default function CartDrawer() {
 
     setValidationError('');
 
-    let text = `🛍️ *NEW ORDER - CAKE SHOPEE NARSIPATNAM*\n`;
+    let text = `🛍️ *NEW ORDER - CAKE SHOPPEE NARSIPATNAM*\n`;
     text += `------------------------------------\n`;
     text += `👤 *Customer Name:* ${customerName.trim()}\n`;
     text += `📞 *Primary Phone:* ${customerPhone.trim()}\n`;
@@ -127,7 +127,7 @@ export default function CartDrawer() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Cake Shopee - Order Receipt</title>
+          <title>Cake Shoppee - Order Receipt</title>
           <style>
             body { font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 15px; color: #000; }
             h2 { text-align: center; margin: 0 0 5px 0; font-size: 20px; }
@@ -139,7 +139,7 @@ export default function CartDrawer() {
           </style>
         </head>
         <body>
-          <h2>CAKE SHOPEE</h2>
+          <h2>CAKE SHOPPEE</h2>
           <p>📍 Near Abes Centre, Beside Himalaya Juice Center<br>Narsipatnam Main Road | 📞 7660948403</p>
           <div class="divider"></div>
           <div style="font-size:12px; margin-bottom:8px;">
@@ -174,7 +174,7 @@ export default function CartDrawer() {
           <div class="divider"></div>
           <div class="total">TOTAL PAYABLE: ₹${grandTotalWithDelivery}</div>
           <div class="divider"></div>
-          <div class="footer-msg">Thank you for ordering with Cake Shopee!<br>Freshly Baked with ❤️ in Narsipatnam</div>
+          <div class="footer-msg">Thank you for ordering with Cake Shoppee!<br>Freshly Baked with ❤️ in Narsipatnam</div>
           <script>
             window.onload = function() { window.print(); };
           </script>

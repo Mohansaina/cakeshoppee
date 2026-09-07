@@ -2,22 +2,22 @@ import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 
 export const metadata = {
-  title: 'Cake Shopee | Authentic Live Bakery & Pastry Shop in Narsipatnam',
-  description: 'Cake Shopee Narsipatnam - 📍 Near Abes centre, beside Himalaya juice center, Main Road. Freshly baked live cakes, warm puffs, cheesecakes, burgers & shakes. Open daily till 10 PM.',
-  keywords: ['Cake Shopee', 'Narsipatnam Bakery', 'Live Bakery Narsipatnam', 'Custom Cakes Narsipatnam', 'Birthday Cakes Narsipatnam', 'Eggless Cakes'],
-  authors: [{ name: 'Cake Shopee' }],
+  title: 'Cake Shoppee | Authentic Live Bakery & Pastry Shop in Narsipatnam',
+  description: 'Cake Shoppee Narsipatnam - 📍 Near Abes centre, beside Himalaya juice center, Main Road. Freshly baked live cakes, warm puffs, cheesecakes, burgers & shakes. Open daily till 10 PM.',
+  keywords: ['Cake Shoppee', 'Cake Shopee', 'Narsipatnam Bakery', 'Live Bakery Narsipatnam', 'Custom Cakes Narsipatnam', 'Birthday Cakes Narsipatnam', 'Eggless Cakes'],
+  authors: [{ name: 'Cake Shoppee' }],
   metadataBase: new URL('https://cakeshoppee.vercel.app'),
   openGraph: {
-    title: 'Cake Shopee Narsipatnam | Live Bakery & Custom Cakes',
+    title: 'Cake Shoppee Narsipatnam | Live Bakery & Custom Cakes',
     description: '📍 Near Abes centre, beside Himalaya juice center, Narsipatnam Main Road. Fresh live cakes, warm puffs, cheesecakes, burgers & shakes. Open till 10 PM daily.',
     url: 'https://cakeshoppee.vercel.app',
-    siteName: 'Cake Shopee Narsipatnam',
+    siteName: 'Cake Shoppee Narsipatnam',
     images: [
       {
         url: 'https://cakeshoppee.vercel.app/images/og-share-card.png',
         width: 512,
         height: 512,
-        alt: 'Cake Shopee Narsipatnam Logo',
+        alt: 'Cake Shoppee Narsipatnam Logo',
       },
     ],
     locale: 'en_IN',
@@ -25,7 +25,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cake Shopee Narsipatnam',
+    title: 'Cake Shoppee Narsipatnam',
     description: '📍 Narsipatnam Main Road. Freshly baked live cakes, warm puffs & custom celebration cakes in Narsipatnam.',
     images: ['https://cakeshoppee.vercel.app/images/og-share-card.png'],
   },
@@ -39,7 +39,7 @@ export const metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Bakery',
-  'name': 'Cake Shopee',
+  'name': 'Cake Shoppee',
   'image': 'https://cakeshoppee.vercel.app/images/logo.png',
   'telephone': '+917660948403',
   'url': 'https://cakeshoppee.vercel.app',

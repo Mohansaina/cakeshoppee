@@ -48,14 +48,14 @@ export default function Header({ onSelectCategory, onSearch }) {
         <Link href="/" className="mgn-hdr-logo" onClick={() => setActive('')}>
           <Image
             src="/images/cake-shopee-logo.png"
-            alt="Cake Shopee"
+            alt="Cake Shoppee"
             width={48}
             height={48}
             priority
             style={{ borderRadius: '50%', objectFit: 'cover' }}
           />
           <div className="mgn-hdr-logo-text">
-            <span className="mgn-hdr-logo-name">Cake Shopee</span>
+            <span className="mgn-hdr-logo-name">Cake Shoppee</span>
             <span className="mgn-hdr-logo-est">est. 2018 · Narsipatnam</span>
           </div>
         </Link>
