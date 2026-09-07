@@ -100,6 +100,17 @@ export default function OurMenuSection({ onSelectCategory }) {
     }, 1500);
   };
 
+  const filteredProducts = PRODUCTS.filter((p) => {
+    const matchesCat = selectedCat === "all" || p.category === selectedCat;
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.flavorNotes &&
+        p.flavorNotes.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesEggless = egglessOnly ? p.eggless : true;
+    return matchesCat && matchesSearch && matchesEggless;
+  });
+
   return (
     <section className="our-menu-section" id="bestsellers">
       <div className="our-menu-inner">
