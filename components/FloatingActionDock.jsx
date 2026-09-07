@@ -34,16 +34,14 @@ export default function FloatingActionDock() {
         <span>WhatsApp Order</span>
       </a>
 
-      {cartCount > 0 && (
-        <button
-          className="floating-cart-pill"
-          onClick={() => setIsCartOpen(true)}
-          aria-label="View Shopping Cart"
-        >
-          <ShoppingBag size={18} />
-          <span>Cart ({cartCount})</span>
-        </button>
-      )}
+      <button
+        className="floating-cart-pill"
+        onClick={() => setIsCartOpen(true)}
+        aria-label="View Shopping Cart"
+      >
+        <ShoppingBag size={18} />
+        <span>Cart {cartCount > 0 ? `(${cartCount})` : ''}</span>
+      </button>
 
     </div>
   );

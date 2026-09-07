@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
+import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import EditorialCakesGrid from '@/components/EditorialCakesGrid';
 import OurMenuSection from '@/components/OurMenuSection';
-import BestsellerProductsRow from '@/components/BestsellerProductsRow';
+import CelebrationCombos from '@/components/CelebrationCombos';
 import OccasionTreatsSection from '@/components/OccasionTreatsSection';
 import CustomCakeBuilder from '@/components/CustomCakeBuilder';
+import StoreGallery from '@/components/StoreGallery';
 import Testimonials from '@/components/Testimonials';
 import FAQSection from '@/components/FAQSection';
 import StoreLocator from '@/components/StoreLocator';
@@ -27,6 +29,9 @@ export default function HomePage() {
 
   return (
     <main>
+      {/* 1. Top Announcement Ticker */}
+      <AnnouncementBar />
+
       {/* 2. Sticky Header with logo + nav */}
       <Header onSelectCategory={handleSelectCategory} onSearch={setSearchQuery} />
 
@@ -36,31 +41,37 @@ export default function HomePage() {
       {/* 4. Bespoke Cakes Gallery Strip — editorial 4-up grid */}
       <EditorialCakesGrid />
 
-      {/* 5 + 6. Our Menu — Category tiles + filterable product grid (combined) */}
+      {/* 5. Our Menu — Category tiles + filterable product grid */}
       <OurMenuSection onSelectCategory={handleSelectCategory} />
 
-      {/* 8. Treats for Any Occasion — 4-card occasion section */}
+      {/* 6. Celebration Combos — party packages */}
+      <CelebrationCombos />
+
+      {/* 7. Treats for Any Occasion — 4-card occasion section */}
       <OccasionTreatsSection
         onSelectCategory={handleSelectCategory}
         onSearch={setSearchQuery}
       />
 
-      {/* 10. Custom Cake Builder — quote form + WhatsApp */}
+      {/* 8. Custom Cake Builder — quote form + WhatsApp */}
       <CustomCakeBuilder />
 
-      {/* 12. Customer Testimonials */}
+      {/* 9. Store & Bakery Creations Gallery */}
+      <StoreGallery />
+
+      {/* 10. Customer Testimonials */}
       <Testimonials />
 
-      {/* 13. FAQ Accordion */}
+      {/* 11. FAQ Accordion */}
       <FAQSection />
 
-      {/* 14. Store Locator — map + contact info */}
+      {/* 12. Store Locator — map + contact info */}
       <StoreLocator />
 
-      {/* 15. Footer */}
+      {/* 13. Footer */}
       <Footer onSelectCategory={handleSelectCategory} />
 
-      {/* 16. Floating Action Dock — WhatsApp + Cart FAB */}
+      {/* 14. Floating Action Dock — WhatsApp + Cart FAB */}
       <FloatingActionDock />
 
       {/* Drawers & Modals */}

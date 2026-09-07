@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { X, Trash2, Plus, Minus, Send, ShoppingBag } from 'lucide-react';
+import { X, Trash2, Plus, Minus, Send, ShoppingBag, Printer } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const NARSIPATNAM_AREAS = [
@@ -72,6 +72,73 @@ export default function CartDrawer() {
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/917660948403?text=${encoded}`, '_blank');
+  };
+
+  const handlePrintReceipt = () => {
+    if (cartItems.length === 0) return;
+    const printWin = window.open('', '_blank', 'width=450,height=600');
+    if (!printWin) return;
+    
+    const itemsHtml = cartItems.map((item, idx) => `
+      <tr>
+        <td style="padding:6px 0; border-bottom:1px dashed #eee;">${idx+1}. ${item.name} (${item.weight || 'Std'})</td>
+        <td style="padding:6px 0; border-bottom:1px dashed #eee; text-align:center;">x${item.quantity}</td>
+        <td style="padding:6px 0; border-bottom:1px dashed #eee; text-align:right;">₹${item.price * item.quantity}</td>
+      </tr>
+    `).join('');
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Cake Shopee - Order Receipt</title>
+          <style>
+            body { font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 15px; color: #000; }
+            h2 { text-align: center; margin: 0 0 5px 0; font-size: 20px; }
+            p { text-align: center; margin: 0 0 10px 0; font-size: 11px; }
+            .divider { border-top: 1px dashed #000; margin: 10px 0; }
+            table { width: 100%; font-size: 12px; border-collapse: collapse; }
+            .total { font-weight: bold; font-size: 16px; margin-top: 10px; text-align: right; }
+            .footer-msg { text-align: center; font-size: 11px; margin-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <h2>CAKE SHOPEE</h2>
+          <p>📍 Near Abes Centre, Beside Himalaya Juice Center<br>Narsipatnam Main Road | 📞 7660948403</p>
+          <div class="divider"></div>
+          <div style="font-size:12px; margin-bottom:8px;">
+            <strong>Order #:</strong> CS-${Date.now().toString().slice(-6)}<br>
+            <strong>Date:</strong> ${new Date().toLocaleString()}<br>
+            <strong>Type:</strong> ${orderType === 'delivery' ? 'DOOR DELIVERY' : 'COUNTER TAKEAWAY'}<br>
+            <strong>Customer:</strong> ${customerName || 'Walk-in Customer'}<br>
+            <strong>Phone:</strong> ${customerPhone || 'N/A'}<br>
+            ${orderType === 'delivery' ? `<strong>Address:</strong> ${selectedArea}, ${streetAddress}<br>` : ''}
+            ${cakeMessage ? `<strong>Cake Text:</strong> "${cakeMessage}"<br>` : ''}
+          </div>
+          <div class="divider"></div>
+          <table>
+            <thead>
+              <tr style="text-align:left; border-bottom:1px solid #000;">
+                <th>Item</th>
+                <th style="text-align:center;">Qty</th>
+                <th style="text-align:right;">Amt</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <div class="divider"></div>
+          <div class="total">TOTAL PAYABLE: ₹${cartTotal}</div>
+          <div class="divider"></div>
+          <div class="footer-msg">Thank you for ordering with Cake Shopee!<br>Freshly Baked with ❤️ in Narsipatnam</div>
+          <script>
+            window.onload = function() { window.print(); };
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
   };
 
   return (
@@ -274,13 +341,24 @@ export default function CartDrawer() {
               <span>₹{cartTotal}</span>
             </div>
 
-            <button
-              className="btn btn-primary btn-block btn-lg"
-              onClick={handleCheckout}
-              disabled={cartItems.length === 0}
-            >
-              <Send size={18} /> Send Order to WhatsApp →
-            </button>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={handlePrintReceipt}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', padding: '12px 10px' }}
+              >
+                <Printer size={16} /> Print KOT Slip
+              </button>
+              
+              <button
+                className="btn btn-primary"
+                onClick={handleCheckout}
+                disabled={cartItems.length === 0}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', padding: '12px 10px' }}
+              >
+                <Send size={16} /> WhatsApp Order
+              </button>
+            </div>
           </div>
         )}
 
