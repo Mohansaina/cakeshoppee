@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { X, Trash2, Plus, Minus, Send, ShoppingBag, Printer } from 'lucide-react';
+import { X, Trash2, Plus, Minus, Send, ShoppingBag, Printer, AlertCircle } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const NARSIPATNAM_AREAS = [
@@ -30,6 +30,7 @@ export default function CartDrawer() {
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
 
   const [isEgglessRequested, setIsEgglessRequested] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
   const deliveryCharge = orderType === 'delivery' ? 50 : 0;
   const egglessFee = isEgglessRequested ? 100 : 0;
@@ -42,26 +43,46 @@ export default function CartDrawer() {
 
     if (cartItems.length === 0) return;
 
+    // Validate required fields
+    const missing = [];
+    if (!customerName || customerName.trim() === '') {
+      missing.push('Your Full Name');
+    }
+    const cleanPhone = (customerPhone || '').replace(/\D/g, '');
+    if (!customerPhone || cleanPhone.length < 10) {
+      missing.push('10-digit Mobile Number');
+    }
+    if (orderType === 'delivery' && (!streetAddress || streetAddress.trim() === '')) {
+      missing.push('House No & Street Address');
+    }
+
+    if (missing.length > 0) {
+      setValidationError(`⚠️ Please fill in all required fields: ${missing.join(', ')}.`);
+      return;
+    }
+
+    setValidationError('');
+
     let text = `🛍️ *NEW ORDER - CAKE SHOPEE NARSIPATNAM*\n`;
     text += `------------------------------------\n`;
-    text += `👤 *Customer Name:* ${customerName || 'Customer'}\n`;
-    text += `📞 *Primary Phone:* ${customerPhone || 'Not specified'}\n`;
-    if (altPhone) {
-      text += `📞 *Alternate Phone:* ${altPhone}\n`;
+    text += `👤 *Customer Name:* ${customerName.trim()}\n`;
+    text += `📞 *Primary Phone:* ${customerPhone.trim()}\n`;
+    if (altPhone && altPhone.trim()) {
+      text += `📞 *Alternate Phone:* ${altPhone.trim()}\n`;
     }
     text += `🚚 *Order Type:* ${orderType === 'delivery' ? 'Local Door Delivery' : 'Counter Takeaway Pickup'}\n`;
     
     if (orderType === 'delivery') {
       text += `📍 *Narsipatnam Area:* ${selectedArea}\n`;
-      text += `🏠 *House/Door No & Street:* ${streetAddress || 'Not specified'}\n`;
+      text += `🏠 *House/Door No & Street:* ${streetAddress.trim()}\n`;
     }
 
     if (isEgglessRequested) {
       text += `🌱 *Eggless Special:* 100% Pure Eggless (+₹100)\n`;
     }
 
-    if (cakeMessage) {
-      text += `🎂 *Message on Cake:* "${cakeMessage}"\n`;
+    if (cakeMessage && cakeMessage.trim()) {
+      text += `🎂 *Message on Cake:* "${cakeMessage.trim()}"\n`;
     }
     
     text += `⏰ *Requested Timing:* ${deliveryTime}\n`;
@@ -264,6 +285,26 @@ export default function CartDrawer() {
                 </div>
               </div>
 
+              {/* Validation Error Notice Box */}
+              {validationError && (
+                <div style={{
+                  marginTop: '12px',
+                  padding: '12px 14px',
+                  background: '#fef2f2',
+                  border: '1.5px solid #ef4444',
+                  borderRadius: '10px',
+                  color: '#b91c1c',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <AlertCircle size={20} color="#ef4444" style={{ flexShrink: 0 }} />
+                  <span>{validationError}</span>
+                </div>
+              )}
+
               {/* Eggless Option Toggle Box */}
               <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff1f2', border: '1px solid #fda4af', borderRadius: '10px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.86rem', fontWeight: '700', color: '#e11d48' }}>
@@ -279,24 +320,40 @@ export default function CartDrawer() {
 
               {/* Customer Details Form */}
               <div className="form-group" style={{ marginTop: '12px' }}>
-                <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Your Full Name *</label>
+                <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
+                  Your Full Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Enter your name"
+                  placeholder="Enter your full name"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onChange={(e) => {
+                    setCustomerName(e.target.value);
+                    if (validationError) setValidationError('');
+                  }}
+                  style={{
+                    borderColor: validationError && (!customerName || !customerName.trim()) ? '#ef4444' : '#cbd5e1'
+                  }}
                   required
                 />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Mobile Number *</label>
+                  <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
+                    Mobile Number <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="tel"
                     placeholder="10-digit mobile no."
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerPhone(e.target.value);
+                      if (validationError) setValidationError('');
+                    }}
+                    style={{
+                      borderColor: validationError && (!customerPhone || customerPhone.replace(/\D/g, '').length < 10) ? '#ef4444' : '#cbd5e1'
+                    }}
                     required
                   />
                 </div>
@@ -327,12 +384,20 @@ export default function CartDrawer() {
                   </div>
 
                   <div className="form-group">
-                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Door / House No & Street Address *</label>
+                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
+                      Door / House No & Street Address <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
                     <textarea
                       rows={2}
                       placeholder="e.g. Door No 4-12, Tagarapu Street, Opposite SBI ATM"
                       value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
+                      onChange={(e) => {
+                        setStreetAddress(e.target.value);
+                        if (validationError) setValidationError('');
+                      }}
+                      style={{
+                        borderColor: validationError && orderType === 'delivery' && (!streetAddress || !streetAddress.trim()) ? '#ef4444' : '#cbd5e1'
+                      }}
                       required
                     ></textarea>
                   </div>
