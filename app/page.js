@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import EditorialCakesGrid from '@/components/EditorialCakesGrid';
 import OurMenuSection from '@/components/OurMenuSection';
+import ShopMenuBoard from '@/components/ShopMenuBoard';
 import CelebrationCombos from '@/components/CelebrationCombos';
 import OccasionTreatsSection from '@/components/OccasionTreatsSection';
 import CustomCakeBuilder from '@/components/CustomCakeBuilder';
@@ -41,10 +42,13 @@ export default function HomePage() {
       {/* 4. Bespoke Cakes Gallery Strip — editorial 4-up grid */}
       <EditorialCakesGrid />
 
-      {/* 5. Our Menu — Category tiles + filterable product grid */}
+      {/* 5. Physical Shop Menu Board Card (Exact rates from physical menu card image) */}
+      <ShopMenuBoard />
+
+      {/* 6. Our Menu — Category tiles + filterable product grid */}
       <OurMenuSection onSelectCategory={handleSelectCategory} />
 
-      {/* 6. Celebration Combos — party packages */}
+      {/* 7. Celebration Combos — party packages */}
       <CelebrationCombos />
 
       {/* 7. Treats for Any Occasion — 4-card occasion section */}
