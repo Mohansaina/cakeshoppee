@@ -10,42 +10,42 @@ const CATEGORIES = [
   {
     id: "all",
     label: "All Delights",
-    emoji: "??",
+    emoji: "✨",
     image: "/images/blackforest.jpg",
     description: "Browse everything we make",
   },
   {
     id: "cakes",
     label: "Signature Cakes",
-    emoji: "??",
+    emoji: "🎂",
     image: "/images/blackforest.jpg",
     description: "Black Forest, Red Velvet & Fruit Cakes",
   },
   {
     id: "pastries",
     label: "Gourmet Pastries",
-    emoji: "??",
+    emoji: "🍰",
     image: "/images/chocoalmond.jpg",
     description: "Choco Almond & Fruit Pastry Slices",
   },
   {
     id: "savouries",
     label: "Hot Fast Food",
-    emoji: "??",
+    emoji: "🍕",
     image: "/images/vegpizza.jpg",
     description: "Pizzas, Burgers & Grilled Sandwiches",
   },
   {
     id: "shakes",
     label: "Thick Milkshakes",
-    emoji: "??",
+    emoji: "🥤",
     image: "/images/oreomilkshake.jpg",
     description: "Oreo, Kulfi & Strawberry Shakes",
   },
   {
     id: "party",
     label: "Party Essentials",
-    emoji: "??",
+    emoji: "🎁",
     image: "/images/hero-custom-wedding-cake.jpg",
     description: "Combos & Celebration Bundles",
   },
@@ -159,7 +159,7 @@ export default function OurMenuSection({ onSelectCategory }) {
                 />
                 <span className="toggle-slider" />
               </label>
-              <span className="toggle-label">?? 100% Eggless Only</span>
+              <span className="toggle-label">🌱 100% Eggless Only</span>
             </div>
 
             {selectedCat !== "all" && (
@@ -173,7 +173,7 @@ export default function OurMenuSection({ onSelectCategory }) {
                   onClick={() => handleSelectCat("all")}
                   aria-label="Clear filter"
                 >
-                  ?
+                  ✕
                 </button>
               </div>
             )}
@@ -187,7 +187,7 @@ export default function OurMenuSection({ onSelectCategory }) {
               className="empty-notice text-center"
               style={{ gridColumn: "1 / -1", padding: "60px 20px" }}
             >
-              <div style={{ fontSize: "3.5rem", marginBottom: "12px" }}>??</div>
+              <div style={{ fontSize: "3.5rem", marginBottom: "12px" }}>🧁</div>
               <h3 style={{ fontSize: "1.4rem", color: "#1f110a", marginBottom: "6px" }}>
                 No Delights Found
               </h3>
@@ -206,13 +206,11 @@ export default function OurMenuSection({ onSelectCategory }) {
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     style={{ objectFit: "cover" }}
                   />
-
-                  {/* Clean product photo without overlay badges */}
                 </div>
 
                 <div className="product-details">
                   <div className="product-meta">
-                    <span className="product-rating">? {product.rating}</span>
+                    <span className="product-rating">★ {product.rating}</span>
                     <span className="product-weight">{product.weight}</span>
                   </div>
 
@@ -220,7 +218,7 @@ export default function OurMenuSection({ onSelectCategory }) {
                   <p className="product-desc">{product.description}</p>
 
                   <div className="product-footer">
-                    <span className="product-price">Rs.{product.price}</span>
+                    <span className="product-price">₹{product.price}</span>
                     <button
                       className="add-cart-btn"
                       onClick={() => handleAddToCart(product)}

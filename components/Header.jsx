@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ShoppingBag, User, ChevronDown } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 const NAV = [
   { label: 'Order',          tab: 'order',    catKey: 'shop',    drop: true  },
@@ -14,6 +15,7 @@ const NAV = [
 
 export default function Header({ onSelectCategory, onSearch }) {
   const [active, setActive] = useState('');
+  const { setIsCartOpen, cartCount } = useCart();
 
   const go = (tab, catKey) => {
     setActive(tab);
@@ -31,6 +33,11 @@ export default function Header({ onSelectCategory, onSearch }) {
       if (onSelectCategory) onSelectCategory(catKey);
       document.getElementById('bestsellers')?.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleSearchClick = () => {
+    const el = document.getElementById('bestsellers');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -73,14 +80,19 @@ export default function Header({ onSelectCategory, onSearch }) {
           {/* Pink pill CTA — matches Magnolia "ORDER ASAP" */}
           <a href="tel:7660948403" className="mgn-hdr-cta">Order Now</a>
 
-          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Search">
+          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Search" onClick={handleSearchClick}>
             <Search size={18} />
           </button>
-          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Account">
+          <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Account" onClick={() => setIsCartOpen(true)}>
             <User size={18} />
           </button>
-          <button className="mgn-hdr-icon" aria-label="Cart">
+          <button className="mgn-hdr-icon" aria-label="Cart" onClick={() => setIsCartOpen(true)} style={{ position: 'relative' }}>
             <ShoppingBag size={18} />
+            {cartCount > 0 && (
+              <span className="cart-badge-count">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
 
