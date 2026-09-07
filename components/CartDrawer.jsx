@@ -29,6 +29,9 @@ export default function CartDrawer() {
   const [cakeMessage, setCakeMessage] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
 
+  const deliveryCharge = orderType === 'delivery' ? (selectedArea.includes('Other') ? 50 : 30) : 0;
+  const grandTotalWithDelivery = cartTotal + deliveryCharge;
+
   if (!isCartOpen) return null;
 
   const handleCheckout = (e) => {
@@ -63,7 +66,9 @@ export default function CartDrawer() {
     });
 
     text += `------------------------------------\n`;
-    text += `💰 *TOTAL AMOUNT:* ₹${cartTotal}\n`;
+    text += `📦 *Items Subtotal:* ₹${cartTotal}\n`;
+    text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE (Counter Takeaway)'}\n`;
+    text += `💰 *TOTAL PAYABLE:* ₹${grandTotalWithDelivery}\n`;
     text += `------------------------------------\n`;
     if (orderType === 'delivery') {
       text += `📍 *Tip:* Tap the '+' button in this WhatsApp chat to share your Live Location pin!\n`;
@@ -129,7 +134,12 @@ export default function CartDrawer() {
             </tbody>
           </table>
           <div class="divider"></div>
-          <div class="total">TOTAL PAYABLE: ₹${cartTotal}</div>
+          <div style="font-size:12px; margin-top:6px;">
+            <div style="display:flex; justify-content:space-between;"><span>Items Subtotal:</span><span>₹${cartTotal}</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>Delivery Fee (${orderType === 'delivery' ? 'Local' : 'Takeaway'}):</span><span>${orderType === 'delivery' ? `₹${deliveryCharge}` : 'FREE'}</span></div>
+          </div>
+          <div class="divider"></div>
+          <div class="total">TOTAL PAYABLE: ₹${grandTotalWithDelivery}</div>
           <div class="divider"></div>
           <div class="footer-msg">Thank you for ordering with Cake Shopee!<br>Freshly Baked with ❤️ in Narsipatnam</div>
           <script>
@@ -230,14 +240,14 @@ export default function CartDrawer() {
                     className={`order-type-btn ${orderType === 'delivery' ? 'active' : ''}`}
                     onClick={() => setOrderType('delivery')}
                   >
-                    🚚 Door Delivery
+                    🚚 Door Delivery (+₹30)
                   </button>
                   <button
                     type="button"
                     className={`order-type-btn ${orderType === 'takeaway' ? 'active' : ''}`}
                     onClick={() => setOrderType('takeaway')}
                   >
-                    🛍️ Counter Takeaway
+                    🛍️ Counter Takeaway (FREE)
                   </button>
                 </div>
               </div>
@@ -332,13 +342,18 @@ export default function CartDrawer() {
         {cartItems.length > 0 && (
           <div className="cart-drawer-footer">
             <div className="cart-summary-row">
-              <span>Items Total ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
+              <span>Items Subtotal ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
               <span>₹{cartTotal}</span>
             </div>
             
+            <div className="cart-summary-row" style={{ fontSize: '0.86rem', color: orderType === 'delivery' ? '#15803d' : '#64748b', fontWeight: '600' }}>
+              <span>Delivery Fee ({orderType === 'delivery' ? 'Local Narsipatnam' : 'Takeaway'})</span>
+              <span>{orderType === 'delivery' ? `+ ₹${deliveryCharge}` : 'FREE (₹0)'}</span>
+            </div>
+
             <div className="cart-total-row">
-              <span>Payable Amount</span>
-              <span>₹{cartTotal}</span>
+              <span>Total Payable Amount</span>
+              <span>₹{grandTotalWithDelivery}</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>

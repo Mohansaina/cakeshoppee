@@ -69,24 +69,36 @@ export default function OurMenuSection({ onSelectCategory }) {
     }, 80);
   };
 
-  const handleAddToCart = (product) => {
-    addToCart(product);
+  const [selectedWeightMap, setSelectedWeightMap] = useState({});
+
+  const handleWeightChange = (productId, weight) => {
+    setSelectedWeightMap((prev) => ({ ...prev, [productId]: weight }));
+  };
+
+  const getItemWeightAndPrice = (product) => {
+    if (!product.weightOptions || product.weightOptions.length === 0) {
+      return { weight: product.weight || 'Std', price: product.price };
+    }
+    const currentWeight = selectedWeightMap[product.id] || product.weightOptions[0].weight;
+    const opt = product.weightOptions.find((o) => o.weight === currentWeight) || product.weightOptions[0];
+    return { weight: opt.weight, price: opt.price };
+  };
+
+  const handleAddToCartWithWeight = (product) => {
+    const { weight, price } = getItemWeightAndPrice(product);
+    const itemToAdd = {
+      ...product,
+      id: `${product.id}-${weight.replace(/\s+/g, '')}`,
+      name: `${product.name} (${weight})`,
+      weight: weight,
+      price: price
+    };
+    addToCart(itemToAdd);
     setAddedItemMap((prev) => ({ ...prev, [product.id]: true }));
     setTimeout(() => {
       setAddedItemMap((prev) => ({ ...prev, [product.id]: false }));
     }, 1500);
   };
-
-  const filteredProducts = PRODUCTS.filter((p) => {
-    const matchesCat = selectedCat === "all" || p.category === selectedCat;
-    const matchesSearch =
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.flavorNotes &&
-        p.flavorNotes.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesEggless = egglessOnly ? p.eggless : true;
-    return matchesCat && matchesSearch && matchesEggless;
-  });
 
   return (
     <section className="our-menu-section" id="bestsellers">
@@ -94,11 +106,11 @@ export default function OurMenuSection({ onSelectCategory }) {
 
         {/* Section Header */}
         <div className="our-menu-header">
-          <span className="our-menu-eyebrow">Authentic Taste &amp; Quality</span>
+          <span className="our-menu-eyebrow">Authentic Shop Menu &amp; Quality</span>
           <span className="section-badge">ONLINE MENU &amp; INSTANT ORDERING</span>
-          <h2 className="our-menu-title">Fresh Bakes &amp; Counter Specials</h2>
+          <h2 className="our-menu-title">Fresh Cool Cakes &amp; Counter Specials</h2>
           <p className="our-menu-subtitle">
-            Order fresh bakes for fast takeaway pickup or door delivery anywhere in Narsipatnam town.
+            Exact shop menu card prices for 1/2 Kg (0.5 kg) and 1 Kg cakes with local door delivery in Narsipatnam town.
           </p>
         </div>
 
@@ -196,47 +208,80 @@ export default function OurMenuSection({ onSelectCategory }) {
               </p>
             </div>
           ) : (
-            filteredProducts.map((product) => (
-              <div key={product.id} className="product-card">
-                <div className="product-thumb">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
-
-                <div className="product-details">
-                  <div className="product-meta">
-                    <span className="product-rating">★ {product.rating}</span>
-                    <span className="product-weight">{product.weight}</span>
+            filteredProducts.map((product) => {
+              const { weight, price } = getItemWeightAndPrice(product);
+              return (
+                <div key={product.id} className="product-card">
+                  <div className="product-thumb">
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      style={{ objectFit: "cover" }}
+                    />
                   </div>
 
-                  <h3 className="product-title">{product.name}</h3>
-                  <p className="product-desc">{product.description}</p>
+                  <div className="product-details">
+                    <div className="product-meta">
+                      <span className="product-rating">★ {product.rating}</span>
+                      <span className="product-weight">{weight}</span>
+                    </div>
 
-                  <div className="product-footer">
-                    <span className="product-price">₹{product.price}</span>
-                    <button
-                      className="add-cart-btn"
-                      onClick={() => handleAddToCart(product)}
-                    >
-                      {addedItemMap[product.id] ? (
-                        <>
-                          <Check size={15} color="#15803d" /> Added!
-                        </>
-                      ) : (
-                        <>
-                          <Plus size={15} /> Add to Cart
-                        </>
-                      )}
-                    </button>
+                    <h3 className="product-title">{product.name}</h3>
+                    <p className="product-desc">{product.description}</p>
+
+                    {/* Weight Option Selector Pill */}
+                    {product.weightOptions && product.weightOptions.length > 0 && (
+                      <div style={{ display: 'flex', gap: '6px', margin: '8px 0 12px 0' }}>
+                        {product.weightOptions.map((opt) => {
+                          const isSelected = (selectedWeightMap[product.id] || product.weightOptions[0].weight) === opt.weight;
+                          return (
+                            <button
+                              key={opt.weight}
+                              type="button"
+                              onClick={() => handleWeightChange(product.id, opt.weight)}
+                              style={{
+                                flex: 1,
+                                padding: '4px 8px',
+                                borderRadius: '99px',
+                                border: isSelected ? '1.5px solid #e11d48' : '1px solid #e2e8f0',
+                                background: isSelected ? '#fff1f2' : '#ffffff',
+                                color: isSelected ? '#e11d48' : '#64748b',
+                                fontSize: '0.78rem',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              {opt.weight} (₹{opt.price})
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    <div className="product-footer">
+                      <span className="product-price">₹{price}</span>
+                      <button
+                        className="add-cart-btn"
+                        onClick={() => handleAddToCartWithWeight(product)}
+                      >
+                        {addedItemMap[product.id] ? (
+                          <>
+                            <Check size={15} color="#15803d" /> Added!
+                          </>
+                        ) : (
+                          <>
+                            <Plus size={15} /> Add to Cart
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
