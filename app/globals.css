@@ -355,6 +355,28 @@ button, input, select, textarea {
   }
 }
 
+/* ===== HERO VIDEO SCROLL ANIMATION ===== */
+@keyframes scrollWheelBounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(12px);
+    opacity: 0.3;
+  }
+}
+
+.scroll-wheel-dot {
+  animation: scrollWheelBounce 1.8s infinite ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .hero-scroll-container {
+    height: 200vh !important;
+  }
+}
+
 /* ===== EDITORIAL CAKES GRID SECTION (Bespoke Showcase) ===== */
 .bloom-gallery-strip-section {
   background: #ffffff;
