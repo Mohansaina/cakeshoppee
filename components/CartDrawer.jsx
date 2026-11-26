@@ -1016,8 +1016,8 @@ export default function CartDrawer() {
 
                   {/* 1-Tap Quick Locality Chips for Narsipatnam */}
                   <div style={{ marginBottom: '14px' }}>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
-                      ⚡ Or choose your nearby spot (1-Tap Auto Fill):
+                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '8px' }}>
+                      ⚡ 1-Tap Pick Your Narsipatnam Colony:
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                       {QUICK_SPOTS.map((spot) => (
@@ -1026,14 +1026,15 @@ export default function CartDrawer() {
                           type="button"
                           onClick={() => handleSelectQuickSpot(spot)}
                           style={{
-                            padding: '6px 10px',
+                            padding: '7px 12px',
                             background: selectedArea === spot.area ? '#fff7ed' : '#ffffff',
-                            border: selectedArea === spot.area ? '1.5px solid #ea580c' : '1px solid #cbd5e1',
+                            border: selectedArea === spot.area ? '2px solid #ea580c' : '1px solid #cbd5e1',
                             borderRadius: '999px',
-                            fontSize: '0.75rem',
-                            fontWeight: selectedArea === spot.area ? 700 : 600,
+                            fontSize: '0.78rem',
+                            fontWeight: selectedArea === spot.area ? 800 : 600,
                             color: selectedArea === spot.area ? '#c2410c' : '#334155',
                             cursor: 'pointer',
+                            boxShadow: selectedArea === spot.area ? '0 2px 6px rgba(234, 88, 12, 0.15)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
@@ -1043,86 +1044,71 @@ export default function CartDrawer() {
                     </div>
                   </div>
 
-                  {/* House / Flat / Door Number (The only typing needed!) */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                      House / Flat / Door / Shop No. <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>(e.g. Flat 201, D.No 4-22, or Shop Name)</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Flat 201 / Door No. 4-22 / Near Landmark"
-                      value={houseNumber}
-                      onChange={(e) => {
-                        setHouseNumber(e.target.value);
-                        if (validationError) setValidationError('');
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: validationError && (!houseNumber || !houseNumber.trim()) && !detectedAddress && !gpsLocation ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
-                        fontSize: '0.86rem',
-                        background: '#ffffff'
-                      }}
-                    />
-                  </div>
+                  {/* Clean, Visible Address Fields (Zero Guesswork) */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+                    
+                    {/* Area Dropdown */}
+                    <div>
+                      <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                        1. Narsipatnam Colony / Locality <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <select
+                        value={selectedArea}
+                        onChange={(e) => {
+                          setSelectedArea(e.target.value);
+                          if (validationError) setValidationError('');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: '1.5px solid #cbd5e1',
+                          fontSize: '0.86rem',
+                          fontWeight: 700,
+                          color: '#0f172a',
+                          background: '#ffffff'
+                        }}
+                      >
+                        {NARSIPATNAM_AREAS.map((area) => (
+                          <option key={area} value={area}>📍 {area}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  {/* Toggle to view/edit full manual fields */}
-                  <div style={{ textAlign: 'center', margin: '4px 0' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowManualFields(!showManualFields)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#64748b',
-                        fontSize: '0.76rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {showManualFields ? '▲ Hide detailed address fields' : '▼ Need to change street or landmark manually? Tap here'}
-                    </button>
-                  </div>
+                    {/* House / Flat / Door Number */}
+                    <div>
+                      <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                        2. House / Flat / Door No. & Building <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Door No. 4-22, 1st Floor / Sri Sai Residency"
+                        value={houseNumber}
+                        onChange={(e) => {
+                          setHouseNumber(e.target.value);
+                          if (validationError) setValidationError('');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: validationError && (!houseNumber || !houseNumber.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          fontSize: '0.86rem',
+                          background: '#ffffff'
+                        }}
+                        required
+                      />
+                    </div>
 
-                  {/* Collapsible Manual Fields */}
-                  {showManualFields && (
-                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      
-                      {/* Area Dropdown */}
+                    {/* Street Name & Landmark */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px' }}>
                       <div>
                         <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
-                          Locality / Area
-                        </label>
-                        <select
-                          value={selectedArea}
-                          onChange={(e) => setSelectedArea(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '9px 10px',
-                            borderRadius: '8px',
-                            border: '1px solid #cbd5e1',
-                            fontSize: '0.84rem',
-                            fontWeight: 600,
-                            color: '#1e293b',
-                            background: '#ffffff'
-                          }}
-                        >
-                          {NARSIPATNAM_AREAS.map((area) => (
-                            <option key={area} value={area}>📍 {area}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Street / Colony */}
-                      <div>
-                        <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
-                          Street / Colony
+                          3. Street / Road
                         </label>
                         <input
                           type="text"
-                          placeholder="e.g. Tagarapu Street / Behind Municipal Office"
+                          placeholder="e.g. Main Street"
                           value={streetName}
                           onChange={(e) => setStreetName(e.target.value)}
                           style={{
@@ -1136,53 +1122,34 @@ export default function CartDrawer() {
                         />
                       </div>
 
-                      {/* Landmark & Pincode */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
-                        <div>
-                          <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
-                            Nearby Landmark
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Opposite SBI ATM"
-                            value={landmark}
-                            onChange={(e) => setLandmark(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '9px 10px',
-                              borderRadius: '8px',
-                              border: '1px solid #cbd5e1',
-                              fontSize: '0.84rem',
-                              background: '#ffffff'
-                            }}
-                          />
-                        </div>
-
-                        <div>
-                          <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
-                            Pin Code
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="531116"
-                            value={pincode}
-                            onChange={(e) => setPincode(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '9px 10px',
-                              borderRadius: '8px',
-                              border: '1px solid #cbd5e1',
-                              fontSize: '0.84rem',
-                              fontWeight: 600,
-                              textAlign: 'center',
-                              background: '#ffffff'
-                            }}
-                          />
-                        </div>
+                      <div>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                          4. Nearby Landmark
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Near SBI ATM"
+                          value={landmark}
+                          onChange={(e) => setLandmark(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.84rem',
+                            background: '#ffffff'
+                          }}
+                        />
                       </div>
-
                     </div>
-                  )}
+
+                    {/* Pin Code prefilled */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#f1f5f9', borderRadius: '6px' }}>
+                      <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Town / Postal Code:</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155' }}>Narsipatnam, AP - 531116</span>
+                    </div>
+
+                  </div>
 
                 </div>
               )}
