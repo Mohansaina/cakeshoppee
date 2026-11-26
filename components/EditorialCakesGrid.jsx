@@ -325,70 +325,16 @@ export default function EditorialCakesGrid() {
                 }}
               />
 
-              {/* Cinematic Vignette */}
+              {/* Subtle Ambient Edge Glow */}
               <div 
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to top, rgba(7, 10, 18, 0.92) 0%, rgba(7, 10, 18, 0.3) 35%, transparent 60%)',
+                  borderRadius: '24px',
+                  boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.15)',
                   pointerEvents: 'none'
                 }} 
               />
-
-              {/* Elegant Minimal Card Tag */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  bottom: '24px',
-                  left: '28px',
-                  right: '28px',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  pointerEvents: 'none',
-                  zIndex: 10
-                }}
-              >
-                <div>
-                  <div style={{
-                    fontSize: '0.74rem',
-                    fontWeight: 700,
-                    color: cake.accentColor,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em',
-                    marginBottom: '4px'
-                  }}>
-                    {cake.tagline}
-                  </div>
-                  <h3 style={{
-                    fontFamily: "var(--font-playfair, Georgia, serif)",
-                    fontSize: 'clamp(1.4rem, 2.8vw, 2rem)',
-                    fontWeight: 800,
-                    color: '#ffffff',
-                    margin: 0,
-                    lineHeight: 1.2,
-                    textShadow: '0 2px 14px rgba(0,0,0,0.9)'
-                  }}>
-                    {cake.title}
-                  </h3>
-                </div>
-
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.12)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.25)',
-                  color: '#ffffff',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  padding: '8px 16px',
-                  borderRadius: '999px',
-                  whiteSpace: 'nowrap',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
-                }}>
-                  Customise &bull; 📞 7660948403
-                </div>
-              </div>
             </div>
           ))}
         </div>
