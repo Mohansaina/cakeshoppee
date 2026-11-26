@@ -51,10 +51,12 @@ export default function CartDrawer() {
 
   // GPS Location Pin & Reverse-Geocoded Auto-Address
   const [gpsLocation, setGpsLocation] = useState(null); // { lat, lng }
+  const [gpsAccuracy, setGpsAccuracy] = useState(null); // in meters
   const [detectedAddress, setDetectedAddress] = useState('');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [showManualFields, setShowManualFields] = useState(false);
+  const [showMapPreview, setShowMapPreview] = useState(true);
 
   // Quick 1-Tap Narsipatnam Popular Spots
   const QUICK_SPOTS = [
@@ -116,7 +118,7 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Handle GPS location auto-detect & reverse-geocoding address fetch
+  // Handle GPS location auto-detect & reverse-geocoding address fetch with two-pass fallback
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -125,88 +127,125 @@ export default function CartDrawer() {
     setIsDetectingGps(true);
     setGpsError('');
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setGpsLocation({ lat: latitude, lng: longitude });
+    const processPosition = async (position) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      setGpsLocation({ lat: latitude, lng: longitude });
+      if (accuracy) {
+        setGpsAccuracy(Math.round(accuracy));
+      }
 
-        // Reverse-geocode coordinates to fetch human-readable address
+      // Reverse-geocode coordinates to fetch human-readable address
+      try {
+        let fetchedAddr = '';
+        let fetchedStreet = '';
+        let fetchedArea = '';
+        let fetchedPostcode = '531116';
+
+        // Provider 1: OpenStreetMap Nominatim reverse geocoding
         try {
-          let fetchedAddr = '';
-          let fetchedStreet = '';
-          let fetchedArea = '';
-          let fetchedPostcode = '531116';
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.address) {
+              const a = data.address;
+              fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || a.village || '';
+              fetchedArea = a.suburb || a.residential || a.village || a.town || a.county || 'Narsipatnam';
+              fetchedPostcode = a.postcode || '531116';
+              fetchedAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}, Narsipatnam`;
+            }
+          }
+        } catch (e) {
+          console.warn('Nominatim reverse geocode error, trying BigDataCloud fallback:', e);
+        }
 
-          // Try OpenStreetMap Nominatim reverse geocoding
+        // Provider 2: BigDataCloud client API fallback if Nominatim was blocked or failed
+        if (!fetchedAddr) {
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.address) {
-                const a = data.address;
-                fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || a.village || '';
-                fetchedArea = a.suburb || a.residential || a.town || a.county || 'Narsipatnam';
-                fetchedPostcode = a.postcode || '531116';
-                fetchedAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}, Narsipatnam`;
-              }
+            const res2 = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+            if (res2.ok) {
+              const data2 = await res2.json();
+              fetchedStreet = data2.locality || data2.principalSubdivision || '';
+              fetchedArea = data2.city || 'Narsipatnam';
+              fetchedAddr = `${data2.locality || ''}, ${data2.city || 'Narsipatnam'}, ${data2.principalSubdivision || 'AP'}`;
             }
-          } catch (e) {
-            console.warn('Nominatim reverse geocode error, trying fallback:', e);
+          } catch (e2) {
+            console.warn('BigDataCloud reverse geocode fallback error:', e2);
           }
-
-          // Fallback to BigDataCloud client API if Nominatim was blocked or failed
-          if (!fetchedAddr) {
-            try {
-              const res2 = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-              if (res2.ok) {
-                const data2 = await res2.json();
-                fetchedStreet = data2.locality || data2.principalSubdivision || '';
-                fetchedArea = data2.city || 'Narsipatnam';
-                fetchedAddr = `${data2.locality || ''}, ${data2.city || 'Narsipatnam'}, ${data2.principalSubdivision || 'AP'}`;
-              }
-            } catch (e2) {
-              console.warn('BigDataCloud reverse geocode fallback error:', e2);
-            }
-          }
-
-          if (fetchedAddr) {
-            setDetectedAddress(fetchedAddr);
-            if (fetchedStreet && (!streetName || !streetName.trim())) {
-              setStreetName(fetchedStreet);
-            }
-            if (fetchedPostcode) {
-              setPincode(fetchedPostcode);
-            }
-            // Auto-select matching area or set landmark
-            if (!landmark || !landmark.trim()) {
-              setLandmark(`Near GPS Pin (${fetchedStreet || 'Auto-detected'})`);
-            }
-            if (!houseNumber || !houseNumber.trim()) {
-              setHouseNumber('My Current Location');
-            }
-          } else {
-            setDetectedAddress(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
-            if (!landmark) setLandmark('Attached GPS Location Pin');
-            if (!houseNumber) setHouseNumber('My Current Location');
-            if (!streetName) setStreetName('Narsipatnam');
-          }
-        } catch (err) {
-          console.warn('Failed to parse reverse geocoded address:', err);
-          setDetectedAddress(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
-        } finally {
-          setIsDetectingGps(false);
-          if (validationError) setValidationError('');
         }
-      },
-      (error) => {
-        setIsDetectingGps(false);
-        if (error.code === error.PERMISSION_DENIED) {
-          setGpsError('Location permission denied. You can tap any of the quick localities below!');
+
+        if (fetchedAddr) {
+          setDetectedAddress(fetchedAddr);
+          if (fetchedStreet && (!streetName || !streetName.trim())) {
+            setStreetName(fetchedStreet);
+          }
+          if (fetchedPostcode) {
+            setPincode(fetchedPostcode);
+          }
+
+          // Smart Narsipatnam Locality Matcher
+          const fullLower = (fetchedAddr + ' ' + fetchedStreet + ' ' + fetchedArea).toLowerCase();
+          if (fullLower.includes('rtc') || fullLower.includes('bus stand') || fullLower.includes('complex')) {
+            setSelectedArea("Near RTC Bus Stand / Complex");
+          } else if (fullLower.includes('balighattam') || fullLower.includes('temple')) {
+            setSelectedArea("Balighattam & Temple Road");
+          } else if (fullLower.includes('pedda') || fullLower.includes('boddepalli')) {
+            setSelectedArea("Peddaboddepalli Area");
+          } else if (fullLower.includes('college') || fullLower.includes('station')) {
+            setSelectedArea("College Road / Station Road");
+          } else if (fullLower.includes('tagarapu')) {
+            setSelectedArea("Tagarapu Veedhi");
+          } else if (fullLower.includes('shanti') || fullLower.includes('housing')) {
+            setSelectedArea("Shanti Nagar / Housing Board");
+          } else if (fullLower.includes('dharmavaram') || fullLower.includes('kotauratla')) {
+            setSelectedArea("Dharmavaram / Kotauratla Road");
+          } else if (fullLower.includes('lingarajupeta')) {
+            setSelectedArea("Lingarajupeta");
+          } else if (fullLower.includes('main road') || fullLower.includes('abes') || fullLower.includes('himalaya')) {
+            setSelectedArea("Near Abes Centre (Main Road)");
+          }
+
+          // Auto-set clean landmark & house number defaults
+          if (!landmark || !landmark.trim()) {
+            setLandmark(`Near ${fetchedStreet || 'GPS Pin Location'}`);
+          }
+          if (!houseNumber || !houseNumber.trim()) {
+            setHouseNumber('My Current Location');
+          }
         } else {
-          setGpsError('Could not fetch exact GPS. Please tap one of the quick localities below.');
+          setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
+          if (!landmark) setLandmark('Attached GPS Location Pin');
+          if (!houseNumber) setHouseNumber('My Current Location');
+          if (!streetName) setStreetName('Narsipatnam');
         }
+      } catch (err) {
+        console.warn('Failed to parse reverse geocoded address:', err);
+        setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
+      } finally {
+        setIsDetectingGps(false);
+        if (validationError) setValidationError('');
+      }
+    };
+
+    // Tier 1: Try high-accuracy GPS (8s timeout)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => processPosition(pos),
+      (err) => {
+        // Tier 2 Fallback: If high accuracy times out indoors, fallback to standard Wi-Fi/cellular accuracy
+        console.log('Tier 1 GPS timed out or failed, falling back to standard accuracy:', err.message);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => processPosition(pos),
+          (err2) => {
+            setIsDetectingGps(false);
+            if (err2.code === err2.PERMISSION_DENIED) {
+              setGpsError('Location permission was denied. Tap any quick spot below for instant 1-tap ordering!');
+            } else {
+              setGpsError('Could not get GPS fix. Please select your nearby spot from the 1-tap options below.');
+            }
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
   };
 
@@ -717,39 +756,80 @@ export default function CartDrawer() {
                     <div style={{
                       background: '#ffffff',
                       border: '1.5px solid #a7f3d0',
-                      borderRadius: '10px',
-                      padding: '12px',
+                      borderRadius: '12px',
+                      padding: '14px',
                       marginBottom: '14px',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.04)'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <CheckCircle2 size={14} color="#059669" /> VERIFIED LOCATION
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.76rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <CheckCircle2 size={15} color="#059669" /> VERIFIED LOCATION
+                          </span>
+                          {gpsAccuracy && (
+                            <span style={{ fontSize: '0.68rem', color: '#065f46', background: '#d1fae5', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                              🎯 ±{gpsAccuracy}m
+                            </span>
+                          )}
+                        </div>
                         {gpsLocation && (
                           <a
                             href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700, textDecoration: 'underline' }}
+                            style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '3px' }}
                           >
-                            🗺️ Open in Google Maps
+                            🗺️ Google Maps ↗
                           </a>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
+
+                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
                         {detectedAddress || 'GPS Pin Attached (Narsipatnam)'}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+
+                      {/* Embedded Live Google Maps Pin View (Customer sees their exact spot) */}
+                      {gpsLocation && (
+                        <div style={{ marginTop: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 700 }}>
+                              📍 Live Satellite/Street Pin:
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowMapPreview(!showMapPreview)}
+                              style={{ background: 'transparent', border: 'none', color: '#0284c7', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                              {showMapPreview ? 'Hide Map' : 'Show Map'}
+                            </button>
+                          </div>
+
+                          {showMapPreview && (
+                            <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #cbd5e1', height: '140px', position: 'relative', background: '#f8fafc' }}>
+                              <iframe
+                                title="Delivery Location Map Pin"
+                                src={`https://maps.google.com/maps?q=${gpsLocation.lat},${gpsLocation.lng}&hl=en&z=16&output=embed`}
+                                width="100%"
+                                height="140"
+                                style={{ border: 0, display: 'block' }}
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f1f5f9' }}>
                         <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
                           Rider gets direct 1-tap navigation to your door.
                         </span>
                         <button
                           type="button"
                           onClick={handleDetectGPS}
-                          style={{ background: 'transparent', border: 'none', color: '#059669', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                          disabled={isDetectingGps}
+                          style={{ background: 'transparent', border: 'none', color: '#059669', fontSize: '0.74rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
                         >
-                          🔄 Refresh
+                          🔄 Refresh Location
                         </button>
                       </div>
                     </div>
