@@ -49,10 +49,23 @@ export default function CartDrawer() {
   const [landmark, setLandmark] = useState('');
   const [pincode, setPincode] = useState('531116');
 
-  // GPS Location Pin
+  // GPS Location Pin & Reverse-Geocoded Auto-Address
   const [gpsLocation, setGpsLocation] = useState(null); // { lat, lng }
+  const [detectedAddress, setDetectedAddress] = useState('');
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
+  const [showManualFields, setShowManualFields] = useState(false);
+
+  // Quick 1-Tap Narsipatnam Popular Spots
+  const QUICK_SPOTS = [
+    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "Bus Stand Road", landmark: "Near RTC Main Gate" },
+    { label: "🛍️ Abes Centre / Main Rd", area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Near Abes Centre / Beside Himalaya Juice" },
+    { label: "🏥 Area Hospital", area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Near Area Hospital" },
+    { label: "🛕 Sai Baba Temple", area: "Balighattam & Temple Road", street: "Temple Road", landmark: "Near Shirdi Sai Temple" },
+    { label: "🎓 College Road", area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College" },
+    { label: "🏘️ Pedaboddepalli", area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Pedaboddepalli Junction" },
+    { label: "🌿 Balighattam", area: "Balighattam & Temple Road", street: "Balighattam Road", landmark: "Near Varaha River / Temple" }
+  ];
 
   // Additional order details
   const [cakeMessage, setCakeMessage] = useState('');
@@ -103,7 +116,7 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Handle GPS location auto-detect
+  // Handle GPS location auto-detect & reverse-geocoding address fetch
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -113,21 +126,100 @@ export default function CartDrawer() {
     setGpsError('');
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
         setGpsLocation({ lat: latitude, lng: longitude });
-        setIsDetectingGps(false);
+
+        // Reverse-geocode coordinates to fetch human-readable address
+        try {
+          let fetchedAddr = '';
+          let fetchedStreet = '';
+          let fetchedArea = '';
+          let fetchedPostcode = '531116';
+
+          // Try OpenStreetMap Nominatim reverse geocoding
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.address) {
+                const a = data.address;
+                fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || a.village || '';
+                fetchedArea = a.suburb || a.residential || a.town || a.county || 'Narsipatnam';
+                fetchedPostcode = a.postcode || '531116';
+                fetchedAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}, Narsipatnam`;
+              }
+            }
+          } catch (e) {
+            console.warn('Nominatim reverse geocode error, trying fallback:', e);
+          }
+
+          // Fallback to BigDataCloud client API if Nominatim was blocked or failed
+          if (!fetchedAddr) {
+            try {
+              const res2 = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+              if (res2.ok) {
+                const data2 = await res2.json();
+                fetchedStreet = data2.locality || data2.principalSubdivision || '';
+                fetchedArea = data2.city || 'Narsipatnam';
+                fetchedAddr = `${data2.locality || ''}, ${data2.city || 'Narsipatnam'}, ${data2.principalSubdivision || 'AP'}`;
+              }
+            } catch (e2) {
+              console.warn('BigDataCloud reverse geocode fallback error:', e2);
+            }
+          }
+
+          if (fetchedAddr) {
+            setDetectedAddress(fetchedAddr);
+            if (fetchedStreet && (!streetName || !streetName.trim())) {
+              setStreetName(fetchedStreet);
+            }
+            if (fetchedPostcode) {
+              setPincode(fetchedPostcode);
+            }
+            // Auto-select matching area or set landmark
+            if (!landmark || !landmark.trim()) {
+              setLandmark(`Near GPS Pin (${fetchedStreet || 'Auto-detected'})`);
+            }
+            if (!houseNumber || !houseNumber.trim()) {
+              setHouseNumber('My Current Location');
+            }
+          } else {
+            setDetectedAddress(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
+            if (!landmark) setLandmark('Attached GPS Location Pin');
+            if (!houseNumber) setHouseNumber('My Current Location');
+            if (!streetName) setStreetName('Narsipatnam');
+          }
+        } catch (err) {
+          console.warn('Failed to parse reverse geocoded address:', err);
+          setDetectedAddress(`GPS: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
+        } finally {
+          setIsDetectingGps(false);
+          if (validationError) setValidationError('');
+        }
       },
       (error) => {
         setIsDetectingGps(false);
         if (error.code === error.PERMISSION_DENIED) {
-          setGpsError('Location permission denied. Please enter your address manually.');
+          setGpsError('Location permission denied. You can tap any of the quick localities below!');
         } else {
-          setGpsError('Could not detect location. Please enter your address below.');
+          setGpsError('Could not fetch exact GPS. Please tap one of the quick localities below.');
         }
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
+  };
+
+  // Quick 1-tap select for popular Narsipatnam spots (zero typing needed)
+  const handleSelectQuickSpot = (spot) => {
+    setSelectedArea(spot.area);
+    setStreetName(spot.street);
+    setLandmark(spot.landmark);
+    setDetectedAddress(`${spot.label}: ${spot.street}, ${spot.area}`);
+    if (!houseNumber || !houseNumber.trim()) {
+      setHouseNumber('Near ' + spot.landmark);
+    }
+    if (validationError) setValidationError('');
   };
 
   // Proceed from Cart to Address step
@@ -154,14 +246,16 @@ export default function CartDrawer() {
     }
     
     if (orderType === 'delivery') {
-      if (!houseNumber || houseNumber.trim() === '') {
-        missing.push('Door / House / Flat No.');
-      }
-      if (!streetName || streetName.trim() === '') {
-        missing.push('Street / Colony Name');
-      }
-      if (!landmark || landmark.trim() === '') {
-        missing.push('Nearby Landmark (helps rider locate you)');
+      const hasAutoAddress = detectedAddress || gpsLocation;
+      
+      // If customer has not auto-detected and not typed manual fields, prompt for address
+      if (!hasAutoAddress) {
+        if (!houseNumber || houseNumber.trim() === '') {
+          missing.push('House / Flat / Door No.');
+        }
+        if (!streetName || streetName.trim() === '') {
+          missing.push('Street / Colony Name');
+        }
       }
     }
 
@@ -172,6 +266,10 @@ export default function CartDrawer() {
 
     setValidationError('');
     saveProfileToLocalStorage();
+
+    const finalHouseNumber = houseNumber && houseNumber.trim() ? houseNumber.trim() : (detectedAddress ? 'Deliver to Detected Location' : 'Near Main Road');
+    const finalStreet = streetName && streetName.trim() ? streetName.trim() : (detectedAddress || 'Narsipatnam');
+    const finalLandmark = landmark && landmark.trim() ? landmark.trim() : (gpsLocation ? 'Live GPS Pin Attached' : 'Narsipatnam');
 
     // Construct beautiful formatted WhatsApp message
     let text = `🛍️ *NEW ORDER - CAKE SHOPPEE NARSIPATNAM*\n`;
@@ -185,11 +283,14 @@ export default function CartDrawer() {
     
     if (orderType === 'delivery') {
       text += `\n📍 *DELIVERY ADDRESS:*\n`;
-      text += `🏠 *House/Door No:* ${houseNumber.trim()}\n`;
-      text += `🛣️ *Street/Colony:* ${streetName.trim()}\n`;
+      text += `🏠 *House/Door/Flat:* ${finalHouseNumber}\n`;
+      text += `🛣️ *Street/Colony:* ${finalStreet}\n`;
       text += `🏛️ *Locality:* ${selectedArea}\n`;
-      text += `🚩 *Landmark:* ${landmark.trim()}\n`;
+      text += `🚩 *Landmark:* ${finalLandmark}\n`;
       text += `📮 *Pin Code:* ${pincode.trim() || '531116'}\n`;
+      if (detectedAddress) {
+        text += `✨ *Auto-Fetched Location:* ${detectedAddress}\n`;
+      }
       if (gpsLocation) {
         text += `🗺️ *Live GPS Pin:* https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}\n`;
       }
@@ -260,7 +361,7 @@ export default function CartDrawer() {
             <strong>Type:</strong> ${orderType === 'delivery' ? 'DOOR DELIVERY' : 'COUNTER TAKEAWAY'}<br>
             <strong>Customer:</strong> ${customerName || 'Customer'}<br>
             <strong>Phone:</strong> ${customerPhone || 'N/A'}<br>
-            ${orderType === 'delivery' ? `<strong>Address:</strong> ${houseNumber}, ${streetName}, ${selectedArea} (Landmark: ${landmark})<br>` : ''}
+            ${orderType === 'delivery' ? `<strong>Address:</strong> ${houseNumber || 'Door Delivery'}, ${streetName || ''}, ${selectedArea} ${landmark ? `(Landmark: ${landmark})` : ''} ${detectedAddress ? `<br><strong>Detected:</strong> ${detectedAddress}` : ''}<br>` : ''}
             ${gpsLocation ? `<strong>GPS Pin:</strong> Attached<br>` : ''}
             ${cakeMessage ? `<strong>Cake Text:</strong> "${cakeMessage}"<br>` : ''}
           </div>
@@ -556,96 +657,141 @@ export default function CartDrawer() {
 
               {/* Delivery Address Section (Only for Delivery) */}
               {orderType === 'delivery' && (
-                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Home size={16} color="#ea580c" /> Exact Delivery Address
+                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '14px', border: '1.5px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Home size={16} color="#ea580c" /> Delivery Address
                     </span>
                     <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, background: '#dcfce7', padding: '2px 8px', borderRadius: '999px' }}>
                       Narsipatnam Town
                     </span>
                   </div>
 
-                  {/* 1-Tap GPS Auto-Detect Button */}
-                  <div style={{ marginBottom: '12px' }}>
+                  {/* 1-Tap Auto-Fetch Location Button */}
+                  <div style={{ marginBottom: '14px' }}>
                     <button
                       type="button"
                       onClick={handleDetectGPS}
                       disabled={isDetectingGps}
                       style={{
                         width: '100%',
-                        padding: '10px 12px',
-                        background: gpsLocation ? '#f0fdf4' : '#ffffff',
-                        border: gpsLocation ? '1.5px solid #22c55e' : '1.5px dashed #ea580c',
+                        padding: '12px 14px',
+                        background: detectedAddress || gpsLocation ? '#ecfdf5' : '#ea580c',
+                        border: detectedAddress || gpsLocation ? '1.5px solid #10b981' : 'none',
                         borderRadius: '10px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
-                        fontSize: '0.84rem',
-                        fontWeight: 700,
-                        color: gpsLocation ? '#15803d' : '#ea580c',
+                        fontSize: '0.88rem',
+                        fontWeight: 800,
+                        color: detectedAddress || gpsLocation ? '#065f46' : '#ffffff',
+                        boxShadow: detectedAddress || gpsLocation ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.25)',
+                        transition: 'all 0.2s ease',
                         touchAction: 'manipulation'
                       }}
                     >
                       {isDetectingGps ? (
                         <>
-                          <Compass className="animate-spin" size={16} /> Detecting your GPS Pin...
+                          <Compass className="animate-spin" size={18} /> Fetching your exact address & GPS...
                         </>
-                      ) : gpsLocation ? (
+                      ) : detectedAddress || gpsLocation ? (
                         <>
-                          <CheckCircle2 size={16} color="#16a34a" /> Live GPS Pin Attached! (Accurate)
+                          <CheckCircle2 size={18} color="#059669" /> Exact Location Fetched!
                         </>
                       ) : (
                         <>
-                          <Navigation size={16} /> 📍 Auto-Detect My Current GPS Location
+                          <Navigation size={18} /> 📍 Auto-Fetch My Current Location
                         </>
                       )}
                     </button>
+
                     {gpsError && (
-                      <p style={{ margin: '4px 0 0 0', fontSize: '0.74rem', color: '#ef4444' }}>{gpsError}</p>
-                    )}
-                    {gpsLocation && (
-                      <p style={{ margin: '4px 0 0 0', fontSize: '0.72rem', color: '#15803d', textAlign: 'center' }}>
-                        Delivery rider will get direct Google Maps navigation to your doorstep!
-                      </p>
+                      <p style={{ margin: '6px 0 0 0', fontSize: '0.76rem', color: '#ef4444', fontWeight: 600 }}>{gpsError}</p>
                     )}
                   </div>
 
-                  {/* Area / Locality Selector */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                      1. Narsipatnam Locality / Area <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <select
-                      value={selectedArea}
-                      onChange={(e) => setSelectedArea(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        fontSize: '0.86rem',
-                        fontWeight: 600,
-                        color: '#1e293b',
-                        background: '#ffffff'
-                      }}
-                    >
-                      {NARSIPATNAM_AREAS.map((area) => (
-                        <option key={area} value={area}>📍 {area}</option>
+                  {/* Live Auto-Fetched Address Card (Customer can see perfectly) */}
+                  {(detectedAddress || gpsLocation) && (
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1.5px solid #a7f3d0',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      marginBottom: '14px',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle2 size={14} color="#059669" /> VERIFIED LOCATION
+                        </span>
+                        {gpsLocation && (
+                          <a
+                            href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700, textDecoration: 'underline' }}
+                          >
+                            🗺️ Open in Google Maps
+                          </a>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
+                        {detectedAddress || 'GPS Pin Attached (Narsipatnam)'}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          Rider gets direct 1-tap navigation to your door.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleDetectGPS}
+                          style={{ background: 'transparent', border: 'none', color: '#059669', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          🔄 Refresh
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 1-Tap Quick Locality Chips for Narsipatnam */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', marginBottom: '6px' }}>
+                      ⚡ Or choose your nearby spot (1-Tap Auto Fill):
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {QUICK_SPOTS.map((spot) => (
+                        <button
+                          key={spot.label}
+                          type="button"
+                          onClick={() => handleSelectQuickSpot(spot)}
+                          style={{
+                            padding: '6px 10px',
+                            background: selectedArea === spot.area ? '#fff7ed' : '#ffffff',
+                            border: selectedArea === spot.area ? '1.5px solid #ea580c' : '1px solid #cbd5e1',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            fontWeight: selectedArea === spot.area ? 700 : 600,
+                            color: selectedArea === spot.area ? '#c2410c' : '#334155',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {spot.label}
+                        </button>
                       ))}
-                    </select>
+                    </div>
                   </div>
 
-                  {/* House / Flat / Door Number */}
-                  <div style={{ marginBottom: '10px' }}>
+                  {/* House / Flat / Door Number (The only typing needed!) */}
+                  <div style={{ marginBottom: '12px' }}>
                     <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                      2. House / Flat / Door No. & Building <span style={{ color: '#ef4444' }}>*</span>
+                      House / Flat / Door / Shop No. <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 500 }}>(e.g. Flat 201, D.No 4-22, or Shop Name)</span>
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Door No. 4-22, 1st Floor / Sri Sai Residency"
+                      placeholder="e.g. Flat 201 / Door No. 4-22 / Near Landmark"
                       value={houseNumber}
                       onChange={(e) => {
                         setHouseNumber(e.target.value);
@@ -653,89 +799,131 @@ export default function CartDrawer() {
                       }}
                       style={{
                         width: '100%',
-                        padding: '10px',
+                        padding: '10px 12px',
                         borderRadius: '8px',
-                        border: validationError && (!houseNumber || !houseNumber.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                        border: validationError && (!houseNumber || !houseNumber.trim()) && !detectedAddress && !gpsLocation ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
                         fontSize: '0.86rem',
                         background: '#ffffff'
                       }}
-                      required
                     />
                   </div>
 
-                  {/* Street / Colony Name */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                      3. Street / Colony / Ward <span style={{ color: '#ef4444' }}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Tagarapu Street / Behind Municipal Office"
-                      value={streetName}
-                      onChange={(e) => {
-                        setStreetName(e.target.value);
-                        if (validationError) setValidationError('');
-                      }}
+                  {/* Toggle to view/edit full manual fields */}
+                  <div style={{ textAlign: 'center', margin: '4px 0' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowManualFields(!showManualFields)}
                       style={{
-                        width: '100%',
-                        padding: '10px',
-                        borderRadius: '8px',
-                        border: validationError && (!streetName || !streetName.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
-                        fontSize: '0.86rem',
-                        background: '#ffffff'
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#64748b',
+                        fontSize: '0.76rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
                       }}
-                      required
-                    />
+                    >
+                      {showManualFields ? '▲ Hide detailed address fields' : '▼ Need to change street or landmark manually? Tap here'}
+                    </button>
                   </div>
 
-                  {/* Landmark (Crucial for Indian towns) */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                        4. Nearby Landmark <span style={{ color: '#ef4444' }}>*</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Opposite SBI ATM, near Temple"
-                        value={landmark}
-                        onChange={(e) => {
-                          setLandmark(e.target.value);
-                          if (validationError) setValidationError('');
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: validationError && (!landmark || !landmark.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
-                          fontSize: '0.86rem',
-                          background: '#ffffff'
-                        }}
-                        required
-                      />
-                    </div>
+                  {/* Collapsible Manual Fields */}
+                  {showManualFields && (
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      
+                      {/* Area Dropdown */}
+                      <div>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                          Locality / Area
+                        </label>
+                        <select
+                          value={selectedArea}
+                          onChange={(e) => setSelectedArea(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.84rem',
+                            fontWeight: 600,
+                            color: '#1e293b',
+                            background: '#ffffff'
+                          }}
+                        >
+                          {NARSIPATNAM_AREAS.map((area) => (
+                            <option key={area} value={area}>📍 {area}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <div>
-                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
-                        Pin Code
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="531116"
-                        value={pincode}
-                        onChange={(e) => setPincode(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px',
-                          borderRadius: '8px',
-                          border: '1px solid #cbd5e1',
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          textAlign: 'center',
-                          background: '#ffffff'
-                        }}
-                      />
+                      {/* Street / Colony */}
+                      <div>
+                        <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                          Street / Colony
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Tagarapu Street / Behind Municipal Office"
+                          value={streetName}
+                          onChange={(e) => setStreetName(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            fontSize: '0.84rem',
+                            background: '#ffffff'
+                          }}
+                        />
+                      </div>
+
+                      {/* Landmark & Pincode */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                            Nearby Landmark
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Opposite SBI ATM"
+                            value={landmark}
+                            onChange={(e) => setLandmark(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '9px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '0.84rem',
+                              background: '#ffffff'
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '0.76rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '3px' }}>
+                            Pin Code
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="531116"
+                            value={pincode}
+                            onChange={(e) => setPincode(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '9px 10px',
+                              borderRadius: '8px',
+                              border: '1px solid #cbd5e1',
+                              fontSize: '0.84rem',
+                              fontWeight: 600,
+                              textAlign: 'center',
+                              background: '#ffffff'
+                            }}
+                          />
+                        </div>
+                      </div>
+
                     </div>
-                  </div>
+                  )}
 
                 </div>
               )}
