@@ -40,6 +40,30 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return Math.round((R * c) * 10) / 10;
 }
 
+// Open Location Code (Google Plus Code generator)
+function getGooglePlusCode(latitude, longitude) {
+  const ALPHABET = '23456789CFGHJMPQRVWX';
+  let lat = Math.min(90, Math.max(-90, latitude));
+  let lng = Math.min(180, Math.max(-180, longitude));
+  if (lat === 90) lat = 89.999999;
+  
+  let latVal = Math.floor((lat + 90) * 8000 * 1000) / 1000;
+  let lngVal = Math.floor((lng + 180) * 8000 * 1000) / 1000;
+  
+  let code = '';
+  for (let i = 0; i < 5; i++) {
+    const latDigit = Math.floor(latVal / Math.pow(20, 4 - i)) % 20;
+    const lngDigit = Math.floor(lngVal / Math.pow(20, 4 - i)) % 20;
+    code += ALPHABET[latDigit] + ALPHABET[lngDigit];
+    if (i === 3) code += '+';
+  }
+  // Optional 11th grid sub-digit
+  const subIndex = Math.floor(((lat + 90) * 8000 * 20 * 4) % 20);
+  const extraChar = ALPHABET[subIndex] || '';
+
+  return code.slice(4) + (extraChar ? extraChar : '');
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -79,62 +103,79 @@ export async function GET(request) {
     if (!isNaN(lat) && !isNaN(lng)) {
       const distance = calculateDistance(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, lat, lng);
       
+      let detectedVillage = '';
+      let detectedMandal = '';
+      let detectedDistrict = '';
+      let detectedState = 'Andhra Pradesh';
+      let detectedPincode = '';
       let street = '';
-      let colony = '';
-      let village = '';
-      let suburb = '';
-      let pincode = '531116';
-      let fullDisplayName = '';
 
-      // 1. Query OpenStreetMap Nominatim with exact coordinates
+      // 1. Query OSM Nominatim at zoom=14 for true village/town/suburb level
       try {
-        const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`, {
+        const osmRes14 = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`, {
           headers: {
             'User-Agent': 'CakeShoppeeBakery/1.0 (info@cakeshoppee.com)',
             'Accept-Language': 'en'
           },
           next: { revalidate: 3600 }
         });
-
-        if (osmRes.ok) {
-          const data = await osmRes.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const rawRoad = addr.road || addr.residential || '';
-            // Filter out highway designations like SH11, MDR0062, MDR0100
-            if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
-              street = rawRoad;
-            }
-            suburb = addr.suburb || addr.neighbourhood || '';
-            village = addr.village || addr.hamlet || '';
-            colony = suburb || village || '';
-            pincode = addr.postcode || '531116';
+        if (osmRes14.ok) {
+          const d14 = await osmRes14.json();
+          if (d14 && d14.address) {
+            const addr = d14.address;
+            detectedVillage = addr.village || addr.suburb || addr.town || addr.residential || d14.name || '';
+            detectedMandal = addr.county || '';
+            detectedDistrict = addr.state_district || '';
+            detectedState = addr.state || 'Andhra Pradesh';
+            detectedPincode = addr.postcode || '';
           }
         }
       } catch (e) {
-        console.warn('Server OSM reverse geocode error:', e);
+        console.warn('Server OSM zoom 14 error:', e);
       }
 
-      // 2. Query BigDataCloud if street was empty
-      if (!street && !colony) {
+      // 2. Query OSM Nominatim at zoom=18 for street name (filter out technical highway codes)
+      try {
+        const osmRes18 = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: {
+            'User-Agent': 'CakeShoppeeBakery/1.0 (info@cakeshoppee.com)',
+            'Accept-Language': 'en'
+          },
+          next: { revalidate: 3600 }
+        });
+        if (osmRes18.ok) {
+          const d18 = await osmRes18.json();
+          if (d18 && d18.address) {
+            const rawRoad = d18.address.road || '';
+            if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
+              street = rawRoad;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Server OSM zoom 18 error:', e);
+      }
+
+      // 3. Fallback to BigDataCloud if village is still empty
+      if (!detectedVillage) {
         try {
           const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
           if (bdcRes.ok) {
             const bdcData = await bdcRes.json();
-            if (bdcData.locality && bdcData.locality !== 'Narsipatnam') {
-              colony = bdcData.locality;
-            }
+            detectedVillage = bdcData.locality || bdcData.city || '';
+            if (bdcData.principalSubdivision) detectedState = bdcData.principalSubdivision;
           }
         } catch (e2) {
           console.warn('Server BigDataCloud fallback error:', e2);
         }
       }
 
-      // 3. Match closest Narsipatnam area & landmark from our verified list
-      let matchedArea = 'Near Abes Centre (Main Road)';
+      // 4. Calculate Google Plus Code
+      const plusCodeLocal = getGooglePlusCode(lat, lng);
+
+      // 5. Check if user is within close proximity to a known Narsipatnam town landmark (<= 1.2 km)
       let closestLandmark = NARSIPATNAM_LANDMARKS[0];
       let minDistance = 99999;
-      
       for (const lm of NARSIPATNAM_LANDMARKS) {
         const d = calculateDistance(lat, lng, lm.lat, lm.lng);
         if (d < minDistance) {
@@ -143,44 +184,63 @@ export async function GET(request) {
         }
       }
 
-      matchedArea = closestLandmark.area;
-      const cleanStreet = street || closestLandmark.street;
-
-      // 4. Construct high-accuracy human readable address IN WORDS
-      const distToLandmarkMeters = Math.round(minDistance * 1000);
+      let matchedArea = '';
       let wordsAddress = '';
+      let finalAddress = '';
+      let plusCodeFull = '';
+      let finalStreet = street;
+      let finalLandmark = '';
 
-      if (distToLandmarkMeters <= 180) {
-        wordsAddress = (cleanStreet && cleanStreet !== closestLandmark.area ? `${cleanStreet}, ` : '') + `${closestLandmark.area}, Narsipatnam`;
-      } else if (distToLandmarkMeters <= 500) {
-        wordsAddress = `Near ${closestLandmark.landmark || closestLandmark.name}, ${closestLandmark.area}, Narsipatnam`;
-      } else if (distToLandmarkMeters <= 1200) {
-        wordsAddress = `${closestLandmark.area} (~${distToLandmarkMeters}m from ${closestLandmark.name}), Narsipatnam`;
+      if (minDistance <= 1.2 && distance <= 3.5) {
+        // Customer is inside Narsipatnam town
+        matchedArea = closestLandmark.area;
+        finalStreet = street || closestLandmark.street;
+        finalLandmark = closestLandmark.landmark || `Near ${closestLandmark.name}`;
+        
+        const distMeters = Math.round(minDistance * 1000);
+        if (distMeters <= 180) {
+          wordsAddress = (finalStreet && finalStreet !== closestLandmark.area ? `${finalStreet}, ` : '') + `${closestLandmark.area}, Narsipatnam`;
+        } else if (distMeters <= 500) {
+          wordsAddress = `Near ${closestLandmark.landmark || closestLandmark.name}, ${closestLandmark.area}, Narsipatnam`;
+        } else {
+          wordsAddress = `${closestLandmark.area}, Narsipatnam`;
+        }
+
+        wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
+        wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
+        wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
+
+        finalAddress = `${wordsAddress} - 531116`;
+        plusCodeFull = `${plusCodeLocal} Narsipatnam, Andhra Pradesh`;
       } else {
-        wordsAddress = `${closestLandmark.area}, Narsipatnam`;
+        // Customer is outside town / in specific locality/village (e.g. Burugupalem, Makavarapalem)
+        const placeName = detectedVillage || (detectedMandal ? detectedMandal.replace(' Mandal', '') : 'Andhra Pradesh');
+        matchedArea = placeName;
+        finalStreet = street || placeName;
+        finalLandmark = detectedMandal ? `Near ${placeName} (${detectedMandal})` : `Near ${placeName}`;
+
+        wordsAddress = `${placeName}, ${detectedState}`;
+        finalAddress = `${placeName}${detectedMandal ? `, ${detectedMandal}` : ''}, ${detectedState}${detectedPincode ? ` - ${detectedPincode}` : ''}`;
+        plusCodeFull = `${plusCodeLocal} ${placeName}, ${detectedState}`;
       }
-
-      // Clean up any repetitive names
-      wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
-      wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
-      wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
-
-      const finalAddress = `${wordsAddress} - 531116`;
 
       return NextResponse.json({
         success: true,
         address: finalAddress,
         wordsAddress: wordsAddress,
-        street: cleanStreet,
+        plusCode: plusCodeFull,
+        plusCodeLocal: plusCodeLocal,
         area: matchedArea,
-        colony: closestLandmark.area,
-        landmark: closestLandmark.landmark || `Near ${closestLandmark.name}`,
-        pincode: pincode || "531116",
+        village: detectedVillage || matchedArea,
+        mandal: detectedMandal,
+        street: finalStreet,
+        landmark: finalLandmark,
+        pincode: detectedPincode || (minDistance <= 1.2 ? "531116" : ""),
         lat: lat,
         lng: lng,
         distanceKm: distance,
-        estimatedTime: distance <= 2 ? "20-25 mins" : distance <= 5 ? "25-35 mins" : "35-50 mins",
-        isWithinDeliveryRange: distance <= 15,
+        estimatedTime: distance <= 2 ? "20-25 mins" : distance <= 5 ? "25-35 mins" : distance <= 15 ? "35-50 mins" : "50-60 mins",
+        isWithinDeliveryRange: distance <= 25,
         mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
       });
     }

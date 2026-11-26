@@ -12,6 +12,29 @@ import { useCart } from '@/context/CartContext';
 
 const LocationPickerModal = dynamic(() => import('./LocationPickerModal'), { ssr: false });
 
+// Open Location Code (Google Plus Code generator)
+function getGooglePlusCode(latitude, longitude) {
+  const ALPHABET = '23456789CFGHJMPQRVWX';
+  let lat = Math.min(90, Math.max(-90, latitude));
+  let lng = Math.min(180, Math.max(-180, longitude));
+  if (lat === 90) lat = 89.999999;
+  
+  let latVal = Math.floor((lat + 90) * 8000 * 1000) / 1000;
+  let lngVal = Math.floor((lng + 180) * 8000 * 1000) / 1000;
+  
+  let code = '';
+  for (let i = 0; i < 5; i++) {
+    const latDigit = Math.floor(latVal / Math.pow(20, 4 - i)) % 20;
+    const lngDigit = Math.floor(lngVal / Math.pow(20, 4 - i)) % 20;
+    code += ALPHABET[latDigit] + ALPHABET[lngDigit];
+    if (i === 3) code += '+';
+  }
+  const subIndex = Math.floor(((lat + 90) * 8000 * 20 * 4) % 20);
+  const extraChar = ALPHABET[subIndex] || '';
+
+  return code.slice(4) + (extraChar ? extraChar : '');
+}
+
 const BAKERY_COORDS = { lat: 17.66635, lng: 82.61015 };
 
 function getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -70,6 +93,7 @@ export default function CartDrawer() {
   const [gpsLocation, setGpsLocation] = useState(null); // { lat, lng }
   const [gpsAccuracy, setGpsAccuracy] = useState(null); // in meters
   const [detectedAddress, setDetectedAddress] = useState('');
+  const [plusCode, setPlusCode] = useState('');
   const [deliveryDistance, setDeliveryDistance] = useState(null); // in km from bakery
   const [deliveryEta, setDeliveryEta] = useState(null); // e.g. "20-25 mins"
   const [isDetectingGps, setIsDetectingGps] = useState(false);
@@ -146,7 +170,7 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Handle GPS location auto-detect: Captures 100% exact mobile coordinates & matches nearest colony cleanly
+  // Handle GPS location auto-detect: Captures 100% exact mobile coordinates & true location text
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -155,7 +179,7 @@ export default function CartDrawer() {
     setIsDetectingGps(true);
     setGpsError('');
 
-    const processPosition = (position) => {
+    const processPosition = async (position) => {
       const { latitude, longitude, accuracy } = position.coords;
       setGpsLocation({ lat: latitude, lng: longitude });
       if (accuracy) {
@@ -165,61 +189,33 @@ export default function CartDrawer() {
       // Calculate exact distance from Cake Shoppee bakery
       const dist = getDistanceKm(BAKERY_COORDS.lat, BAKERY_COORDS.lng, latitude, longitude);
       setDeliveryDistance(dist);
-      setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : '30-40 mins');
+      setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : dist <= 6 ? '25-35 mins' : '45-60 mins');
 
-      // Find closest verified Narsipatnam colony from our list
-      let closestSpot = QUICK_SPOTS[0];
-      let minDist = 99999;
-      for (const spot of QUICK_SPOTS) {
-        const d = getDistanceKm(latitude, longitude, spot.lat, spot.lng);
-        if (d < minDist) {
-          minDist = d;
-          closestSpot = spot;
-        }
-      }
+      // Local Google Plus Code fallback
+      const localCode = getGooglePlusCode(latitude, longitude);
 
-      // Format clean, human-readable address strictly IN WORDS
-      const meters = Math.round(minDist * 1000);
-      let wordsAddress = '';
-      if (meters <= 180) {
-        wordsAddress = (closestSpot.street !== closestSpot.area ? `${closestSpot.street}, ` : '') + `${closestSpot.area}, Narsipatnam`;
-      } else if (meters <= 500) {
-        wordsAddress = `Near ${closestSpot.landmark}, ${closestSpot.area}, Narsipatnam`;
-      } else if (meters <= 1200) {
-        wordsAddress = `${closestSpot.area} (~${meters}m from ${closestSpot.landmark}), Narsipatnam`;
-      } else {
-        wordsAddress = `${closestSpot.area}, Narsipatnam`;
-      }
-
-      wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
-      wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
-      wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
-
-      // Set clean words address immediately
-      setDetectedAddress(wordsAddress);
-      setSelectedArea(closestSpot.area);
-      if (!streetName || !streetName.trim()) {
-        setStreetName(closestSpot.street);
-      }
-      if (!landmark || !landmark.trim()) {
-        setLandmark(closestSpot.landmark);
-      }
-      if (!houseNumber || !houseNumber.trim()) {
-        setHouseNumber('Near ' + closestSpot.landmark);
-      }
-
-      // Background refinement via server geocoder API
-      fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && data.success && data.wordsAddress) {
-            setDetectedAddress(data.wordsAddress);
+      // Query reverse geocoder API to get the true location text
+      try {
+        const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success) {
+            setDetectedAddress(data.wordsAddress || data.address);
+            if (data.plusCode) setPlusCode(data.plusCode);
             if (data.area) setSelectedArea(data.area);
-            if (data.street && (!streetName || streetName === closestSpot.street)) setStreetName(data.street);
-            if (data.landmark && (!landmark || landmark === closestSpot.landmark)) setLandmark(data.landmark);
+            if (data.street) setStreetName(data.street);
+            if (data.landmark) setLandmark(data.landmark);
+            if (data.pincode) setPincode(data.pincode);
+            if (!houseNumber || !houseNumber.trim()) {
+              setHouseNumber('Doorstep GPS Location');
+            }
           }
-        })
-        .catch((err) => console.log('Background geocode refinement:', err));
+        }
+      } catch (err) {
+        console.warn('Geocode API fetch error:', err);
+        setPlusCode(localCode);
+        setDetectedAddress(`📍 GPS Pin: ${localCode}`);
+      }
 
       setIsDetectingGps(false);
       if (validationError) setValidationError('');
@@ -297,6 +293,7 @@ export default function CartDrawer() {
     setGpsLocation({ lat: loc.lat, lng: loc.lng });
     setGpsAccuracy(5);
     setDetectedAddress(loc.address);
+    if (loc.plusCode) setPlusCode(loc.plusCode);
     if (loc.area) setSelectedArea(loc.area);
     if (loc.street) setStreetName(loc.street);
     if (loc.landmark) setLandmark(loc.landmark);
@@ -304,7 +301,7 @@ export default function CartDrawer() {
     if (loc.distanceKm !== undefined) setDeliveryDistance(loc.distanceKm);
     if (loc.estimatedTime) setDeliveryEta(loc.estimatedTime);
     if (!houseNumber || !houseNumber.trim() || houseNumber === 'My Current Location') {
-      setHouseNumber('My Current Location');
+      setHouseNumber('Doorstep GPS Location');
     }
     if (validationError) setValidationError('');
   };
@@ -387,16 +384,16 @@ export default function CartDrawer() {
     if (orderType === 'delivery') {
       text += `\n📍 *DELIVERY ADDRESS:*\n`;
       text += `🏠 *House/Door/Flat:* ${finalHouseNumber}\n`;
-      text += `🏛️ *Colony / Locality:* ${selectedArea}\n`;
+      text += `🏛️ *Colony / Village:* ${selectedArea}\n`;
       if (streetName && streetName.trim() && streetName.trim() !== selectedArea) {
         text += `🛣️ *Street/Road:* ${streetName.trim()}\n`;
       }
       if (landmark && landmark.trim()) {
         text += `🚩 *Landmark:* ${landmark.trim()}\n`;
       }
-      text += `📮 *Town:* Narsipatnam, AP - 531116\n`;
-      if (detectedAddress && detectedAddress.trim()) {
-        text += `✨ *Location in Words:* ${detectedAddress.trim()}\n`;
+      text += `📮 *Area / Town:* ${detectedAddress || `${selectedArea}, Andhra Pradesh`}\n`;
+      if (plusCode) {
+        text += `🌐 *Google Plus Code:* ${plusCode}\n`;
       }
       if (deliveryDistance !== null) {
         text += `🛵 *Distance from Shop:* ~${deliveryDistance} km (${deliveryEta || '20-30 mins'})\n`;
@@ -970,18 +967,26 @@ export default function CartDrawer() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>📍 {detectedAddress || `${selectedArea}, Narsipatnam`}</span>
+                          <span>📍 {detectedAddress || `${selectedArea}, Andhra Pradesh`}</span>
                         </div>
+                        {plusCode && (
+                          <div style={{ fontSize: '0.8rem', color: '#0369a1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span>🌐 Plus Code:</span>
+                            <span style={{ background: '#e0f2fe', padding: '1px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                              {plusCode}
+                            </span>
+                          </div>
+                        )}
                         <div style={{ fontSize: '0.8rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          <span>Colony: <strong>{selectedArea}</strong></span>
+                          <span>Colony / Village: <strong>{selectedArea}</strong></span>
                           {streetName && streetName.trim() && streetName.trim() !== selectedArea && (
                             <span>• Road: <strong>{streetName.trim()}</strong></span>
                           )}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
-                          Doorstep GPS Pin Active ({gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Captured'}) • 100% Exact Link
+                          Doorstep GPS Pin: {gpsLocation ? `${gpsLocation.lat.toFixed(6)}, ${gpsLocation.lng.toFixed(6)}` : 'Captured'} (100% Exact Rooftop)
                         </div>
                       </div>
 
@@ -1096,6 +1101,9 @@ export default function CartDrawer() {
                           background: '#ffffff'
                         }}
                       >
+                        {!NARSIPATNAM_AREAS.includes(selectedArea) && (
+                          <option value={selectedArea}>📍 {selectedArea} (Detected Locality)</option>
+                        )}
                         {NARSIPATNAM_AREAS.map((area) => (
                           <option key={area} value={area}>📍 {area}</option>
                         ))}

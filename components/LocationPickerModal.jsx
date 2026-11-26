@@ -241,7 +241,8 @@ export default function LocationPickerModal({
     onSelectLocation({
       lat: currentCoords.lat,
       lng: currentCoords.lng,
-      address: geoData?.address || addressPreview,
+      address: geoData?.wordsAddress || geoData?.address || addressPreview,
+      plusCode: geoData?.plusCode || '',
       street: geoData?.street || '',
       area: geoData?.area || '',
       landmark: geoData?.landmark || '',
