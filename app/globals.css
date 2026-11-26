@@ -62,7 +62,7 @@ html {
 html, body {
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden !important;
+  overflow-x: clip;
   position: relative;
   margin: 0;
   padding: 0;
@@ -79,7 +79,7 @@ body {
 main {
   width: 100%;
   max-width: 100vw;
-  overflow-x: hidden !important;
+  overflow-x: clip;
   position: relative;
 }
 
@@ -371,9 +371,13 @@ button, input, select, textarea {
   animation: scrollWheelBounce 1.8s infinite ease-in-out;
 }
 
+.hero-scroll-container {
+  height: 360vh !important;
+}
+
 @media (max-width: 768px) {
   .hero-scroll-container {
-    height: 200vh !important;
+    height: 300vh !important;
   }
 }
 

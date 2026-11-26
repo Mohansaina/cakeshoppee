@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { 
-  Volume2, VolumeX, Play, Pause, ChevronDown, 
+  Play, Pause, ChevronDown, 
   Sparkles, Award, Clock, ShieldCheck 
 } from 'lucide-react';
 
@@ -12,16 +12,18 @@ export default function HeroSection() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
 
-  const [currentFrame, setCurrentFrame] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
 
   // Store preloaded HTMLImageElements
   const imagesRef = useRef([]);
-  const isReadyRef = useRef(false);
   const animFrameIdRef = useRef(null);
   const autoPlayFrameRef = useRef(0);
+
+  // Smooth lerp frame tracking
+  const targetFrameRef = useRef(0);
+  const displayedFrameRef = useRef(0);
 
   // Draw a specific frame to the canvas (aspect ratio 'cover')
   const drawFrame = useCallback((index) => {
@@ -30,7 +32,8 @@ export default function HeroSection() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = imagesRef.current[index];
+    const safeIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(index)));
+    const img = imagesRef.current[safeIndex];
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
     const cw = canvas.width;
@@ -67,9 +70,9 @@ export default function HeroSection() {
     if (rect.width > 0 && rect.height > 0) {
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      drawFrame(currentFrame);
+      drawFrame(displayedFrameRef.current);
     }
-  }, [currentFrame, drawFrame]);
+  }, [drawFrame]);
 
   // Preload all 120 WebP frames
   useEffect(() => {
@@ -91,7 +94,6 @@ export default function HeroSection() {
         loaded++;
         setImagesLoaded(loaded);
         if (i === 0) drawFrame(0);
-        if (loaded >= 15) isReadyRef.current = true;
       };
       imgArray.push(img);
     }
@@ -105,7 +107,32 @@ export default function HeroSection() {
     };
   }, [drawFrame, updateCanvasSize]);
 
-  // Handle scroll: Video completes in first 70% of scroll, then text reveals
+  // Smooth lerp animation loop for butter-smooth frame transitions
+  useEffect(() => {
+    let active = true;
+
+    const renderLoop = () => {
+      if (!isAutoPlay) {
+        const diff = targetFrameRef.current - displayedFrameRef.current;
+        if (Math.abs(diff) > 0.05) {
+          displayedFrameRef.current += diff * 0.32;
+          drawFrame(displayedFrameRef.current);
+        }
+      }
+      if (active) {
+        animFrameIdRef.current = requestAnimationFrame(renderLoop);
+      }
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(renderLoop);
+
+    return () => {
+      active = false;
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+    };
+  }, [isAutoPlay, drawFrame]);
+
+  // Handle scroll: Video completes in first 65% of scroll, then text reveals
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -119,15 +146,14 @@ export default function HeroSection() {
     const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
     setScrollProgress(progress);
 
-    // Video completes smoothly between progress 0.0 and 0.70
-    const videoProgress = Math.min(1, progress / 0.70);
+    // Video completes smoothly between progress 0.0 and 0.65
+    const videoProgress = Math.min(1, progress / 0.65);
     const targetIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.floor(videoProgress * (TOTAL_FRAMES - 1))));
     
     if (!isAutoPlay) {
-      setCurrentFrame(targetIndex);
-      drawFrame(targetIndex);
+      targetFrameRef.current = targetIndex;
     }
-  }, [drawFrame, isAutoPlay]);
+  }, [isAutoPlay]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -135,22 +161,19 @@ export default function HeroSection() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Optional Autoplay loop
+  // Autoplay loop option
   useEffect(() => {
-    if (!isAutoPlay) {
-      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
-      return;
-    }
+    if (!isAutoPlay) return;
 
     let lastTime = performance.now();
-    const fpsInterval = 1000 / 24; // 24 fps playback
+    const fpsInterval = 1000 / 24;
 
     const loop = (now) => {
       const elapsed = now - lastTime;
       if (elapsed > fpsInterval) {
         lastTime = now - (elapsed % fpsInterval);
         autoPlayFrameRef.current = (autoPlayFrameRef.current + 1) % TOTAL_FRAMES;
-        setCurrentFrame(autoPlayFrameRef.current);
+        displayedFrameRef.current = autoPlayFrameRef.current;
         drawFrame(autoPlayFrameRef.current);
       }
       animFrameIdRef.current = requestAnimationFrame(loop);
@@ -171,17 +194,16 @@ export default function HeroSection() {
     }
   };
 
-  // Video completes at 0.70
-  // Text reveals after video completes: 0.68 -> 0.85
-  const isVideoComplete = scrollProgress >= 0.70;
-  const textOpacity = scrollProgress < 0.68 ? 0 : Math.min(1, (scrollProgress - 0.68) / 0.14);
+  // Video completes at 0.65
+  // Text reveals after video completes: 0.62 -> 0.82
+  const textOpacity = scrollProgress < 0.62 ? 0 : Math.min(1, (scrollProgress - 0.62) / 0.16);
   const textTranslateY = Math.max(0, (1 - textOpacity) * 35);
 
   // Vignette overlay gets darker when text reveals to ensure white/gold typography pops
   const darkOverlayOpacity = 0.25 + textOpacity * 0.55;
 
   // Initial scroll prompt (only at the very top, disappears immediately upon scrolling)
-  const promptOpacity = Math.max(0, 1 - scrollProgress * 12);
+  const promptOpacity = Math.max(0, 1 - scrollProgress * 14);
 
   return (
     <section 
@@ -190,7 +212,7 @@ export default function HeroSection() {
       className="hero-scroll-container"
       style={{
         position: 'relative',
-        height: '260vh',
+        height: '360vh',
         background: '#090d16',
         color: '#ffffff'
       }}
@@ -573,7 +595,7 @@ export default function HeroSection() {
           <div 
             style={{
               height: '100%',
-              width: `${Math.min(100, (scrollProgress / 0.70) * 100)}%`,
+              width: `${Math.min(100, (scrollProgress / 0.65) * 100)}%`,
               background: 'linear-gradient(90deg, #ea580c 0%, #f43f5e 50%, #fb923c 100%)',
               boxShadow: '0 0 10px rgba(251, 146, 60, 0.8)',
               transition: 'width 0.04s linear'
