@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Search, Eye, Plus, Check } from "lucide-react";
+import { Search, Eye, Plus, Check, Sparkles, ChevronDown, CheckCircle2 } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 
@@ -65,40 +65,152 @@ export default function OurMenuSection({ onSelectCategory }) {
   const [egglessOnly, setEgglessOnly] = useState(false);
   const [addedItemMap, setAddedItemMap] = useState({});
   const [isSeriesPaused, setIsSeriesPaused] = useState(false);
-  const [categoriesInView, setCategoriesInView] = useState(false);
   const gridRef = useRef(null);
   const trackRef = useRef(null);
-  const catStripRef = useRef(null);
+  const categoryScrollTrackRef = useRef(null);
+  const targetProgressRef = useRef(0);
+  const currentProgressRef = useRef(0);
+  const animFrameIdRef = useRef(null);
+  const spotlightCardRef = useRef(null);
+  const slotRefs = useRef([]);
 
-  // Scroll-triggered staggered jump animation for categories
+  const [placedCount, setPlacedCount] = useState(0);
+  const [activeSpotlightIdx, setActiveSpotlightIdx] = useState(0);
+  const [hasSkipped, setHasSkipped] = useState(false);
+
+  // Scroll-tied interactive loop: Categories display first in spotlight, then jump one by one into their places
   useEffect(() => {
-    if (typeof IntersectionObserver === "undefined") {
-      setCategoriesInView(true);
-      return;
-    }
+    let active = true;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setCategoriesInView(true);
+    const handleScroll = () => {
+      if (!categoryScrollTrackRef.current) return;
+      const rect = categoryScrollTrackRef.current.getBoundingClientRect();
+      const top = rect.top + window.scrollY;
+      const height = rect.height;
+      const viewportHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+
+      const progress = (scrollY - top) / (height - viewportHeight);
+      targetProgressRef.current = Math.min(Math.max(progress, 0), 1);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+
+    const renderLoop = () => {
+      if (!active) return;
+      const diff = targetProgressRef.current - currentProgressRef.current;
+      if (Math.abs(diff) > 0.0004) {
+        currentProgressRef.current += diff * 0.11;
+      } else {
+        currentProgressRef.current = targetProgressRef.current;
+      }
+
+      const prog = currentProgressRef.current;
+      const totalCats = CATEGORIES.length; // 7
+      const step = prog * totalCats; // 0.0 to 7.0
+
+      const currentIdx = Math.min(totalCats - 1, Math.floor(step));
+      const localProg = step - currentIdx;
+
+      setActiveSpotlightIdx(currentIdx);
+
+      let landed = 0;
+      for (let i = 0; i < totalCats; i++) {
+        if (step >= i + 0.82) {
+          landed = i + 1;
+        }
+      }
+      setPlacedCount((prev) => (prev !== landed ? landed : prev));
+
+      // Direct DOM updates on slots for 60fps performance
+      for (let i = 0; i < totalCats; i++) {
+        const slotEl = slotRefs.current[i];
+        if (!slotEl) continue;
+
+        const isLanded = step >= i + 0.82;
+        const isLanding = step >= i + 0.22 && step < i + 0.82;
+
+        const cardEl = slotEl.querySelector(".cat-slot-card");
+        const placeholderEl = slotEl.querySelector(".cat-slot-placeholder");
+
+        if (isLanded) {
+          if (cardEl) {
+            cardEl.style.opacity = "1";
+            cardEl.style.transform = "translate3d(0, 0, 0) scale(1)";
+            cardEl.style.pointerEvents = "auto";
           }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
-    );
+          if (placeholderEl) {
+            placeholderEl.style.opacity = "0";
+            placeholderEl.style.pointerEvents = "none";
+          }
+        } else if (isLanding) {
+          if (cardEl) {
+            cardEl.style.opacity = "0";
+            cardEl.style.transform = "translate3d(0, -20px, 0) scale(0.9)";
+            cardEl.style.pointerEvents = "none";
+          }
+          if (placeholderEl) {
+            placeholderEl.style.opacity = "1";
+            placeholderEl.style.borderColor = "#ea580c";
+          }
+        } else {
+          if (cardEl) {
+            cardEl.style.opacity = "0";
+            cardEl.style.transform = "translate3d(0, -30px, 0) scale(0.85)";
+            cardEl.style.pointerEvents = "none";
+          }
+          if (placeholderEl) {
+            placeholderEl.style.opacity = "0.55";
+            placeholderEl.style.borderColor = "#cbd5e1";
+          }
+        }
+      }
 
-    if (catStripRef.current) {
-      observer.observe(catStripRef.current);
-    }
+      // Direct DOM updates on spotlight card
+      if (spotlightCardRef.current) {
+        if (step >= 6.82) {
+          // All categories finished their jumps and made their places
+          spotlightCardRef.current.style.opacity = "0";
+          spotlightCardRef.current.style.transform = "translate3d(0, -30px, 0) scale(0.85)";
+          spotlightCardRef.current.style.pointerEvents = "none";
+        } else {
+          spotlightCardRef.current.style.pointerEvents = "auto";
+          if (localProg < 0.22) {
+            // First displayed prominently
+            spotlightCardRef.current.style.opacity = "1";
+            spotlightCardRef.current.style.transform = "translate3d(0, 0, 0) scale(1)";
+          } else if (localProg >= 0.22 && localProg < 0.82) {
+            // Jumps in parabola arc towards its slot in the row!
+            const jumpT = (localProg - 0.22) / 0.6; // 0 to 1
+            const arc = Math.sin(jumpT * Math.PI);
+            const translateY = -arc * 65 + jumpT * 85;
+            const scale = 1 + arc * 0.12 - jumpT * 0.16;
+            const opacity = Math.max(0.15, 1 - Math.pow(jumpT, 2) * 0.75);
+            spotlightCardRef.current.style.opacity = opacity;
+            spotlightCardRef.current.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
+          } else {
+            // Next category emerges into spotlight
+            const enterT = (localProg - 0.82) / 0.18;
+            spotlightCardRef.current.style.opacity = enterT;
+            spotlightCardRef.current.style.transform = `translate3d(0, ${(1 - enterT) * -20}px, 0) scale(${0.88 + enterT * 0.12})`;
+          }
+        }
+      }
 
-    const timer = setTimeout(() => {
-      setCategoriesInView(true);
-    }, 1800);
+      animFrameIdRef.current = requestAnimationFrame(renderLoop);
+    };
+
+    animFrameIdRef.current = requestAnimationFrame(renderLoop);
 
     return () => {
-      observer.disconnect();
-      clearTimeout(timer);
+      active = false;
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
+      if (animFrameIdRef.current) {
+        cancelAnimationFrame(animFrameIdRef.current);
+      }
     };
   }, []);
 
@@ -165,60 +277,136 @@ export default function OurMenuSection({ onSelectCategory }) {
     <section className="our-menu-section" id="bestsellers">
       <div className="our-menu-inner">
 
-        {/* Section Header */}
-        <div className="our-menu-header">
-          <span className="our-menu-eyebrow">Fresh Kitchen &amp; Fast Food Menu</span>
-          <span className="section-badge">ONLINE MENU &amp; INSTANT ORDERING</span>
-          <h2 className="our-menu-title">Fresh Pizzas, Burgers &amp; Fast Food</h2>
-          <p className="our-menu-subtitle">
-            Oven-hot 8-inch pizzas, crispy burgers, toasted sandwiches, wok noodles &amp; fried rice with local door delivery in Narsipatnam town.
-          </p>
-        </div>
+        {/* Interactive Category Scroll Arena ("First displays, on scroll jumps one by one into their places") */}
+        <div ref={categoryScrollTrackRef} className="category-scroll-stage">
+          <div className="category-stage-sticky">
+            {/* Stage Header */}
+            <div className="category-stage-header">
+              <span className="our-menu-eyebrow">Fresh Kitchen &amp; Fast Food Menu</span>
+              <div className="category-stage-badge">
+                <Sparkles size={13} color="#ea580c" />
+                <span>INTERACTIVE CATEGORY DISCOVERY</span>
+              </div>
+              <h2 className="our-menu-title">Fresh Pizzas, Burgers &amp; Fast Food</h2>
+              <p className="category-stage-subtitle">
+                {hasSkipped || placedCount === 7 ? (
+                  <span style={{ color: '#16a34a', fontWeight: '700' }}>
+                    ✦ All 7 categories in their places! Tap any category to filter the menu below.
+                  </span>
+                ) : (
+                  <span>
+                    Scroll to launch categories one by one • Placing: <strong style={{ color: '#ea580c' }}>{CATEGORIES[activeSpotlightIdx]?.label}</strong> ({activeSpotlightIdx + 1} of 7)
+                  </span>
+                )}
+              </p>
 
-        {/* Category Tiles with scroll-driven staggered jump wave into perfect places */}
-        <div 
-          ref={catStripRef}
-          className={`our-menu-cat-strip ${categoriesInView ? "is-in-view" : ""}`} 
-          role="tablist" 
-          aria-label="Filter by category"
-        >
-          {CATEGORIES.map((cat, idx) => {
-            const isActive = selectedCat === cat.id;
-            const itemCount = cat.id === "all"
-              ? PRODUCTS.length
-              : PRODUCTS.filter((p) => p.category === cat.id).length;
+              {/* Quick skip pill */}
+              {placedCount < 7 && !hasSkipped && (
+                <button
+                  type="button"
+                  className="category-skip-btn"
+                  onClick={() => {
+                    setHasSkipped(true);
+                    setPlacedCount(7);
+                  }}
+                >
+                  ⚡ Skip intro &bull; Place all categories
+                </button>
+              )}
+            </div>
 
-            return (
-              <button
-                key={cat.id}
-                role="tab"
-                aria-selected={isActive}
-                className={`our-menu-cat-tile ${isActive ? "active" : ""}`}
-                style={{
-                  animationDelay: `${idx * 85}ms`,
-                }}
-                onClick={() => handleSelectCat(cat.id)}
-                title={cat.description}
-              >
-                <div className="our-menu-cat-img-wrap">
-                  <Image
-                    src={cat.image}
-                    alt={cat.label}
-                    fill
-                    sizes="(max-width: 640px) 40vw, 160px"
-                    className="our-menu-cat-img"
-                  />
-                  <div className="our-menu-cat-overlay" />
-                  <span className="our-menu-cat-floating-emoji">{cat.emoji}</span>
-                  {isActive && <div className="our-menu-cat-active-ring" />}
+            {/* Spotlight Category Card (Displayed first, jumps on scroll towards its place) */}
+            {(!hasSkipped && placedCount < 7) && (
+              <div className="category-spotlight-arena">
+                <div ref={spotlightCardRef} className="category-spotlight-card">
+                  <div className="category-spotlight-img-wrap">
+                    <Image
+                      src={CATEGORIES[activeSpotlightIdx]?.image || CATEGORIES[0].image}
+                      alt={CATEGORIES[activeSpotlightIdx]?.label || ""}
+                      fill
+                      sizes="280px"
+                      priority
+                      className="category-spotlight-img"
+                    />
+                    <div className="category-spotlight-overlay" />
+                    <span className="category-spotlight-emoji">
+                      {CATEGORIES[activeSpotlightIdx]?.emoji}
+                    </span>
+                    <span className="category-spotlight-tag">
+                      Category {activeSpotlightIdx + 1} of 7
+                    </span>
+                  </div>
+                  <div className="category-spotlight-info">
+                    <h3 className="category-spotlight-name">
+                      {CATEGORIES[activeSpotlightIdx]?.label}
+                    </h3>
+                    <p className="category-spotlight-desc">
+                      {CATEGORIES[activeSpotlightIdx]?.description}
+                    </p>
+                    <div className="category-spotlight-cue">
+                      <span>Scroll down to jump into place</span>
+                      <ChevronDown size={14} className="bounce-arrow" />
+                    </div>
+                  </div>
                 </div>
-                <div className="our-menu-cat-label">
-                  <span className="our-menu-cat-name">{cat.label}</span>
-                  <span className="our-menu-cat-count">{itemCount} Items</span>
-                </div>
-              </button>
-            );
-          })}
+              </div>
+            )}
+
+            {/* The 7 Categories Row ("For last they make their own places") */}
+            <div className="category-slots-container">
+              <div className="category-slots-track" role="tablist" aria-label="Category places">
+                {CATEGORIES.map((cat, idx) => {
+                  const isActive = selectedCat === cat.id;
+                  const isLanded = hasSkipped || placedCount > idx;
+                  const itemCount = cat.id === "all"
+                    ? PRODUCTS.length
+                    : PRODUCTS.filter((p) => p.category === cat.id).length;
+
+                  return (
+                    <div
+                      key={cat.id}
+                      ref={(el) => (slotRefs.current[idx] = el)}
+                      className={`category-slot ${isLanded ? "is-filled" : "is-waiting"}`}
+                    >
+                      {/* Empty placeholder slot silhouette */}
+                      <div className="cat-slot-placeholder">
+                        <span className="cat-slot-placeholder-emoji">{cat.emoji}</span>
+                        <span className="cat-slot-placeholder-num">Slot {idx + 1}</span>
+                        <span className="cat-slot-placeholder-label">{cat.label}</span>
+                      </div>
+
+                      {/* The Placed Category Card (Landed into its own place) */}
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={isActive}
+                        className={`cat-slot-card ${isActive ? "active" : ""}`}
+                        onClick={() => handleSelectCat(cat.id)}
+                        title={cat.description}
+                      >
+                        <div className="cat-slot-img-wrap">
+                          <Image
+                            src={cat.image}
+                            alt={cat.label}
+                            fill
+                            sizes="(max-width: 640px) 25vw, 160px"
+                            className="cat-slot-img"
+                          />
+                          <div className="cat-slot-overlay" />
+                          <span className="cat-slot-floating-emoji">{cat.emoji}</span>
+                          {isActive && <div className="cat-slot-active-ring" />}
+                        </div>
+                        <div className="cat-slot-label">
+                          <span className="cat-slot-name">{cat.label}</span>
+                          <span className="cat-slot-count">{itemCount} Items</span>
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Continuous Moving Series Carousel Row (Pause on Touch / Hover) */}
