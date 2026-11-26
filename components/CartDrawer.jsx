@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { 
   X, Trash2, Plus, Minus, Send, ShoppingBag, Printer, 
   AlertCircle, MapPin, Navigation, CheckCircle2, ArrowLeft, ArrowRight,
-  Clock, Phone, User, Home, Building2, Compass, ShieldCheck, Search
+  Clock, Phone, User, Home, Building2, Compass, ShieldCheck, Search, Crosshair
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+
+const LocationPickerModal = dynamic(() => import('./LocationPickerModal'), { ssr: false });
 
 const NARSIPATNAM_AREAS = [
   "Near Abes Centre (Main Road)",
@@ -59,6 +62,7 @@ export default function CartDrawer() {
   const [gpsError, setGpsError] = useState('');
   const [showManualFields, setShowManualFields] = useState(false);
   const [showMapPreview, setShowMapPreview] = useState(true);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
 
   // Colony & Landmark Live Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -273,6 +277,23 @@ export default function CartDrawer() {
     }
     setSearchResults([]);
     setSearchQuery('');
+    if (validationError) setValidationError('');
+  };
+
+  // Handle location confirmed from Interactive Leaflet Map Picker
+  const handleLocationFromMap = (loc) => {
+    setGpsLocation({ lat: loc.lat, lng: loc.lng });
+    setGpsAccuracy(5);
+    setDetectedAddress(loc.address);
+    if (loc.area) setSelectedArea(loc.area);
+    if (loc.street) setStreetName(loc.street);
+    if (loc.landmark) setLandmark(loc.landmark);
+    if (loc.pincode) setPincode(loc.pincode);
+    if (loc.distanceKm !== undefined) setDeliveryDistance(loc.distanceKm);
+    if (loc.estimatedTime) setDeliveryEta(loc.estimatedTime);
+    if (!houseNumber || !houseNumber.trim() || houseNumber === 'My Current Location') {
+      setHouseNumber('My Current Location');
+    }
     if (validationError) setValidationError('');
   };
 
@@ -740,45 +761,69 @@ export default function CartDrawer() {
                     </span>
                   </div>
 
-                  {/* 1-Tap Auto-Fetch Location Button */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <button
-                      type="button"
-                      onClick={handleDetectGPS}
-                      disabled={isDetectingGps}
-                      style={{
-                        width: '100%',
-                        padding: '12px 14px',
-                        background: detectedAddress || gpsLocation ? '#ecfdf5' : '#ea580c',
-                        border: detectedAddress || gpsLocation ? '1.5px solid #10b981' : 'none',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        fontSize: '0.88rem',
-                        fontWeight: 800,
-                        color: detectedAddress || gpsLocation ? '#065f46' : '#ffffff',
-                        boxShadow: detectedAddress || gpsLocation ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.25)',
-                        transition: 'all 0.2s ease',
-                        touchAction: 'manipulation'
-                      }}
-                    >
-                      {isDetectingGps ? (
-                        <>
-                          <Compass className="animate-spin" size={18} /> Fetching your exact address & GPS...
-                        </>
-                      ) : detectedAddress || gpsLocation ? (
-                        <>
-                          <CheckCircle2 size={18} color="#059669" /> Exact Location Fetched!
-                        </>
-                      ) : (
-                        <>
-                          <Navigation size={18} /> 📍 Auto-Fetch My Current Location
-                        </>
-                      )}
-                    </button>
+                  {/* 1-Tap Auto-Fetch & Map Pinpoint Action Buttons */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={handleDetectGPS}
+                        disabled={isDetectingGps}
+                        style={{
+                          padding: '11px 10px',
+                          background: detectedAddress || gpsLocation ? '#ecfdf5' : '#ea580c',
+                          border: detectedAddress || gpsLocation ? '1.5px solid #10b981' : 'none',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          color: detectedAddress || gpsLocation ? '#065f46' : '#ffffff',
+                          boxShadow: detectedAddress || gpsLocation ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.25)',
+                          transition: 'all 0.2s ease',
+                          touchAction: 'manipulation'
+                        }}
+                      >
+                        {isDetectingGps ? (
+                          <>
+                            <Compass className="animate-spin" size={16} /> Fetching...
+                          </>
+                        ) : detectedAddress || gpsLocation ? (
+                          <>
+                            <CheckCircle2 size={16} color="#059669" /> Fetched!
+                          </>
+                        ) : (
+                          <>
+                            <Navigation size={16} /> 📍 Auto-Fetch GPS
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsMapPickerOpen(true)}
+                        style={{
+                          padding: '11px 10px',
+                          background: '#fff7ed',
+                          border: '1.5px solid #ea580c',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          fontSize: '0.82rem',
+                          fontWeight: 800,
+                          color: '#ea580c',
+                          transition: 'all 0.2s ease',
+                          touchAction: 'manipulation'
+                        }}
+                      >
+                        <Crosshair size={16} /> 🗺️ Pinpoint on Map
+                      </button>
+                    </div>
 
                     {gpsError && (
                       <p style={{ margin: '6px 0 0 0', fontSize: '0.76rem', color: '#ef4444', fontWeight: 600 }}>{gpsError}</p>
@@ -876,16 +921,37 @@ export default function CartDrawer() {
                             </span>
                           )}
                         </div>
-                        {gpsLocation && (
-                          <a
-                            href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '3px' }}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setIsMapPickerOpen(true)}
+                            style={{
+                              background: '#fff7ed',
+                              border: '1.5px solid #ea580c',
+                              borderRadius: '6px',
+                              padding: '3px 8px',
+                              fontSize: '0.74rem',
+                              fontWeight: 700,
+                              color: '#ea580c',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
                           >
-                            🗺️ Google Maps ↗
-                          </a>
-                        )}
+                            <Crosshair size={13} /> Drag Pin
+                          </button>
+                          {gpsLocation && (
+                            <a
+                              href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: '0.74rem', color: '#0284c7', fontWeight: 700, textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '3px' }}
+                            >
+                              🗺️ Maps ↗
+                            </a>
+                          )}
+                        </div>
                       </div>
 
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
@@ -1339,6 +1405,14 @@ export default function CartDrawer() {
 
           </div>
         )}
+
+        {/* Interactive Full Map Pinpoint Modal */}
+        <LocationPickerModal
+          isOpen={isMapPickerOpen}
+          onClose={() => setIsMapPickerOpen(false)}
+          initialCoords={gpsLocation || { lat: 17.66635, lng: 82.61015 }}
+          onSelectLocation={handleLocationFromMap}
+        />
 
       </div>
     </div>
