@@ -568,43 +568,8 @@ export default function HeroSection() {
             </button>
           </div>
 
-          {/* Stats Row */}
-          <div 
-            style={{
-              display: 'inline-flex',
-              gap: '24px',
-              padding: '12px 24px',
-              background: 'rgba(15, 23, 42, 0.7)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.18)'
-            }}
-          >
-            {[
-              { num: '5,000+', label: 'Celebrations' },
-              { num: '100%', label: 'Pure Eggless' },
-              { num: '20 Min', label: 'Express Decor' }
-            ].map((s, idx) => (
-              <div key={idx} style={{ textAlign: 'center' }}>
-                <div style={{
-                  fontSize: '1.25rem',
-                  fontWeight: 800,
-                  color: '#fb923c',
-                  fontFamily: 'var(--font-playfair, Georgia, serif)',
-                  lineHeight: 1.1
-                }}>
-                  {s.num}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, marginTop: '2px' }}>
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* Downward prompt */}
-          <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>
+          <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.78rem', fontWeight: 600 }}>
             <span>Continue scrolling down to explore cakes &amp; savouries</span>
             <ChevronDown size={14} />
           </div>
