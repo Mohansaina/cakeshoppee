@@ -57,7 +57,6 @@ export default function EditorialCakesGrid() {
   const cardRefs = useRef([]);
   const dotRefs = useRef([]);
   const stageGlowRef = useRef(null);
-  const counterRef = useRef(null);
 
   const targetProgressRef = useRef(0);
   const currentProgressRef = useRef(0);
@@ -87,12 +86,7 @@ export default function EditorialCakesGrid() {
       const floatIndex = currentProgressRef.current * (totalCards - 1);
       const activeInt = Math.min(totalCards - 1, Math.floor(floatIndex + 0.5));
 
-      // 1. Update Counter
-      if (counterRef.current) {
-        counterRef.current.innerText = `0${activeInt + 1} / 0${totalCards}`;
-      }
-
-      // 2. Update Ambient Glow Stage
+      // 1. Update Ambient Glow Stage
       if (stageGlowRef.current) {
         const activeItem = SIGNATURE_CAKES[activeInt];
         stageGlowRef.current.style.background = `radial-gradient(circle at 50% 50%, ${activeItem.glowColor} 0%, rgba(9, 13, 22, 0) 70%)`;
@@ -224,57 +218,42 @@ export default function EditorialCakesGrid() {
           }} 
         />
 
-        {/* Top Header & Counter Bar */}
+        {/* Top Header Bar (Clean, consistent fonts matching site) */}
         <div 
           style={{
             position: 'absolute',
-            top: '32px',
+            top: '28px',
             left: '0',
             right: '0',
-            padding: '0 36px',
+            padding: '0 32px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            maxWidth: '1280px',
-            margin: '0 auto',
+            justifyContent: 'center',
             zIndex: 40
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.16)',
+            padding: '7px 18px',
+            borderRadius: '999px',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)'
+          }}>
+            <Sparkles size={13} color="#fb923c" />
             <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.16)',
-              padding: '6px 14px',
-              borderRadius: '999px',
-              fontSize: '0.78rem',
-              fontWeight: 800,
-              letterSpacing: '0.1em',
-              color: '#fed7aa',
+              fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: '#ffffff',
               textTransform: 'uppercase'
             }}>
-              <Sparkles size={13} color="#fb923c" />
-              <span>Signature Gallery</span>
+              Signature Gallery
             </span>
-            <span style={{ fontSize: '0.82rem', color: '#94a3b8', fontWeight: 600 }}>
-              &bull; Scroll to reveal next cake
-            </span>
-          </div>
-
-          <div 
-            ref={counterRef}
-            style={{
-              fontFamily: "var(--font-playfair, Georgia, serif)",
-              fontSize: '1.25rem',
-              fontWeight: 800,
-              color: '#ffffff',
-              letterSpacing: '0.08em',
-              textShadow: '0 2px 10px rgba(0,0,0,0.8)'
-            }}
-          >
-            01 / 05
           </div>
         </div>
 
@@ -378,9 +357,10 @@ export default function EditorialCakesGrid() {
             alignItems: 'center',
             gap: '6px',
             color: '#94a3b8',
-            fontSize: '0.76rem',
+            fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
+            fontSize: '0.78rem',
             fontWeight: 600,
-            letterSpacing: '0.06em',
+            letterSpacing: '0.04em',
             zIndex: 40
           }}
         >

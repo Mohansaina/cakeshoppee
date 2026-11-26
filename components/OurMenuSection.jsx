@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Search, Eye, Plus, Check } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
@@ -65,8 +65,42 @@ export default function OurMenuSection({ onSelectCategory }) {
   const [egglessOnly, setEgglessOnly] = useState(false);
   const [addedItemMap, setAddedItemMap] = useState({});
   const [isSeriesPaused, setIsSeriesPaused] = useState(false);
+  const [categoriesInView, setCategoriesInView] = useState(false);
   const gridRef = useRef(null);
   const trackRef = useRef(null);
+  const catStripRef = useRef(null);
+
+  // Scroll-triggered staggered jump animation for categories
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") {
+      setCategoriesInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setCategoriesInView(true);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+
+    if (catStripRef.current) {
+      observer.observe(catStripRef.current);
+    }
+
+    const timer = setTimeout(() => {
+      setCategoriesInView(true);
+    }, 1800);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
+  }, []);
 
   const handleSelectCat = (catId) => {
     setSelectedCat(catId);
@@ -141,16 +175,28 @@ export default function OurMenuSection({ onSelectCategory }) {
           </p>
         </div>
 
-        {/* Category Tiles */}
-        <div className="our-menu-cat-strip" role="tablist" aria-label="Filter by category">
-          {CATEGORIES.map((cat) => {
+        {/* Category Tiles with scroll-driven staggered jump wave into perfect places */}
+        <div 
+          ref={catStripRef}
+          className={`our-menu-cat-strip ${categoriesInView ? "is-in-view" : ""}`} 
+          role="tablist" 
+          aria-label="Filter by category"
+        >
+          {CATEGORIES.map((cat, idx) => {
             const isActive = selectedCat === cat.id;
+            const itemCount = cat.id === "all"
+              ? PRODUCTS.length
+              : PRODUCTS.filter((p) => p.category === cat.id).length;
+
             return (
               <button
                 key={cat.id}
                 role="tab"
                 aria-selected={isActive}
-                className={"our-menu-cat-tile" + (isActive ? " active" : "")}
+                className={`our-menu-cat-tile ${isActive ? "active" : ""}`}
+                style={{
+                  animationDelay: `${idx * 85}ms`,
+                }}
                 onClick={() => handleSelectCat(cat.id)}
                 title={cat.description}
               >
@@ -163,11 +209,12 @@ export default function OurMenuSection({ onSelectCategory }) {
                     className="our-menu-cat-img"
                   />
                   <div className="our-menu-cat-overlay" />
+                  <span className="our-menu-cat-floating-emoji">{cat.emoji}</span>
                   {isActive && <div className="our-menu-cat-active-ring" />}
                 </div>
                 <div className="our-menu-cat-label">
-                  <span className="our-menu-cat-emoji">{cat.emoji}</span>
                   <span className="our-menu-cat-name">{cat.label}</span>
+                  <span className="our-menu-cat-count">{itemCount} Items</span>
                 </div>
               </button>
             );
