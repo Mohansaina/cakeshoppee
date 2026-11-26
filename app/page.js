@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import Preloader from '@/components/Preloader';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -30,9 +29,6 @@ export default function HomePage() {
 
   return (
     <main>
-      {/* 0. Brand Preloader Animation */}
-      <Preloader />
-
       {/* 1. Top Announcement Ticker */}
       <AnnouncementBar />
 

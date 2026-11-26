@@ -8,11 +8,40 @@ import {
 
 const TOTAL_FRAMES = 140;
 
+// 4-pointed lens-flare sparkle star matching the iridescent luxury aesthetic
+function SparkleStar({ size = 22, style = {}, delay = '0s' }) {
+  return (
+    <svg 
+      className="cs-diamond-glint"
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      style={{
+        position: 'absolute',
+        pointerEvents: 'none',
+        filter: 'drop-shadow(0 0 8px rgba(255,255,255,1)) drop-shadow(0 0 16px rgba(192,132,252,0.85))',
+        zIndex: 5,
+        animationDelay: delay,
+        ...style
+      }}
+    >
+      <path 
+        d="M12 0 C12 6.5 6.5 12 0 12 C6.5 12 12 17.5 12 24 C12 17.5 17.5 12 24 12 C17.5 12 12 6.5 12 0 Z" 
+        fill="#ffffff" 
+      />
+      <circle cx="12" cy="12" r="3" fill="#ffffff" />
+      <circle cx="12" cy="12" r="1.5" fill="#fbcfe8" />
+    </svg>
+  );
+}
+
 export default function HeroSection() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const vignetteRef = useRef(null);
   const promptRef = useRef(null);
+  const initialTitleRef = useRef(null);
   const textRevealRef = useRef(null);
   const progressBarRef = useRef(null);
 
@@ -69,6 +98,16 @@ export default function HeroSection() {
 
   // Update visual elements directly via DOM refs (zero React re-renders during scroll)
   const updateVisuals = useCallback((progress) => {
+    // 0. Initial Holographic Title (TIDALIA iridescent style): visible at start (1.0), dissolves over 0.0 -> 0.14
+    const introOpacity = Math.max(0, 1 - progress / 0.14);
+    const introScale = 1 + progress * 0.12;
+    const introTranslateY = -progress * 45;
+    if (initialTitleRef.current) {
+      initialTitleRef.current.style.opacity = introOpacity;
+      initialTitleRef.current.style.transform = `translate(-50%, -50%) scale(${introScale}) translateY(${introTranslateY}px)`;
+      initialTitleRef.current.style.pointerEvents = introOpacity > 0.05 ? 'auto' : 'none';
+    }
+
     // 1. Text reveals softly after video completes: 0.72 -> 0.88
     const textOpacity = progress < 0.72 ? 0 : Math.min(1, (progress - 0.72) / 0.16);
     const textTranslateY = Math.max(0, (1 - textOpacity) * 32);
@@ -363,6 +402,74 @@ export default function HeroSection() {
             zIndex: 2
           }} 
         />
+
+        {/* ========================================================
+            INITIAL HOLOGRAPHIC HERO TITLE (TIDALIA IRIDESCENT STYLE)
+            ======================================================== */}
+        <div 
+          ref={initialTitleRef}
+          style={{
+            position: 'absolute',
+            top: '46%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            width: '90%',
+            maxWidth: '1200px',
+            pointerEvents: 'auto',
+            willChange: 'opacity, transform'
+          }}
+        >
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <SparkleStar size={24} style={{ top: '-12px', left: '-14px' }} delay="0s" />
+            <SparkleStar size={16} style={{ top: '24%', left: '17%' }} delay="0.5s" />
+            <SparkleStar size={18} style={{ top: '10%', left: '33%' }} delay="1.2s" />
+            <SparkleStar size={18} style={{ top: '44%', left: '52%' }} delay="0.8s" />
+            <SparkleStar size={20} style={{ top: '18%', left: '74%' }} delay="1.5s" />
+            <SparkleStar size={26} style={{ top: '-10px', right: '-16px' }} delay="0.3s" />
+
+            <h2 
+              style={{
+                fontFamily: 'var(--font-serif, "Playfair Display", Georgia, serif)',
+                fontSize: 'clamp(2.6rem, 7.8vw, 6.2rem)',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                margin: 0,
+                lineHeight: 1,
+                background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 14%, #e0e7ff 30%, #fbcfe8 48%, #bae6fd 66%, #f5d0fe 82%, #ffffff 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                filter: 'drop-shadow(0 0 24px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 55px rgba(192, 132, 252, 0.4))',
+                userSelect: 'none'
+              }}
+            >
+              CAKE SHOPPEE
+            </h2>
+          </div>
+
+          <p 
+            style={{
+              fontSize: 'clamp(0.85rem, 1.8vw, 1.15rem)',
+              color: '#f1f5f9',
+              letterSpacing: '0.04em',
+              fontWeight: 400,
+              margin: '18px 0 0 0',
+              textShadow: '0 2px 14px rgba(0,0,0,0.95)',
+              maxWidth: '680px',
+              lineHeight: 1.5,
+              userSelect: 'none'
+            }}
+          >
+            Turn a feeling, a memory, or an imagined celebration into cake.
+          </p>
+        </div>
 
         {/* ========================================================
             INITIAL PROMPT (Clean, vanishes immediately upon scroll)
