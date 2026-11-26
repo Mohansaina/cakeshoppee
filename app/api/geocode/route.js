@@ -100,43 +100,39 @@ export async function GET(request) {
           const data = await osmRes.json();
           if (data && data.address) {
             const addr = data.address;
-            street = addr.road || addr.residential || '';
+            const rawRoad = addr.road || addr.residential || '';
+            // Filter out highway designations like SH11, MDR0062, MDR0100
+            if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
+              street = rawRoad;
+            }
             suburb = addr.suburb || addr.neighbourhood || '';
             village = addr.village || addr.hamlet || '';
-            colony = suburb || village || addr.residential || '';
+            colony = suburb || village || '';
             pincode = addr.postcode || '531116';
-            
-            // Build real address string strictly from local elements
-            const parts = [];
-            if (street) parts.push(street);
-            if (colony && colony !== street) parts.push(colony);
-            if (!parts.includes('Narsipatnam')) parts.push('Narsipatnam');
-            if (pincode) parts.push(pincode);
-            fullDisplayName = parts.join(', ');
           }
         }
       } catch (e) {
         console.warn('Server OSM reverse geocode error:', e);
       }
 
-      // 2. Query BigDataCloud if Nominatim had empty details
+      // 2. Query BigDataCloud if street was empty
       if (!street && !colony) {
         try {
           const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
           if (bdcRes.ok) {
             const bdcData = await bdcRes.json();
-            street = bdcData.locality || '';
-            colony = bdcData.city || 'Narsipatnam';
-            fullDisplayName = `${street ? `${street}, ` : ''}${colony}, Narsipatnam - 531116`;
+            if (bdcData.locality && bdcData.locality !== 'Narsipatnam') {
+              colony = bdcData.locality;
+            }
           }
         } catch (e2) {
           console.warn('Server BigDataCloud fallback error:', e2);
         }
       }
 
-      // 3. Match closest Narsipatnam area ONLY IF within close proximity (<= 400m), otherwise use exact colony
-      let matchedArea = 'Other Narsipatnam Locality';
-      let closestLandmark = null;
+      // 3. Match closest Narsipatnam area & landmark from our verified list
+      let matchedArea = 'Near Abes Centre (Main Road)';
+      let closestLandmark = NARSIPATNAM_LANDMARKS[0];
       let minDistance = 99999;
       
       for (const lm of NARSIPATNAM_LANDMARKS) {
@@ -147,45 +143,38 @@ export async function GET(request) {
         }
       }
 
-      // If customer is within 400m of a known area center, associate that area
-      if (minDistance <= 0.4 && closestLandmark) {
-        matchedArea = closestLandmark.area;
-      } else if (colony) {
-        // Try to match colony to areas
-        const cLower = (colony + ' ' + street).toLowerCase();
-        if (cLower.includes('rtc') || cLower.includes('bus stand')) {
-          matchedArea = "Near RTC Bus Stand / Complex";
-        } else if (cLower.includes('balighattam') || cLower.includes('temple')) {
-          matchedArea = "Balighattam & Temple Road";
-        } else if (cLower.includes('pedda') || cLower.includes('boddepalli')) {
-          matchedArea = "Peddaboddepalli Area";
-        } else if (cLower.includes('college') || cLower.includes('station')) {
-          matchedArea = "College Road / Station Road";
-        } else if (cLower.includes('tagarapu')) {
-          matchedArea = "Tagarapu Veedhi";
-        } else if (cLower.includes('shanti') || cLower.includes('housing')) {
-          matchedArea = "Shanti Nagar / Housing Board";
-        } else if (cLower.includes('dharmavaram') || cLower.includes('kotauratla')) {
-          matchedArea = "Dharmavaram / Kotauratla Road";
-        } else if (cLower.includes('lingarajupeta')) {
-          matchedArea = "Lingarajupeta";
-        } else if (cLower.includes('main road') || cLower.includes('abes')) {
-          matchedArea = "Near Abes Centre (Main Road)";
-        } else {
-          matchedArea = `${colony} Area`;
-        }
+      matchedArea = closestLandmark.area;
+      const cleanStreet = street || closestLandmark.street;
+
+      // 4. Construct high-accuracy human readable address IN WORDS
+      const distToLandmarkMeters = Math.round(minDistance * 1000);
+      let wordsAddress = '';
+
+      if (distToLandmarkMeters <= 180) {
+        wordsAddress = (cleanStreet && cleanStreet !== closestLandmark.area ? `${cleanStreet}, ` : '') + `${closestLandmark.area}, Narsipatnam`;
+      } else if (distToLandmarkMeters <= 500) {
+        wordsAddress = `Near ${closestLandmark.landmark || closestLandmark.name}, ${closestLandmark.area}, Narsipatnam`;
+      } else if (distToLandmarkMeters <= 1200) {
+        wordsAddress = `${closestLandmark.area} (~${distToLandmarkMeters}m from ${closestLandmark.name}), Narsipatnam`;
+      } else {
+        wordsAddress = `${closestLandmark.area}, Narsipatnam`;
       }
 
-      const finalAddress = fullDisplayName || `📍 Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}, Narsipatnam`;
-      const finalStreet = street || colony || 'Exact GPS Pin Location';
+      // Clean up any repetitive names
+      wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
+      wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
+      wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
+
+      const finalAddress = `${wordsAddress} - 531116`;
 
       return NextResponse.json({
         success: true,
         address: finalAddress,
-        street: finalStreet,
+        wordsAddress: wordsAddress,
+        street: cleanStreet,
         area: matchedArea,
-        colony: colony || '',
-        landmark: closestLandmark ? `Approx ${Math.round(minDistance * 1000)}m from ${closestLandmark.name}` : 'Near GPS Pin',
+        colony: closestLandmark.area,
+        landmark: closestLandmark.landmark || `Near ${closestLandmark.name}`,
         pincode: pincode || "531116",
         lat: lat,
         lng: lng,

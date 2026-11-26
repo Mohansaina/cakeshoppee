@@ -37,7 +37,7 @@ export default function LocationPickerModal({
   const [searchResults, setSearchResults] = useState([]);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
 
-  // Fetch address whenever coords change
+  // Fetch address whenever coords change - ALWAYS IN WORDS
   const fetchAddressForCoords = async (lat, lng) => {
     setIsLoadingAddress(true);
     try {
@@ -45,18 +45,16 @@ export default function LocationPickerModal({
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
-          const cleanDisplay = data.area && data.area !== 'Other Narsipatnam Locality'
-            ? `${data.area}, Narsipatnam`
-            : (data.address && !data.address.includes('SH11') ? data.address : `📍 Pinned at Narsipatnam (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+          const cleanDisplay = data.wordsAddress || data.address || (data.area ? `${data.area}, Narsipatnam` : 'Narsipatnam, AP');
           setAddressPreview(cleanDisplay);
           setDistanceInfo(`~${data.distanceKm} km from shop • ${data.estimatedTime || '20-30 mins'}`);
           return data;
         }
       }
-      setAddressPreview(`Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      setAddressPreview(`Narsipatnam, Andhra Pradesh`);
     } catch (e) {
       console.warn('Map geocode error:', e);
-      setAddressPreview(`Coordinates: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+      setAddressPreview(`Narsipatnam, Andhra Pradesh`);
     } finally {
       setIsLoadingAddress(false);
     }

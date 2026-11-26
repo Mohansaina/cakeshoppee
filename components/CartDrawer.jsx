@@ -178,22 +178,48 @@ export default function CartDrawer() {
         }
       }
 
-      // If user is within 600m of a known colony, auto-select it
-      if (minDist <= 0.6) {
-        setSelectedArea(closestSpot.area);
-        if (!streetName || !streetName.trim()) {
-          setStreetName(closestSpot.street);
-        }
-        if (!landmark || !landmark.trim()) {
-          setLandmark(closestSpot.landmark);
-        }
+      // Format clean, human-readable address strictly IN WORDS
+      const meters = Math.round(minDist * 1000);
+      let wordsAddress = '';
+      if (meters <= 180) {
+        wordsAddress = (closestSpot.street !== closestSpot.area ? `${closestSpot.street}, ` : '') + `${closestSpot.area}, Narsipatnam`;
+      } else if (meters <= 500) {
+        wordsAddress = `Near ${closestSpot.landmark}, ${closestSpot.area}, Narsipatnam`;
+      } else if (meters <= 1200) {
+        wordsAddress = `${closestSpot.area} (~${meters}m from ${closestSpot.landmark}), Narsipatnam`;
+      } else {
+        wordsAddress = `${closestSpot.area}, Narsipatnam`;
       }
 
-      // Set clean, 100% accurate text that NEVER displays confusing highway names
-      setDetectedAddress(`Live GPS Pin Attached (${dist} km from Cake Shoppee)`);
-      if (!houseNumber || !houseNumber.trim()) {
-        setHouseNumber('My Current Location');
+      wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
+      wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
+      wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
+
+      // Set clean words address immediately
+      setDetectedAddress(wordsAddress);
+      setSelectedArea(closestSpot.area);
+      if (!streetName || !streetName.trim()) {
+        setStreetName(closestSpot.street);
       }
+      if (!landmark || !landmark.trim()) {
+        setLandmark(closestSpot.landmark);
+      }
+      if (!houseNumber || !houseNumber.trim()) {
+        setHouseNumber('Near ' + closestSpot.landmark);
+      }
+
+      // Background refinement via server geocoder API
+      fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.wordsAddress) {
+            setDetectedAddress(data.wordsAddress);
+            if (data.area) setSelectedArea(data.area);
+            if (data.street && (!streetName || streetName === closestSpot.street)) setStreetName(data.street);
+            if (data.landmark && (!landmark || landmark === closestSpot.landmark)) setLandmark(data.landmark);
+          }
+        })
+        .catch((err) => console.log('Background geocode refinement:', err));
 
       setIsDetectingGps(false);
       if (validationError) setValidationError('');
@@ -369,6 +395,9 @@ export default function CartDrawer() {
         text += `🚩 *Landmark:* ${landmark.trim()}\n`;
       }
       text += `📮 *Town:* Narsipatnam, AP - 531116\n`;
+      if (detectedAddress && detectedAddress.trim()) {
+        text += `✨ *Location in Words:* ${detectedAddress.trim()}\n`;
+      }
       if (deliveryDistance !== null) {
         text += `🛵 *Distance from Shop:* ~${deliveryDistance} km (${deliveryEta || '20-30 mins'})\n`;
       }
@@ -942,11 +971,17 @@ export default function CartDrawer() {
                       </div>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>📍 Live Doorstep GPS Pin Attached</span>
+                        <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>📍 {detectedAddress || `${selectedArea}, Narsipatnam`}</span>
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: '#475569' }}>
-                          Satellite Coordinates: <strong>{gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Captured'}</strong>
+                        <div style={{ fontSize: '0.8rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span>Colony: <strong>{selectedArea}</strong></span>
+                          {streetName && streetName.trim() && streetName.trim() !== selectedArea && (
+                            <span>• Road: <strong>{streetName.trim()}</strong></span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                          Doorstep GPS Pin Active ({gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Captured'}) • 100% Exact Link
                         </div>
                       </div>
 
