@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from 'react';
-import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import EditorialCakesGrid from '@/components/EditorialCakesGrid';
@@ -29,9 +28,6 @@ export default function HomePage() {
 
   return (
     <main>
-      {/* 1. Top Announcement Ticker */}
-      <AnnouncementBar />
-
       {/* 2. Sticky Header with logo + nav */}
       <Header onSelectCategory={handleSelectCategory} onSearch={setSearchQuery} />
 
