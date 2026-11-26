@@ -21,60 +21,86 @@ export default function HeroSection() {
   const animFrameIdRef = useRef(null);
   const autoPlayFrameRef = useRef(0);
 
-  // Smooth lerp frame tracking
+  // High-precision sub-frame lerp tracking
   const targetFrameRef = useRef(0);
-  const displayedFrameRef = useRef(0);
+  const currentFrameRef = useRef(0);
+  const lastDrawnFloatRef = useRef(-1);
 
-  // Draw a specific frame to the canvas (aspect ratio 'cover')
-  const drawFrame = useCallback((index) => {
+  // Cached canvas bounds for maximum 60fps/120fps performance
+  const boundsRef = useRef({ w: 0, h: 0, x: 0, y: 0 });
+
+  // Draw continuous blended frames to canvas
+  const drawBlendFrame = useCallback((floatIndex) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    const safeIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(index)));
-    const img = imagesRef.current[safeIndex];
-    if (!img || !img.complete || img.naturalWidth === 0) return;
+    const bounds = boundsRef.current;
+    if (bounds.w === 0 || bounds.h === 0) return;
 
-    const cw = canvas.width;
-    const ch = canvas.height;
+    const safeFloat = Math.min(TOTAL_FRAMES - 1, Math.max(0, floatIndex));
+    const frameA = Math.floor(safeFloat);
+    const frameB = Math.min(TOTAL_FRAMES - 1, frameA + 1);
+    const fraction = safeFloat - frameA;
 
-    // Cover math (similar to CSS object-fit: cover)
-    const imgRatio = img.naturalWidth / img.naturalHeight;
-    const canvasRatio = cw / ch;
+    const imgA = imagesRef.current[frameA];
+    if (!imgA || !imgA.complete || imgA.naturalWidth === 0) return;
 
-    let drawW, drawH, drawX, drawY;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
-    if (canvasRatio > imgRatio) {
-      drawW = cw;
-      drawH = cw / imgRatio;
-      drawX = 0;
-      drawY = (ch - drawH) / 2;
-    } else {
-      drawH = ch;
-      drawW = ch * imgRatio;
-      drawX = (cw - drawW) / 2;
-      drawY = 0;
+    // 1. Draw primary frame
+    ctx.globalAlpha = 1;
+    ctx.drawImage(imgA, bounds.x, bounds.y, bounds.w, bounds.h);
+
+    // 2. Optical crossfade blend with next frame for liquid-smooth continuity
+    if (fraction > 0.02 && frameB !== frameA) {
+      const imgB = imagesRef.current[frameB];
+      if (imgB && imgB.complete && imgB.naturalWidth > 0) {
+        ctx.globalAlpha = fraction;
+        ctx.drawImage(imgB, bounds.x, bounds.y, bounds.w, bounds.h);
+        ctx.globalAlpha = 1;
+      }
     }
-
-    ctx.clearRect(0, 0, cw, ch);
-    ctx.drawImage(img, drawX, drawY, drawW, drawH);
   }, []);
 
-  // Set high-DPI canvas size matching window
+  // Update canvas resolution and cache aspect-fit bounds
   const updateCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = canvas.getBoundingClientRect();
-    if (rect.width > 0 && rect.height > 0) {
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      drawFrame(displayedFrameRef.current);
-    }
-  }, [drawFrame]);
 
-  // Preload all 120 WebP frames
+    if (rect.width > 0 && rect.height > 0) {
+      const cw = Math.round(rect.width * dpr);
+      const ch = Math.round(rect.height * dpr);
+      canvas.width = cw;
+      canvas.height = ch;
+
+      // Aspect cover calculation (1280x720 is 16:9)
+      const imgRatio = 16 / 9;
+      const canvasRatio = cw / ch;
+
+      let drawW, drawH, drawX, drawY;
+      if (canvasRatio > imgRatio) {
+        drawW = cw;
+        drawH = cw / imgRatio;
+        drawX = 0;
+        drawY = (ch - drawH) / 2;
+      } else {
+        drawH = ch;
+        drawW = ch * imgRatio;
+        drawX = (cw - drawW) / 2;
+        drawY = 0;
+      }
+
+      boundsRef.current = { w: drawW, h: drawH, x: drawX, y: drawY };
+      drawBlendFrame(currentFrameRef.current);
+    }
+  }, [drawBlendFrame]);
+
+  // Preload and GPU-decode all 120 WebP frames
   useEffect(() => {
     let loaded = 0;
     const imgArray = [];
@@ -83,18 +109,29 @@ export default function HeroSection() {
     const firstImg = new Image();
     firstImg.src = `/hero-frames/frame_000.webp`;
     firstImg.onload = () => {
-      drawFrame(0);
+      if (firstImg.decode) {
+        firstImg.decode().then(() => drawBlendFrame(0)).catch(() => drawBlendFrame(0));
+      } else {
+        drawBlendFrame(0);
+      }
     };
 
     for (let i = 0; i < TOTAL_FRAMES; i++) {
       const img = new Image();
       const numStr = String(i).padStart(3, '0');
       img.src = `/hero-frames/frame_${numStr}.webp`;
-      img.onload = () => {
+      
+      const onImageReady = () => {
         loaded++;
         setImagesLoaded(loaded);
-        if (i === 0) drawFrame(0);
+        if (i === 0) drawBlendFrame(0);
       };
+
+      if (img.decode) {
+        img.decode().then(onImageReady).catch(onImageReady);
+      } else {
+        img.onload = onImageReady;
+      }
       imgArray.push(img);
     }
     imagesRef.current = imgArray;
@@ -105,18 +142,19 @@ export default function HeroSection() {
     return () => {
       window.removeEventListener('resize', updateCanvasSize);
     };
-  }, [drawFrame, updateCanvasSize]);
+  }, [drawBlendFrame, updateCanvasSize]);
 
-  // Smooth lerp animation loop for butter-smooth frame transitions
+  // Liquid-smooth continuous lerp loop
   useEffect(() => {
     let active = true;
 
     const renderLoop = () => {
       if (!isAutoPlay) {
-        const diff = targetFrameRef.current - displayedFrameRef.current;
-        if (Math.abs(diff) > 0.05) {
-          displayedFrameRef.current += diff * 0.32;
-          drawFrame(displayedFrameRef.current);
+        const diff = targetFrameRef.current - currentFrameRef.current;
+        // Silk-smooth exponential damping
+        if (Math.abs(diff) > 0.005) {
+          currentFrameRef.current += diff * 0.09;
+          drawBlendFrame(currentFrameRef.current);
         }
       }
       if (active) {
@@ -130,9 +168,9 @@ export default function HeroSection() {
       active = false;
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [isAutoPlay, drawFrame]);
+  }, [isAutoPlay, drawBlendFrame]);
 
-  // Handle scroll: Video completes in first 65% of scroll, then text reveals
+  // Scroll handler: continuous float progress
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -146,12 +184,12 @@ export default function HeroSection() {
     const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
     setScrollProgress(progress);
 
-    // Video completes smoothly between progress 0.0 and 0.65
-    const videoProgress = Math.min(1, progress / 0.65);
-    const targetIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.floor(videoProgress * (TOTAL_FRAMES - 1))));
+    // Continuous floating-point target frame (0.0 to 119.0)
+    const videoProgress = Math.min(1, progress / 0.72);
+    const targetFloat = videoProgress * (TOTAL_FRAMES - 1);
     
     if (!isAutoPlay) {
-      targetFrameRef.current = targetIndex;
+      targetFrameRef.current = targetFloat;
     }
   }, [isAutoPlay]);
 
@@ -173,8 +211,8 @@ export default function HeroSection() {
       if (elapsed > fpsInterval) {
         lastTime = now - (elapsed % fpsInterval);
         autoPlayFrameRef.current = (autoPlayFrameRef.current + 1) % TOTAL_FRAMES;
-        displayedFrameRef.current = autoPlayFrameRef.current;
-        drawFrame(autoPlayFrameRef.current);
+        currentFrameRef.current = autoPlayFrameRef.current;
+        drawBlendFrame(autoPlayFrameRef.current);
       }
       animFrameIdRef.current = requestAnimationFrame(loop);
     };
@@ -184,7 +222,7 @@ export default function HeroSection() {
     return () => {
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [isAutoPlay, drawFrame]);
+  }, [isAutoPlay, drawBlendFrame]);
 
   // Smooth scroll helper to next section
   const scrollToNext = () => {
@@ -194,9 +232,9 @@ export default function HeroSection() {
     }
   };
 
-  // Video completes at 0.65
-  // Text reveals after video completes: 0.62 -> 0.82
-  const textOpacity = scrollProgress < 0.62 ? 0 : Math.min(1, (scrollProgress - 0.62) / 0.16);
+  // Video completes smoothly across the first 72% of scroll runway
+  // Text reveals softly after video completes: 0.70 -> 0.88
+  const textOpacity = scrollProgress < 0.70 ? 0 : Math.min(1, (scrollProgress - 0.70) / 0.16);
   const textTranslateY = Math.max(0, (1 - textOpacity) * 35);
 
   // Vignette overlay gets darker when text reveals to ensure white/gold typography pops
@@ -212,7 +250,7 @@ export default function HeroSection() {
       className="hero-scroll-container"
       style={{
         position: 'relative',
-        height: '360vh',
+        height: '560vh',
         background: '#090d16',
         color: '#ffffff'
       }}
@@ -232,7 +270,7 @@ export default function HeroSection() {
         }}
       >
         {/* ========================================================
-            CANVAS FRAME-BY-FRAME RENDERER (Clean, No Text Initially)
+            CANVAS FRAME-BY-FRAME RENDERER (Dual-Frame Optical Blend)
             ======================================================== */}
         <canvas
           ref={canvasRef}
@@ -595,7 +633,7 @@ export default function HeroSection() {
           <div 
             style={{
               height: '100%',
-              width: `${Math.min(100, (scrollProgress / 0.65) * 100)}%`,
+              width: `${Math.min(100, (scrollProgress / 0.72) * 100)}%`,
               background: 'linear-gradient(90deg, #ea580c 0%, #f43f5e 50%, #fb923c 100%)',
               boxShadow: '0 0 10px rgba(251, 146, 60, 0.8)',
               transition: 'width 0.04s linear'

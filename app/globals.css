@@ -372,12 +372,12 @@ button, input, select, textarea {
 }
 
 .hero-scroll-container {
-  height: 360vh !important;
+  height: 560vh !important;
 }
 
 @media (max-width: 768px) {
   .hero-scroll-container {
-    height: 300vh !important;
+    height: 440vh !important;
   }
 }
 
