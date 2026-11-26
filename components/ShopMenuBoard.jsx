@@ -25,6 +25,27 @@ const SHOP_COOL_CAKES = [
   { name: "Honey Almond", p05: 450, p1: 950 }
 ];
 
+const CAKE_IMAGE_MAP = {
+  "Vanilla": "/images/cakes/vanilla-cool-cake.jpg",
+  "Butterscotch": "/images/cakes/butterscotch-cake.jpg",
+  "Strawberry": "/images/cakes/strawberry-cake.jpg",
+  "Pineapple": "/images/cakes/pineapple-cake.jpg",
+  "Milky Butterscotch": "/images/cakes/milky-butterscotch-cake.jpg",
+  "Blue Berry": "/images/cakes/blueberry-cake.jpg",
+  "Black Current": "/images/cakes/black-currant-cake.jpg",
+  "White Forest": "/images/cakes/white-forest-cake.jpg",
+  "Choco Vennela": "/images/cakes/choco-vennela-cake.jpg",
+  "Black Forest": "/images/cakes/black-forest-cake.jpg",
+  "Chocolate": "/images/cakes/chocolate-cool-cake.jpg",
+  "Choco Chip": "/images/cakes/choco-chip-cake.jpg",
+  "Choco Almond": "/images/cakes/choco-almond-cake.jpg",
+  "Choco Crunch": "/images/cakes/choco-crunch-cake.jpg",
+  "Double Chocolate": "/images/cakes/double-chocolate-cake.jpg",
+  "Fresh Fruit": "/images/cakes/fresh-fruit-cake.jpg",
+  "RedVelvet": "/images/cakes/red-velvet-cake.jpg",
+  "Honey Almond": "/images/cakes/honey-almond-cake.jpg"
+};
+
 export default function ShopMenuBoard() {
   const { addToCart } = useCart();
   const [addedItem, setAddedItem] = useState('');
@@ -35,7 +56,7 @@ export default function ShopMenuBoard() {
       name: `${name} Cool Cake (${weight})`,
       price: price,
       weight: weight,
-      image: '/images/blackforest.jpg',
+      image: CAKE_IMAGE_MAP[name] || '/images/cakes/black-forest-cake.jpg',
       eggless: true
     };
     addToCart(itemToAdd);
@@ -46,7 +67,7 @@ export default function ShopMenuBoard() {
   return (
     <section className="shop-menu-board-section" id="menu-board" style={{ padding: '40px 15px', background: '#121214' }}>
       <div className="container" style={{ maxWidth: '680px', margin: '0 auto' }}>
-        
+
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <span style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>
             ✨ Official In-Store Menu Card
@@ -69,7 +90,7 @@ export default function ShopMenuBoard() {
           color: '#ffffff',
           fontFamily: 'Arial, sans-serif'
         }}>
-          
+
           {/* Header Logo Text */}
           <div style={{ textAlign: 'center', borderBottom: '2px solid #ffffff', paddingBottom: '14px', marginBottom: '16px' }}>
             <h1 style={{

@@ -1,43 +1,143 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { X, Trash2, Plus, Minus, Send, ShoppingBag, Printer, AlertCircle } from 'lucide-react';
+import { 
+  X, Trash2, Plus, Minus, Send, ShoppingBag, Printer, 
+  AlertCircle, MapPin, Navigation, CheckCircle2, ArrowLeft, ArrowRight,
+  Clock, Phone, User, Home, Building2, Compass, ShieldCheck
+} from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const NARSIPATNAM_AREAS = [
   "Near Abes Centre (Main Road)",
-  "Beside Himalaya Juice Center",
-  "Near RTC Bus Stand",
-  "Peddaboddepalli",
-  "Balighattam",
+  "Beside Himalaya Juice Center (Main Road)",
+  "Near RTC Bus Stand / Complex",
+  "Peddaboddepalli Area",
+  "Balighattam & Temple Road",
   "Lingarajupeta",
   "College Road / Station Road",
   "Tagarapu Veedhi",
-  "Other Narsipatnam Area"
+  "Shanti Nagar / Housing Board",
+  "Dharmavaram / Kotauratla Road",
+  "Other Narsipatnam Locality"
 ];
 
 export default function CartDrawer() {
-  const { cartItems = [], isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, cartTotal = 0 } = useCart();
+  const { 
+    cartItems = [], 
+    isCartOpen, 
+    setIsCartOpen, 
+    removeFromCart, 
+    updateQuantity, 
+    clearCart, 
+    cartTotal = 0 
+  } = useCart();
   
-  const [orderType, setOrderType] = useState('delivery'); // 'delivery' or 'takeaway'
+  // Checkout Steps: 'cart' (Step 1) -> 'address' (Step 2)
+  const [checkoutStep, setCheckoutStep] = useState('cart');
+
+  const [orderType, setOrderType] = useState('delivery'); // 'delivery' | 'takeaway'
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [altPhone, setAltPhone] = useState('');
+  
+  // Structured Address fields for accurate delivery in Narsipatnam
   const [selectedArea, setSelectedArea] = useState('Near Abes Centre (Main Road)');
-  const [streetAddress, setStreetAddress] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  const [streetName, setStreetName] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [pincode, setPincode] = useState('531116');
+
+  // GPS Location Pin
+  const [gpsLocation, setGpsLocation] = useState(null); // { lat, lng }
+  const [isDetectingGps, setIsDetectingGps] = useState(false);
+  const [gpsError, setGpsError] = useState('');
+
+  // Additional order details
   const [cakeMessage, setCakeMessage] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
-
-  const [isEgglessRequested, setIsEgglessRequested] = useState(false);
   const [validationError, setValidationError] = useState('');
 
+  // Restore saved customer profile from localStorage
+  useEffect(() => {
+    try {
+      const savedProfile = localStorage.getItem('cs_customer_profile');
+      if (savedProfile) {
+        const p = JSON.parse(savedProfile);
+        if (p.name) setCustomerName(p.name);
+        if (p.phone) setCustomerPhone(p.phone);
+        if (p.altPhone) setAltPhone(p.altPhone);
+        if (p.area) setSelectedArea(p.area);
+        if (p.houseNumber) setHouseNumber(p.houseNumber);
+        if (p.streetName) setStreetName(p.streetName);
+        if (p.landmark) setLandmark(p.landmark);
+        if (p.pincode) setPincode(p.pincode);
+      }
+    } catch (e) {
+      console.warn('Could not read saved profile:', e);
+    }
+  }, []);
+
+  // Auto-save customer address to localStorage
+  const saveProfileToLocalStorage = () => {
+    try {
+      const profile = {
+        name: customerName.trim(),
+        phone: customerPhone.trim(),
+        altPhone: altPhone.trim(),
+        area: selectedArea,
+        houseNumber: houseNumber.trim(),
+        streetName: streetName.trim(),
+        landmark: landmark.trim(),
+        pincode: pincode.trim() || '531116'
+      };
+      localStorage.setItem('cs_customer_profile', JSON.stringify(profile));
+    } catch (e) {
+      console.warn('Could not save profile:', e);
+    }
+  };
+
   const deliveryCharge = orderType === 'delivery' ? 50 : 0;
-  const egglessFee = isEgglessRequested ? 100 : 0;
-  const grandTotalWithDelivery = cartTotal + deliveryCharge + egglessFee;
+  const grandTotalWithDelivery = cartTotal + deliveryCharge;
 
   if (!isCartOpen) return null;
 
+  // Handle GPS location auto-detect
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation is not supported by your browser.');
+      return;
+    }
+    setIsDetectingGps(true);
+    setGpsError('');
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setGpsLocation({ lat: latitude, lng: longitude });
+        setIsDetectingGps(false);
+      },
+      (error) => {
+        setIsDetectingGps(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          setGpsError('Location permission denied. Please enter your address manually.');
+        } else {
+          setGpsError('Could not detect location. Please enter your address below.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  // Proceed from Cart to Address step
+  const handleProceedToAddress = () => {
+    if (cartItems.length === 0) return;
+    setValidationError('');
+    setCheckoutStep('address');
+  };
+
+  // Final Order Validation & WhatsApp submission
   const handleCheckout = (e) => {
     e.preventDefault();
 
@@ -50,35 +150,51 @@ export default function CartDrawer() {
     }
     const cleanPhone = (customerPhone || '').replace(/\D/g, '');
     if (!customerPhone || cleanPhone.length < 10) {
-      missing.push('10-digit Mobile Number');
+      missing.push('10-digit WhatsApp Mobile Number');
     }
-    if (orderType === 'delivery' && (!streetAddress || streetAddress.trim() === '')) {
-      missing.push('House No & Street Address');
+    
+    if (orderType === 'delivery') {
+      if (!houseNumber || houseNumber.trim() === '') {
+        missing.push('Door / House / Flat No.');
+      }
+      if (!streetName || streetName.trim() === '') {
+        missing.push('Street / Colony Name');
+      }
+      if (!landmark || landmark.trim() === '') {
+        missing.push('Nearby Landmark (helps rider locate you)');
+      }
     }
 
     if (missing.length > 0) {
-      setValidationError(`⚠️ Please fill in all required fields: ${missing.join(', ')}.`);
+      setValidationError(`⚠️ Please complete: ${missing.join(', ')}.`);
       return;
     }
 
     setValidationError('');
+    saveProfileToLocalStorage();
 
+    // Construct beautiful formatted WhatsApp message
     let text = `🛍️ *NEW ORDER - CAKE SHOPPEE NARSIPATNAM*\n`;
-    text += `------------------------------------\n`;
+    text += `════════════════════════════════════\n`;
     text += `👤 *Customer Name:* ${customerName.trim()}\n`;
-    text += `📞 *Primary Phone:* ${customerPhone.trim()}\n`;
+    text += `📞 *Primary Mobile:* ${customerPhone.trim()}\n`;
     if (altPhone && altPhone.trim()) {
       text += `📞 *Alternate Phone:* ${altPhone.trim()}\n`;
     }
-    text += `🚚 *Order Type:* ${orderType === 'delivery' ? 'Local Door Delivery' : 'Counter Takeaway Pickup'}\n`;
+    text += `🚚 *Order Type:* ${orderType === 'delivery' ? 'Local Door Delivery' : 'Shop Takeaway Pickup'}\n`;
     
     if (orderType === 'delivery') {
-      text += `📍 *Narsipatnam Area:* ${selectedArea}\n`;
-      text += `🏠 *House/Door No & Street:* ${streetAddress.trim()}\n`;
-    }
-
-    if (isEgglessRequested) {
-      text += `🌱 *Eggless Special:* 100% Pure Eggless (+₹100)\n`;
+      text += `\n📍 *DELIVERY ADDRESS:*\n`;
+      text += `🏠 *House/Door No:* ${houseNumber.trim()}\n`;
+      text += `🛣️ *Street/Colony:* ${streetName.trim()}\n`;
+      text += `🏛️ *Locality:* ${selectedArea}\n`;
+      text += `🚩 *Landmark:* ${landmark.trim()}\n`;
+      text += `📮 *Pin Code:* ${pincode.trim() || '531116'}\n`;
+      if (gpsLocation) {
+        text += `🗺️ *Live GPS Pin:* https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}\n`;
+      }
+    } else {
+      text += `\n🏪 *Pickup Location:* Cake Shoppee Counter, Near Abes Centre, beside Himalaya Juice Center, Main Road, Narsipatnam.\n`;
     }
 
     if (cakeMessage && cakeMessage.trim()) {
@@ -86,33 +202,29 @@ export default function CartDrawer() {
     }
     
     text += `⏰ *Requested Timing:* ${deliveryTime}\n`;
-    text += `------------------------------------\n`;
-    text += `*ITEMS ORDERED:*\n`;
+    text += `════════════════════════════════════\n`;
+    text += `📋 *ITEMS ORDERED:*\n`;
 
     cartItems.forEach((item, index) => {
-      text += `${index + 1}. ${item.name} (${item.weight || 'Std'}) x ${item.quantity} = ₹${item.price * item.quantity}\n`;
+      const dietNote = item.egglessTag ? ` [${item.eggless ? '🌱 100% Eggless' : '🥚 Regular'}]` : '';
+      text += `${index + 1}. ${item.name} (${item.weight || 'Std'})${dietNote} x ${item.quantity} = ₹${item.price * item.quantity}\n`;
     });
 
-    text += `------------------------------------\n`;
+    text += `════════════════════════════════════\n`;
     text += `📦 *Items Subtotal:* ₹${cartTotal}\n`;
-    if (isEgglessRequested) {
-      text += `🌱 *Eggless Extra Charge:* +₹100\n`;
-    }
-    text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹50` : 'FREE (Counter Takeaway)'}\n`;
+    text += `🚚 *Delivery Charge:* ${orderType === 'delivery' ? `₹50` : 'FREE (Takeaway)'}\n`;
     text += `💰 *TOTAL PAYABLE:* ₹${grandTotalWithDelivery}\n`;
-    text += `------------------------------------\n`;
-    if (orderType === 'delivery') {
-      text += `📍 *Tip:* Tap the '+' button in this WhatsApp chat to share your Live Location pin!\n`;
-    }
-    text += `Please confirm my order and send UPI payment details.`;
+    text += `════════════════════════════════════\n`;
+    text += `Please confirm my order and send UPI QR / payment details for verification.`;
 
     const encoded = encodeURIComponent(text);
     window.open(`https://wa.me/917660948403?text=${encoded}`, '_blank');
   };
 
+  // Thermal Receipt Generator
   const handlePrintReceipt = () => {
     if (cartItems.length === 0) return;
-    const printWin = window.open('', '_blank', 'width=450,height=600');
+    const printWin = window.open('', '_blank', 'width=450,height=650');
     if (!printWin) return;
     
     const itemsHtml = cartItems.map((item, idx) => `
@@ -127,7 +239,7 @@ export default function CartDrawer() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Cake Shoppee - Order Receipt</title>
+          <title>Cake Shoppee - Order KOT</title>
           <style>
             body { font-family: 'Courier New', Courier, monospace; width: 320px; margin: 0 auto; padding: 15px; color: #000; }
             h2 { text-align: center; margin: 0 0 5px 0; font-size: 20px; }
@@ -146,10 +258,10 @@ export default function CartDrawer() {
             <strong>Order #:</strong> CS-${Date.now().toString().slice(-6)}<br>
             <strong>Date:</strong> ${new Date().toLocaleString()}<br>
             <strong>Type:</strong> ${orderType === 'delivery' ? 'DOOR DELIVERY' : 'COUNTER TAKEAWAY'}<br>
-            <strong>Customer:</strong> ${customerName || 'Walk-in Customer'}<br>
+            <strong>Customer:</strong> ${customerName || 'Customer'}<br>
             <strong>Phone:</strong> ${customerPhone || 'N/A'}<br>
-            ${isEgglessRequested ? `<strong>Diet:</strong> 100% PURE EGGLESS (+₹100)<br>` : ''}
-            ${orderType === 'delivery' ? `<strong>Address:</strong> ${selectedArea}, ${streetAddress}<br>` : ''}
+            ${orderType === 'delivery' ? `<strong>Address:</strong> ${houseNumber}, ${streetName}, ${selectedArea} (Landmark: ${landmark})<br>` : ''}
+            ${gpsLocation ? `<strong>GPS Pin:</strong> Attached<br>` : ''}
             ${cakeMessage ? `<strong>Cake Text:</strong> "${cakeMessage}"<br>` : ''}
           </div>
           <div class="divider"></div>
@@ -158,7 +270,7 @@ export default function CartDrawer() {
               <tr style="text-align:left; border-bottom:1px solid #000;">
                 <th>Item</th>
                 <th style="text-align:center;">Qty</th>
-                <th style="text-align:right;">Amt</th>
+                <th style="text-align:right;">Price</th>
               </tr>
             </thead>
             <tbody>
@@ -166,216 +278,359 @@ export default function CartDrawer() {
             </tbody>
           </table>
           <div class="divider"></div>
-          <div style="font-size:12px; margin-top:6px;">
-            <div style="display:flex; justify-content:space-between;"><span>Items Subtotal:</span><span>₹${cartTotal}</span></div>
-            ${isEgglessRequested ? `<div style="display:flex; justify-content:space-between;"><span>Eggless Fee:</span><span>+ ₹100</span></div>` : ''}
-            <div style="display:flex; justify-content:space-between;"><span>Delivery Fee (${orderType === 'delivery' ? 'Local' : 'Takeaway'}):</span><span>${orderType === 'delivery' ? `₹50` : 'FREE'}</span></div>
-          </div>
+          <div style="font-size:12px; text-align:right;">Subtotal: ₹${cartTotal}</div>
+          ${orderType === 'delivery' ? `<div style="font-size:12px; text-align:right;">Delivery Fee: ₹50</div>` : ''}
+          <div class="total">Total: ₹${grandTotalWithDelivery}</div>
           <div class="divider"></div>
-          <div class="total">TOTAL PAYABLE: ₹${grandTotalWithDelivery}</div>
-          <div class="divider"></div>
-          <div class="footer-msg">Thank you for ordering with Cake Shoppee!<br>Freshly Baked with ❤️ in Narsipatnam</div>
-          <script>
-            window.onload = function() { window.print(); };
-          </script>
+          <div class="footer-msg">Thank you for ordering with Cake Shoppee Narsipatnam!</div>
         </body>
       </html>
     `);
     printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 400);
   };
 
   return (
-    <div className={`cart-drawer-backdrop ${isCartOpen ? 'active' : ''}`} onClick={() => setIsCartOpen(false)}>
-      <div className={`cart-drawer ${isCartOpen ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
+    <div className="cart-drawer-backdrop" onClick={() => setIsCartOpen(false)}>
+      <div 
+        className="cart-drawer" 
+        onClick={(e) => e.stopPropagation()}
+        style={{ display: 'flex', flexDirection: 'column' }}
+      >
         
-        {/* Header */}
-        <div className="cart-drawer-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShoppingBag size={20} color="#e11d48" />
-            <h3>Your Order Cart</h3>
+        {/* Drawer Header with Step Indicator */}
+        <div className="cart-drawer-header" style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {checkoutStep === 'address' && (
+                <button
+                  onClick={() => { setCheckoutStep('cart'); setValidationError(''); }}
+                  style={{ background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  title="Back to cart items"
+                >
+                  <ArrowLeft size={16} color="#0f172a" />
+                </button>
+              )}
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                {checkoutStep === 'cart' ? 'Your Fresh Cart' : 'Delivery Details'}
+              </h3>
+            </div>
+            
+            {/* Step Progress Pill */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px' }}>
+              <span style={{ 
+                fontSize: '0.74rem', 
+                fontWeight: 700, 
+                padding: '2px 8px', 
+                borderRadius: '999px',
+                background: checkoutStep === 'cart' ? '#ea580c' : '#16a34a',
+                color: '#ffffff'
+              }}>
+                {checkoutStep === 'cart' ? 'Step 1 of 2: Cart Items' : 'Step 2 of 2: Address & Place Order'}
+              </span>
+              <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                ({cartItems.reduce((acc, i) => acc + i.quantity, 0)} items)
+              </span>
+            </div>
           </div>
-          <button className="close-drawer-btn" onClick={() => setIsCartOpen(false)} aria-label="Close Cart">
-            <X size={22} />
+
+          <button 
+            className="close-drawer-btn" 
+            onClick={() => setIsCartOpen(false)}
+            aria-label="Close cart"
+            style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <X size={20} color="#64748b" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="cart-drawer-body">
+        {/* Drawer Body */}
+        <div className="cart-drawer-body" style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
+          
           {cartItems.length === 0 ? (
-            <div className="text-center" style={{ padding: '60px 20px' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🧁</div>
-              <h4 style={{ color: '#1f110a', marginBottom: '6px' }}>Your Cart is Empty</h4>
-              <p style={{ color: '#695247', fontSize: '0.9rem', marginBottom: '20px' }}>
-                Add your favorite cakes, pastries, puffs or shakes to get started!
-              </p>
-              <button
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
+              <ShoppingBag size={54} color="#cbd5e1" style={{ margin: '0 auto 16px' }} />
+              <h4 style={{ color: '#334155', fontWeight: 700, marginBottom: '6px' }}>Your cart is empty</h4>
+              <p style={{ fontSize: '0.9rem', marginBottom: '20px' }}>Explore our cool cakes, fast-food savouries & celebration combos.</p>
+              <button 
                 className="btn btn-primary"
                 onClick={() => setIsCartOpen(false)}
+                style={{ padding: '10px 20px', fontSize: '0.88rem' }}
               >
-                Browse Menu
+                Browse Our Menu
               </button>
             </div>
-          ) : (
+          ) : checkoutStep === 'cart' ? (
+            
+            /* ========================================================
+               STEP 1: CART ITEMS & PREPARATION PREFERENCES
+               ======================================================== */
             <>
-              {cartItems.map((item) => (
-                <div key={item.id} className="cart-item-row">
-                  <div className="cart-item-img">
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      sizes="64px"
-                      style={{ objectFit: 'cover' }}
-                    />
+              {/* Order Items List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {cartItems.map((item) => (
+                  <div key={item.id} className="cart-item-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px', borderBottom: '1px solid #f1f5f9' }}>
+                    <div className="cart-item-img" style={{ width: '56px', height: '56px', borderRadius: '8px', overflow: 'hidden', position: 'relative', flexShrink: 0, background: '#f8fafc' }}>
+                      <Image
+                        src={item.image || '/images/cakes/vanilla-cool-cake.jpg'}
+                        alt={item.name}
+                        fill
+                        sizes="56px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a', margin: '0 0 2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {item.name}
+                      </h4>
+                      <p style={{ fontSize: '0.78rem', color: '#64748b', margin: 0 }}>
+                        {item.weight || 'Standard'} • <strong style={{ color: '#ea580c' }}>₹{item.price}</strong>
+                      </p>
+                      {item.egglessTag && (
+                        <div style={{ marginTop: '3px' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            color: item.eggless ? '#15803d' : '#475569',
+                            background: item.eggless ? '#dcfce7' : '#f1f5f9',
+                            border: `1px solid ${item.eggless ? '#bbf7d0' : '#e2e8f0'}`,
+                            padding: '1px 6px',
+                            borderRadius: '4px'
+                          }}>
+                            {item.egglessTag}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Quantity Selector */}
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        style={{ background: 'transparent', border: 'none', padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus size={13} color="#475569" />
+                      </button>
+                      <span style={{ fontSize: '0.86rem', fontWeight: 700, minWidth: '22px', textAlign: 'center', color: '#0f172a' }}>
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        style={{ background: 'transparent', border: 'none', padding: '6px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        aria-label="Increase quantity"
+                      >
+                        <Plus size={13} color="#475569" />
+                      </button>
+                    </div>
+
+                    {/* Item Total & Remove */}
+                    <div style={{ textAlign: 'right', minWidth: '55px' }}>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#0f172a' }}>
+                        ₹{item.price * item.quantity}
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', marginTop: '2px' }}
+                        title="Remove item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="cart-item-info">
-                    <h5 className="cart-item-title">{item.name}</h5>
-                    <span className="cart-item-price">₹{item.price}</span>
-                  </div>
-
-                  <div className="cart-item-qty">
-                    <button
-                      className="qty-btn"
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus size={12} />
-                    </button>
-                    <span style={{ fontSize: '0.85rem', fontWeight: '700', minWidth: '16px', textAlign: 'center' }}>
-                      {item.quantity}
-                    </span>
-                    <button
-                      className="qty-btn"
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      aria-label="Increase quantity"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    style={{ background: 'transparent', border: 'none', color: '#947e74', cursor: 'pointer' }}
-                    title="Remove Item"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-
-              {/* Order Fulfillment Selection */}
-              <div style={{ marginTop: '14px' }}>
-                <label style={{ fontSize: '0.86rem', fontWeight: '700', color: '#1f110a' }}>Fulfillment Option:</label>
-                <div className="cart-order-type-switch">
+              {/* Delivery vs Takeaway Quick Selector */}
+              <div style={{ marginTop: '16px' }}>
+                <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '8px' }}>
+                  How would you like to receive your order?
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <button
                     type="button"
-                    className={`order-type-btn ${orderType === 'delivery' ? 'active' : ''}`}
                     onClick={() => setOrderType('delivery')}
+                    style={{
+                      padding: '12px 8px',
+                      borderRadius: '10px',
+                      border: orderType === 'delivery' ? '2px solid #ea580c' : '1px solid #cbd5e1',
+                      background: orderType === 'delivery' ? '#fff7ed' : '#ffffff',
+                      color: orderType === 'delivery' ? '#c2410c' : '#475569',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
                   >
-                    🚚 Door Delivery (+₹50)
+                    <span>🚚 Door Delivery</span>
+                    <span style={{ fontSize: '0.74rem', color: '#ea580c' }}>+₹50 Local Fee</span>
                   </button>
+
                   <button
                     type="button"
-                    className={`order-type-btn ${orderType === 'takeaway' ? 'active' : ''}`}
                     onClick={() => setOrderType('takeaway')}
+                    style={{
+                      padding: '12px 8px',
+                      borderRadius: '10px',
+                      border: orderType === 'takeaway' ? '2px solid #16a34a' : '1px solid #cbd5e1',
+                      background: orderType === 'takeaway' ? '#f0fdf4' : '#ffffff',
+                      color: orderType === 'takeaway' ? '#15803d' : '#475569',
+                      fontWeight: 700,
+                      fontSize: '0.84rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
                   >
-                    🛍️ Counter Takeaway (FREE)
+                    <span>🏪 Shop Takeaway</span>
+                    <span style={{ fontSize: '0.74rem', color: '#16a34a' }}>FREE (No Fee)</span>
                   </button>
                 </div>
               </div>
-
-              {/* Validation Error Notice Box */}
+            </>
+          ) : (
+            
+            /* ========================================================
+               STEP 2: EASY & ACCURATE DELIVERY ADDRESS FORM
+               ======================================================== */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Validation Warning Alert */}
               {validationError && (
                 <div style={{
-                  marginTop: '12px',
-                  padding: '12px 14px',
+                  padding: '10px 14px',
                   background: '#fef2f2',
-                  border: '1.5px solid #ef4444',
+                  border: '1.5px solid #fecaca',
                   borderRadius: '10px',
                   color: '#b91c1c',
-                  fontSize: '0.85rem',
-                  fontWeight: '700',
+                  fontSize: '0.84rem',
+                  fontWeight: '600',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <AlertCircle size={20} color="#ef4444" style={{ flexShrink: 0 }} />
+                  <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
                   <span>{validationError}</span>
                 </div>
               )}
 
-              {/* Eggless Option Toggle Box */}
-              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fff1f2', border: '1px solid #fda4af', borderRadius: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.86rem', fontWeight: '700', color: '#e11d48' }}>
-                  <input
-                    type="checkbox"
-                    checked={isEgglessRequested}
-                    onChange={(e) => setIsEgglessRequested(e.target.checked)}
-                    style={{ width: '16px', height: '16px', accentColor: '#e11d48' }}
-                  />
-                  <span>🌱 Prepare Cake 100% Eggless (+₹100)</span>
-                </label>
-              </div>
-
-              {/* Customer Details Form */}
-              <div className="form-group" style={{ marginTop: '12px' }}>
-                <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
-                  Your Full Name <span style={{ color: '#ef4444' }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={customerName}
-                  onChange={(e) => {
-                    setCustomerName(e.target.value);
-                    if (validationError) setValidationError('');
-                  }}
-                  style={{
-                    borderColor: validationError && (!customerName || !customerName.trim()) ? '#ef4444' : '#cbd5e1'
-                  }}
-                  required
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
-                    Mobile Number <span style={{ color: '#ef4444' }}>*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="10-digit mobile no."
-                    value={customerPhone}
-                    onChange={(e) => {
-                      setCustomerPhone(e.target.value);
-                      if (validationError) setValidationError('');
-                    }}
-                    style={{
-                      borderColor: validationError && (!customerPhone || customerPhone.replace(/\D/g, '').length < 10) ? '#ef4444' : '#cbd5e1'
-                    }}
-                    required
-                  />
+              {/* Order Mode Banner */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                background: orderType === 'delivery' ? '#fff7ed' : '#f0fdf4',
+                border: `1px solid ${orderType === 'delivery' ? '#fed7aa' : '#bbf7d0'}`,
+                borderRadius: '10px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={18} color={orderType === 'delivery' ? '#ea580c' : '#16a34a'} />
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a' }}>
+                      {orderType === 'delivery' ? 'Local Door Delivery' : 'Shop Takeaway Pickup'}
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b' }}>
+                      {orderType === 'delivery' ? 'Delivered directly to your house in Narsipatnam' : 'Pickup at Cake Shoppee, Near Abes Centre'}
+                    </div>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Alt. Phone (Optional)</label>
-                  <input
-                    type="tel"
-                    placeholder="Secondary number"
-                    value={altPhone}
-                    onChange={(e) => setAltPhone(e.target.value)}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setOrderType(orderType === 'delivery' ? 'takeaway' : 'delivery')}
+                  style={{ background: 'transparent', border: 'none', color: '#ea580c', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                >
+                  Change
+                </button>
               </div>
 
+              {/* Delivery Address Section (Only for Delivery) */}
               {orderType === 'delivery' && (
-                <>
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Select Narsipatnam Area / Landmark *</label>
+                <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Home size={16} color="#ea580c" /> Exact Delivery Address
+                    </span>
+                    <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700, background: '#dcfce7', padding: '2px 8px', borderRadius: '999px' }}>
+                      Narsipatnam Town
+                    </span>
+                  </div>
+
+                  {/* 1-Tap GPS Auto-Detect Button */}
+                  <div style={{ marginBottom: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={handleDetectGPS}
+                      disabled={isDetectingGps}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        background: gpsLocation ? '#f0fdf4' : '#ffffff',
+                        border: gpsLocation ? '1.5px solid #22c55e' : '1.5px dashed #ea580c',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        color: gpsLocation ? '#15803d' : '#ea580c',
+                        touchAction: 'manipulation'
+                      }}
+                    >
+                      {isDetectingGps ? (
+                        <>
+                          <Compass className="animate-spin" size={16} /> Detecting your GPS Pin...
+                        </>
+                      ) : gpsLocation ? (
+                        <>
+                          <CheckCircle2 size={16} color="#16a34a" /> Live GPS Pin Attached! (Accurate)
+                        </>
+                      ) : (
+                        <>
+                          <Navigation size={16} /> 📍 Auto-Detect My Current GPS Location
+                        </>
+                      )}
+                    </button>
+                    {gpsError && (
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.74rem', color: '#ef4444' }}>{gpsError}</p>
+                    )}
+                    {gpsLocation && (
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.72rem', color: '#15803d', textAlign: 'center' }}>
+                        Delivery rider will get direct Google Maps navigation to your doorstep!
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Area / Locality Selector */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      1. Narsipatnam Locality / Area <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
                     <select
                       value={selectedArea}
                       onChange={(e) => setSelectedArea(e.target.value)}
-                      style={{ fontWeight: '600', color: '#1e293b' }}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.86rem',
+                        fontWeight: 600,
+                        color: '#1e293b',
+                        background: '#ffffff'
+                      }}
                     >
                       {NARSIPATNAM_AREAS.map((area) => (
                         <option key={area} value={area}>📍 {area}</option>
@@ -383,94 +638,324 @@ export default function CartDrawer() {
                     </select>
                   </div>
 
-                  <div className="form-group">
-                    <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>
-                      Door / House No & Street Address <span style={{ color: '#ef4444' }}>*</span>
+                  {/* House / Flat / Door Number */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      2. House / Flat / Door No. & Building <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <textarea
-                      rows={2}
-                      placeholder="e.g. Door No 4-12, Tagarapu Street, Opposite SBI ATM"
-                      value={streetAddress}
+                    <input
+                      type="text"
+                      placeholder="e.g. Door No. 4-22, 1st Floor / Sri Sai Residency"
+                      value={houseNumber}
                       onChange={(e) => {
-                        setStreetAddress(e.target.value);
+                        setHouseNumber(e.target.value);
                         if (validationError) setValidationError('');
                       }}
                       style={{
-                        borderColor: validationError && orderType === 'delivery' && (!streetAddress || !streetAddress.trim()) ? '#ef4444' : '#cbd5e1'
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: validationError && (!houseNumber || !houseNumber.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                        fontSize: '0.86rem',
+                        background: '#ffffff'
                       }}
                       required
-                    ></textarea>
+                    />
                   </div>
-                </>
+
+                  {/* Street / Colony Name */}
+                  <div style={{ marginBottom: '10px' }}>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      3. Street / Colony / Ward <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Tagarapu Street / Behind Municipal Office"
+                      value={streetName}
+                      onChange={(e) => {
+                        setStreetName(e.target.value);
+                        if (validationError) setValidationError('');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: validationError && (!streetName || !streetName.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                        fontSize: '0.86rem',
+                        background: '#ffffff'
+                      }}
+                      required
+                    />
+                  </div>
+
+                  {/* Landmark (Crucial for Indian towns) */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '8px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                        4. Nearby Landmark <span style={{ color: '#ef4444' }}>*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Opposite SBI ATM, near Temple"
+                        value={landmark}
+                        onChange={(e) => {
+                          setLandmark(e.target.value);
+                          if (validationError) setValidationError('');
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: validationError && (!landmark || !landmark.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                          fontSize: '0.86rem',
+                          background: '#ffffff'
+                        }}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                        Pin Code
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="531116"
+                        value={pincode}
+                        onChange={(e) => setPincode(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: '1px solid #cbd5e1',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                          background: '#ffffff'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                </div>
               )}
 
-              <div className="form-group">
-                <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Custom Message on Cake (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Happy Birthday Sai!"
-                  value={cakeMessage}
-                  onChange={(e) => setCakeMessage(e.target.value)}
-                />
+              {/* Customer Contact Information */}
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.86rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                  <User size={16} color="#ea580c" /> Customer Contact Details
+                </span>
+
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    Your Full Name <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={customerName}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      if (validationError) setValidationError('');
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: validationError && (!customerName || !customerName.trim()) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                      fontSize: '0.86rem',
+                      background: '#ffffff'
+                    }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      WhatsApp Number <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="10-digit mobile"
+                      value={customerPhone}
+                      onChange={(e) => {
+                        setCustomerPhone(e.target.value);
+                        if (validationError) setValidationError('');
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: validationError && (!customerPhone || customerPhone.replace(/\D/g, '').length < 10) ? '1.5px solid #ef4444' : '1px solid #cbd5e1',
+                        fontSize: '0.86rem',
+                        background: '#ffffff'
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                      Alt. Phone (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="Secondary number"
+                      value={altPhone}
+                      onChange={(e) => setAltPhone(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '0.86rem',
+                        background: '#ffffff'
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="form-group">
-                <label style={{ fontSize: '0.84rem', fontWeight: '600' }}>Requested Delivery Timing</label>
-                <select value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)}>
-                  <option value="As soon as possible">As Soon As Possible (Within 30-45 mins)</option>
-                  <option value="Today Evening (4:00 PM – 6:00 PM)">Today Evening (4:00 PM – 6:00 PM)</option>
-                  <option value="Today Night (7:00 PM – 9:30 PM)">Today Night (7:00 PM – 9:30 PM)</option>
-                  <option value="Tomorrow Morning (10:00 AM – 1:00 PM)">Tomorrow Morning (10:00 AM – 1:00 PM)</option>
-                  <option value="Tomorrow Evening (4:00 PM – 8:00 PM)">Tomorrow Evening (4:00 PM – 8:00 PM)</option>
-                </select>
+              {/* Special Cake Message & Delivery Timing */}
+              <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    Custom Message to Pipe on Cake (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Happy Birthday Rakesh!"
+                    value={cakeMessage}
+                    onChange={(e) => setCakeMessage(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.86rem',
+                      background: '#ffffff'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                    Preferred Timing
+                  </label>
+                  <select
+                    value={deliveryTime}
+                    onChange={(e) => setDeliveryTime(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: '1px solid #cbd5e1',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: '#1e293b',
+                      background: '#ffffff'
+                    }}
+                  >
+                    <option value="As soon as possible">As Soon As Possible (Within 30–45 mins)</option>
+                    <option value="Today Evening (4:00 PM – 6:00 PM)">Today Evening (4:00 PM – 6:00 PM)</option>
+                    <option value="Today Night (7:00 PM – 9:30 PM)">Today Night (7:00 PM – 9:30 PM)</option>
+                    <option value="Tomorrow Morning (10:00 AM – 1:00 PM)">Tomorrow Morning (10:00 AM – 1:00 PM)</option>
+                    <option value="Tomorrow Evening (4:00 PM – 8:00 PM)">Tomorrow Evening (4:00 PM – 8:00 PM)</option>
+                  </select>
+                </div>
               </div>
-            </>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', color: '#16a34a', justifyContent: 'center' }}>
+                <ShieldCheck size={14} /> Your address details are safely saved on this device for instant 1-tap reordering!
+              </div>
+
+            </div>
           )}
+
         </div>
 
-        {/* Footer */}
+        {/* Footer with Step-Specific Actions */}
         {cartItems.length > 0 && (
-          <div className="cart-drawer-footer">
-            <div className="cart-summary-row">
+          <div className="cart-drawer-footer" style={{ padding: '16px 20px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
+            
+            {/* Price Breakdown */}
+            <div className="cart-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem', color: '#64748b', marginBottom: '4px' }}>
               <span>Items Subtotal ({cartItems.reduce((acc, i) => acc + i.quantity, 0)})</span>
               <span>₹{cartTotal}</span>
             </div>
-
-            {isEgglessRequested && (
-              <div className="cart-summary-row" style={{ fontSize: '0.86rem', color: '#e11d48', fontWeight: '600' }}>
-                <span>Eggless Charge</span>
-                <span>+ ₹100</span>
-              </div>
-            )}
             
-            <div className="cart-summary-row" style={{ fontSize: '0.86rem', color: orderType === 'delivery' ? '#15803d' : '#64748b', fontWeight: '600' }}>
-              <span>Delivery Fee ({orderType === 'delivery' ? 'Local Narsipatnam' : 'Takeaway'})</span>
+            <div className="cart-summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.84rem', color: orderType === 'delivery' ? '#ea580c' : '#16a34a', fontWeight: '600', marginBottom: '8px' }}>
+              <span>{orderType === 'delivery' ? 'Local Narsipatnam Delivery Fee' : 'Store Takeaway Pickup'}</span>
               <span>{orderType === 'delivery' ? `+ ₹${deliveryCharge}` : 'FREE (₹0)'}</span>
             </div>
 
-            <div className="cart-total-row">
-              <span>Total Payable Amount</span>
-              <span>₹{grandTotalWithDelivery}</span>
+            <div className="cart-total-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#0f172a', paddingTop: '6px', borderTop: '1px dashed #cbd5e1', marginBottom: '12px' }}>
+              <span>Total Payable</span>
+              <span style={{ color: '#ea580c' }}>₹{grandTotalWithDelivery}</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+            {/* Step Action Buttons */}
+            {checkoutStep === 'cart' ? (
               <button
-                className="btn btn-secondary"
-                onClick={handlePrintReceipt}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', padding: '12px 10px' }}
+                className="btn-primary btn-block"
+                onClick={handleProceedToAddress}
+                style={{
+                  width: '100%',
+                  padding: '14px',
+                  fontSize: '0.96rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  borderRadius: '12px',
+                  touchAction: 'manipulation'
+                }}
               >
-                <Printer size={16} /> Print KOT Slip
+                <span>Proceed to Delivery Address</span>
+                <ArrowRight size={18} />
               </button>
-              
-              <button
-                className="btn btn-primary"
-                onClick={handleCheckout}
-                disabled={cartItems.length === 0}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.85rem', padding: '12px 10px' }}
-              >
-                <Send size={16} /> WhatsApp Order
-              </button>
-            </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handlePrintReceipt}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '0.84rem',
+                    padding: '12px 8px',
+                    borderRadius: '10px'
+                  }}
+                >
+                  <Printer size={16} /> Print KOT
+                </button>
+                
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleCheckout}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    padding: '12px 10px',
+                    borderRadius: '10px',
+                    touchAction: 'manipulation'
+                  }}
+                >
+                  <Send size={16} /> Place WhatsApp Order
+                </button>
+              </div>
+            )}
+
           </div>
         )}
 

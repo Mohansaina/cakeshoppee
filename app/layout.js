@@ -1,5 +1,14 @@
 import './globals.css';
+import Script from 'next/script';
 import { CartProvider } from '@/context/CartContext';
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#ea580c',
+  viewportFit: 'cover'
+};
 
 export const metadata = {
   title: 'Cake Shoppee | Authentic Live Bakery & Pastry Shop in Narsipatnam',
@@ -30,9 +39,12 @@ export const metadata = {
     images: ['https://cakeshoppee.vercel.app/images/og-share-card.png'],
   },
   icons: {
-    icon: '/favicon.png?v=4',
-    shortcut: '/favicon.ico?v=4',
-    apple: '/apple-touch-icon.png?v=4',
+    icon: [
+      { url: '/favicon.png?v=logo', type: 'image/png' },
+      { url: '/favicon.ico?v=logo' }
+    ],
+    shortcut: '/favicon.ico?v=logo',
+    apple: '/apple-touch-icon.png?v=logo',
   },
 };
 
@@ -62,11 +74,8 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.png?v=4" type="image/png" />
-        <link rel="shortcut icon" href="/favicon.ico?v=4" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4" />
         <link rel="image_src" href="https://cakeshoppee.vercel.app/images/whatsapp-share-logo.png" />
         <meta name="thumbnail" content="https://cakeshoppee.vercel.app/images/whatsapp-share-logo.png" />
         <meta property="og:type" content="website" />
@@ -86,57 +95,64 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              function googleTranslateElementInit() {
-                new google.translate.TranslateElement({
-                  pageLanguage: 'en',
-                  includedLanguages: 'en,te',
-                  autoDisplay: false
-                }, 'google_translate_element');
-              }
-
-              function toggleTeluguLanguage() {
-                var currentLang = localStorage.getItem('preferredLanguage') || 'en';
-                var nextLang = currentLang === 'te' ? 'en' : 'te';
-                setLanguage(nextLang);
-              }
-
-              function setLanguage(lang) {
-                var select = document.querySelector('.goog-te-combo');
-                if (select) {
-                  select.value = lang;
-                  select.dispatchEvent(new Event('change'));
-                  localStorage.setItem('preferredLanguage', lang);
-                  updateLangBtnUI(lang);
-                } else {
-                  setTimeout(function() { setLanguage(lang); }, 300);
-                }
-              }
-
-              function updateLangBtnUI(lang) {
-                var labels = document.querySelectorAll('.lang-label');
-                labels.forEach(function(lbl) {
-                  lbl.innerText = lang === 'te' ? 'English' : 'తెలుగు';
-                });
-              }
-
-              document.addEventListener('DOMContentLoaded', function() {
-                var savedLang = localStorage.getItem('preferredLanguage');
-                if (savedLang === 'te') {
-                  setTimeout(function() { setLanguage('te'); }, 1000);
-                }
-              });
-            `
-          }}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
       </head>
-      <body>
-        <div id="google_translate_element" style={{ display: 'none' }}></div>
+      <body suppressHydrationWarning>
+        <div id="google_translate_element" suppressHydrationWarning style={{ display: 'none' }}></div>
         <CartProvider>
           {children}
         </CartProvider>
+
+        {/* Hydration-safe Google Translate Scripts */}
+        <Script id="google-translate-init" strategy="afterInteractive">
+          {`
+            function googleTranslateElementInit() {
+              new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,te',
+                autoDisplay: false
+              }, 'google_translate_element');
+            }
+
+            function toggleTeluguLanguage() {
+              var currentLang = localStorage.getItem('preferredLanguage') || 'en';
+              var nextLang = currentLang === 'te' ? 'en' : 'te';
+              setLanguage(nextLang);
+            }
+
+            function setLanguage(lang) {
+              var select = document.querySelector('.goog-te-combo');
+              if (select) {
+                select.value = lang;
+                select.dispatchEvent(new Event('change'));
+                localStorage.setItem('preferredLanguage', lang);
+                updateLangBtnUI(lang);
+              } else {
+                setTimeout(function() { setLanguage(lang); }, 300);
+              }
+            }
+
+            function updateLangBtnUI(lang) {
+              var labels = document.querySelectorAll('.lang-label');
+              labels.forEach(function(lbl) {
+                lbl.innerText = lang === 'te' ? 'English' : 'తెలుగు';
+              });
+            }
+
+            window.addEventListener('DOMContentLoaded', function() {
+              var savedLang = localStorage.getItem('preferredLanguage');
+              if (savedLang === 'te') {
+                setTimeout(function() { setLanguage('te'); }, 1000);
+              }
+            });
+          `}
+        </Script>
+        <Script
+          src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

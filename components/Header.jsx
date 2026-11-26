@@ -22,7 +22,7 @@ export default function Header({ onSelectCategory, onSearch }) {
     const scrollMap = {
       custom:  'custom-cake',
       combos:  'combos',
-      about:   'store-gallery',
+      about:   'find-us',
       contact: 'find-us',
       shop:    'bestsellers',
     };

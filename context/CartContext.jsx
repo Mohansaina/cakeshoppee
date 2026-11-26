@@ -13,6 +13,9 @@ export function CartProvider({ children }) {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [activeLightboxPhoto, setActiveLightboxPhoto] = useState(null);
 
+  // Eggless Cake Choice Modal state
+  const [pendingEgglessCake, setPendingEgglessCake] = useState(null);
+
   // Sync from localStorage on mount
   useEffect(() => {
     try {
@@ -37,7 +40,8 @@ export function CartProvider({ children }) {
     }
   }, [cart]);
 
-  const addToCart = (product, addQty = 1) => {
+  // Internal direct adder to cart
+  const addToCartDirect = (product, addQty = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
@@ -54,15 +58,53 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           name: product.name,
+          category: product.category,
           price: product.price,
           image: product.image,
           weight: product.weight || 'Std',
+          eggless: product.eggless,
+          isEggless: product.isEggless,
+          egglessTag: product.egglessTag,
           quantity: addQty,
           qty: addQty,
         },
       ];
     });
     setIsCartOpen(true);
+  };
+
+  // Main addToCart with automatic Cake Eggless Prompt
+  const addToCart = (product, addQty = 1) => {
+    // If it's a cake and eggless choice hasn't been made yet, prompt customer!
+    const isCake = product.category === 'cakes' || (product.name && product.name.toLowerCase().includes('cool cake'));
+    if (isCake && !product.egglessChoiceMade) {
+      setPendingEgglessCake(product);
+      return;
+    }
+    addToCartDirect(product, addQty);
+  };
+
+  // Called when customer selects Eggless (+₹100) or Regular in EgglessChoiceModal
+  const confirmEgglessCake = (cakeProduct, isEggless) => {
+    const basePrice = Number(cakeProduct.price) || 350;
+    const finalPrice = isEggless ? basePrice + 100 : basePrice;
+    const weightStr = cakeProduct.weight || '0.5 kg';
+    
+    const finalItem = {
+      ...cakeProduct,
+      id: `${cakeProduct.id || 'cake'}-${weightStr.replace(/\s+/g, '')}-${isEggless ? 'eggless' : 'regular'}`,
+      name: cakeProduct.name,
+      price: finalPrice,
+      weight: weightStr,
+      eggless: isEggless,
+      isEggless: isEggless,
+      egglessChoiceMade: true,
+      egglessTag: isEggless ? '🌱 100% Pure Eggless (+₹100)' : '🥚 Regular (With Egg)',
+      image: cakeProduct.image || '/images/cakes/vanilla-cool-cake.jpg'
+    };
+
+    addToCartDirect(finalItem, 1);
+    setPendingEgglessCake(null);
   };
 
   const updateCartQuantity = (id, delta) => {
@@ -77,7 +119,7 @@ export function CartProvider({ children }) {
           return item;
         })
         .filter(Boolean)
-    );
+      );
   };
 
   const updateQuantity = (id, newQty) => {
@@ -126,6 +168,10 @@ export function CartProvider({ children }) {
         cart: normalizedCart,
         cartItems: normalizedCart,
         addToCart,
+        addToCartDirect,
+        confirmEgglessCake,
+        pendingEgglessCake,
+        setPendingEgglessCake,
         updateCartQuantity,
         updateQuantity,
         removeFromCart,
@@ -161,4 +207,3 @@ export function useCart() {
   }
   return context;
 }
-

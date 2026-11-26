@@ -83,7 +83,7 @@ export default function Footer({ onSelectCategory }) {
               <li><a href="#bestsellers">Full Menu</a></li>
               <li><a href="#combos">Party Combos</a></li>
               <li><a href="#custom-cake">Custom Cake</a></li>
-              <li><a href="#gallery">Gallery</a></li>
+              <li><a href="#reviews">Reviews</a></li>
               <li><a href="#faq">FAQ</a></li>
             </ul>
           </div>

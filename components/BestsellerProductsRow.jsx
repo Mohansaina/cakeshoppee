@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Star, Plus, Check } from 'lucide-react';
 import { PRODUCTS } from '@/data/products';
@@ -9,6 +9,8 @@ import { useCart } from '@/context/CartContext';
 export default function BestsellerProductsRow({ selectedCat, setSelectedCat, searchQuery }) {
   const { addToCart, setQuickViewProduct } = useCart();
   const [addedMap, setAddedMap] = useState({});
+  const [isSeriesPaused, setIsSeriesPaused] = useState(false);
+  const trackRef = useRef(null);
 
   const handleAdd = (p) => {
     addToCart(p);
@@ -16,6 +18,13 @@ export default function BestsellerProductsRow({ selectedCat, setSelectedCat, sea
     setTimeout(() => {
       setAddedMap((prev) => ({ ...prev, [p.id]: false }));
     }, 1500);
+  };
+
+  const scrollTrack = (direction) => {
+    if (trackRef.current && trackRef.current.parentElement) {
+      const scrollAmount = direction === "left" ? -280 : 280;
+      trackRef.current.parentElement.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
   };
 
   const filtered = PRODUCTS.filter((p) => {
@@ -33,102 +42,176 @@ export default function BestsellerProductsRow({ selectedCat, setSelectedCat, sea
         <div className="section-head-bar">
           <div>
             <h2 className="section-head-title">Fresh Counter Bestsellers</h2>
-            <p className="section-head-sub">Prepared fresh daily • 100% pure eggless options available</p>
+            <p className="section-head-sub">Moving series showcase • Touch or hover anywhere to pause</p>
           </div>
           {setSelectedCat && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <button 
                 className="view-all-button"
-                style={{ background: selectedCat === 'all' ? '#e11d48' : '#f1f5f9', color: selectedCat === 'all' ? '#fff' : '#334155' }}
+                style={{ background: selectedCat === 'all' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'all' ? '#fff' : '#334155' }}
                 onClick={() => setSelectedCat('all')}
               >
                 All
               </button>
               <button 
                 className="view-all-button"
-                style={{ background: selectedCat === 'cakes' ? '#e11d48' : '#f1f5f9', color: selectedCat === 'cakes' ? '#fff' : '#334155' }}
+                style={{ background: selectedCat === 'cakes' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'cakes' ? '#fff' : '#334155' }}
                 onClick={() => setSelectedCat('cakes')}
               >
                 Cakes
               </button>
               <button 
                 className="view-all-button"
-                style={{ background: selectedCat === 'pastries' ? '#e11d48' : '#f1f5f9', color: selectedCat === 'pastries' ? '#fff' : '#334155' }}
-                onClick={() => setSelectedCat('pastries')}
+                style={{ background: selectedCat === 'pizzas' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'pizzas' ? '#fff' : '#334155' }}
+                onClick={() => setSelectedCat('pizzas')}
               >
-                Pastries
+                Pizzas
               </button>
               <button 
                 className="view-all-button"
-                style={{ background: selectedCat === 'savouries' ? '#e11d48' : '#f1f5f9', color: selectedCat === 'savouries' ? '#fff' : '#334155' }}
-                onClick={() => setSelectedCat('savouries')}
+                style={{ background: selectedCat === 'burgers' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'burgers' ? '#fff' : '#334155' }}
+                onClick={() => setSelectedCat('burgers')}
               >
-                Savouries
+                Burgers
+              </button>
+              <button 
+                className="view-all-button"
+                style={{ background: selectedCat === 'sandwiches' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'sandwiches' ? '#fff' : '#334155' }}
+                onClick={() => setSelectedCat('sandwiches')}
+              >
+                Sandwiches
+              </button>
+              <button 
+                className="view-all-button"
+                style={{ background: selectedCat === 'chinese' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'chinese' ? '#fff' : '#334155' }}
+                onClick={() => setSelectedCat('chinese')}
+              >
+                Chinese
+              </button>
+              <button 
+                className="view-all-button"
+                style={{ background: selectedCat === 'snacks' ? '#ea580c' : '#f1f5f9', color: selectedCat === 'snacks' ? '#fff' : '#334155' }}
+                onClick={() => setSelectedCat('snacks')}
+              >
+                Snacks
               </button>
             </div>
           )}
         </div>
 
-        <div className="products-4-grid">
-          {filtered.map((product) => {
-            const originalPrice = Math.round(product.price * 1.25);
-            const discount = Math.round(((originalPrice - product.price) / originalPrice) * 100);
+        {/* Continuous Moving Series Carousel Row (Pause on Touch / Hover) */}
+        <div className="series-motion-container">
+          <div className="series-motion-header" style={{ marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: '600' }}>
+              Showing {filtered.length} items gliding in series
+            </span>
 
-            return (
-              <div 
-                key={product.id} 
-                className="product-item-card"
-                onClick={() => setQuickViewProduct(product)}
+            <div className="series-motion-controls">
+              <button
+                type="button"
+                className="series-status-indicator"
+                onClick={() => setIsSeriesPaused((prev) => !prev)}
+                title="Tap to pause or resume motion"
               >
-                <div className="product-item-thumb">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    style={{ objectFit: 'cover' }}
-                  />
-                  {product.bestseller && (
-                    <span className="product-mini-tag">Bestseller</span>
-                  )}
-                </div>
+                {isSeriesPaused ? (
+                  <>⏸️ <span>Paused (Tap to Move)</span></>
+                ) : (
+                  <>🟢 <span>Moving in Series • Touch to Stop</span></>
+                )}
+              </button>
 
-                <div className="product-item-body">
-                  <h4 className="product-item-title">{product.name} ({product.weight})</h4>
-                  
-                  <div className="product-price-row">
-                    <div className="price-flex-group">
-                      <span className="main-price">₹{product.price}</span>
-                      <span className="old-price">₹{originalPrice}</span>
-                      <span className="off-tag">{discount}% off</span>
+              <button
+                type="button"
+                className="series-nav-arrow"
+                onClick={() => scrollTrack("left")}
+                aria-label="Scroll left"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="series-nav-arrow"
+                onClick={() => scrollTrack("right")}
+                aria-label="Scroll right"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="series-motion-wrapper"
+            onMouseEnter={() => setIsSeriesPaused(true)}
+            onMouseLeave={() => setIsSeriesPaused(false)}
+            onTouchStart={() => setIsSeriesPaused(true)}
+            onTouchEnd={() => setIsSeriesPaused(false)}
+          >
+            <div
+              ref={trackRef}
+              className={`series-motion-track${isSeriesPaused ? " is-paused" : ""}`}
+            >
+              {[...filtered, ...filtered].map((product, idx) => {
+                const isItemAdded = addedMap[product.id];
+                return (
+                  <div
+                    key={`${product.id}-bestseller-series-${idx}`}
+                    className="series-item-pill"
+                    onClick={() => setQuickViewProduct(product)}
+                  >
+                    <div className="series-item-thumb">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="240px"
+                      />
+                      <div className="series-diet-badge-top">
+                        {product.isVeg ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #16a34a', borderRadius: '3px', background: '#ffffff' }} title="Pure Vegetarian">
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #dc2626', borderRadius: '3px', background: '#ffffff' }} title="Non-Vegetarian">
+                            <span style={{ width: '0', height: '0', borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderBottom: '6px solid #dc2626' }} />
+                          </span>
+                        )}
+                      </div>
+                      {product.tag && (
+                        <span className="series-tag-top">{product.tag}</span>
+                      )}
                     </div>
 
-                    <span className="rating-pill-badge">
-                      {product.rating} <Star size={10} fill="#ffffff" color="#ffffff" />
-                    </span>
+                    <div className="series-item-body">
+                      <h4 className="series-item-title" title={product.name}>{product.name}</h4>
+                      <p className="series-item-desc">{product.description}</p>
+                      
+                      <div className="series-item-footer">
+                        <span className="series-item-price">₹{product.price}</span>
+                        <button
+                          type="button"
+                          className="series-item-add-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAdd(product);
+                          }}
+                        >
+                          {isItemAdded ? (
+                            <>
+                              <Check size={13} /> Added!
+                            </>
+                          ) : (
+                            <>
+                              <Plus size={13} /> Add
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <button
-                    className="card-add-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAdd(product);
-                    }}
-                  >
-                    {addedMap[product.id] ? (
-                      <>
-                        <Check size={14} style={{ display: 'inline', marginRight: '4px' }} /> Added!
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={14} style={{ display: 'inline', marginRight: '4px' }} /> Add to Cart
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          </div>
         </div>
 
       </div>

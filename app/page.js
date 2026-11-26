@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Preloader from '@/components/Preloader';
 import AnnouncementBar from '@/components/AnnouncementBar';
 import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
@@ -10,7 +11,6 @@ import ShopMenuBoard from '@/components/ShopMenuBoard';
 import CelebrationCombos from '@/components/CelebrationCombos';
 import OccasionTreatsSection from '@/components/OccasionTreatsSection';
 import CustomCakeBuilder from '@/components/CustomCakeBuilder';
-import StoreGallery from '@/components/StoreGallery';
 import Testimonials from '@/components/Testimonials';
 import FAQSection from '@/components/FAQSection';
 import StoreLocator from '@/components/StoreLocator';
@@ -18,7 +18,7 @@ import Footer from '@/components/Footer';
 import FloatingActionDock from '@/components/FloatingActionDock';
 import CartDrawer from '@/components/CartDrawer';
 import QuickViewModal from '@/components/QuickViewModal';
-import GalleryLightbox from '@/components/GalleryLightbox';
+import EgglessChoiceModal from '@/components/EgglessChoiceModal';
 
 export default function HomePage() {
   const [selectedCat, setSelectedCat] = useState('all');
@@ -30,6 +30,9 @@ export default function HomePage() {
 
   return (
     <main>
+      {/* 0. Brand Preloader Animation */}
+      <Preloader />
+
       {/* 1. Top Announcement Ticker */}
       <AnnouncementBar />
 
@@ -42,26 +45,23 @@ export default function HomePage() {
       {/* 4. Bespoke Cakes Gallery Strip — editorial 4-up grid */}
       <EditorialCakesGrid />
 
-      {/* 5. Physical Shop Menu Board Card (Exact rates from physical menu card image) */}
-      <ShopMenuBoard />
-
-      {/* 6. Our Menu — Category tiles + filterable product grid */}
+      {/* 5. Our Menu — Category tiles + filterable product grid (Pizzas & Savouries first, then Cakes) */}
       <OurMenuSection onSelectCategory={handleSelectCategory} />
+
+      {/* 6. Physical Shop Menu Board Card (Exact rates from physical menu card image) */}
+      <ShopMenuBoard />
 
       {/* 7. Celebration Combos — party packages */}
       <CelebrationCombos />
 
-      {/* 7. Treats for Any Occasion — 4-card occasion section */}
+      {/* 8. Treats for Any Occasion — 4-card occasion section */}
       <OccasionTreatsSection
         onSelectCategory={handleSelectCategory}
         onSearch={setSearchQuery}
       />
 
-      {/* 8. Custom Cake Builder — quote form + WhatsApp */}
+      {/* 9. Custom Cake Builder — quote form + WhatsApp */}
       <CustomCakeBuilder />
-
-      {/* 9. Store & Bakery Creations Gallery */}
-      <StoreGallery />
 
       {/* 10. Customer Testimonials */}
       <Testimonials />
@@ -81,7 +81,7 @@ export default function HomePage() {
       {/* Drawers & Modals */}
       <CartDrawer />
       <QuickViewModal />
-      <GalleryLightbox />
+      <EgglessChoiceModal />
     </main>
   );
 }

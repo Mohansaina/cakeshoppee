@@ -9,45 +9,52 @@ import { useCart } from "@/context/CartContext";
 const CATEGORIES = [
   {
     id: "all",
-    label: "All Delights",
+    label: "All Items",
     emoji: "✨",
-    image: "/images/blackforest.jpg",
-    description: "Browse everything we make",
+    image: "/images/menu/vegetablepizza8inches.jpg",
+    description: "Browse our complete menu",
+  },
+  {
+    id: "pizzas",
+    label: "Pizzas",
+    emoji: "🍕",
+    image: "/images/menu/vegetablepizza8inches.jpg",
+    description: "8-Inch Hand-Crafted Oven Pizzas",
+  },
+  {
+    id: "burgers",
+    label: "Burgers",
+    emoji: "🍔",
+    image: "/images/menu/chicken-burger.jpg",
+    description: "Crispy Veg, Paneer and Chicken Burgers",
+  },
+  {
+    id: "sandwiches",
+    label: "Sandwiches",
+    emoji: "🥪",
+    image: "/images/menu/chicken-club-sandwich.jpg",
+    description: "Fresh Toasted, Corn and Club Sandwiches",
+  },
+  {
+    id: "chinese",
+    label: "Chinese",
+    emoji: "🥢",
+    image: "/images/menu/chicken-fried-rice.jpg",
+    description: "Wok Fried Rice and Hakka Noodles",
+  },
+  {
+    id: "snacks",
+    label: "Snacks",
+    emoji: "🍟",
+    image: "/images/menu/french-fries.jpg",
+    description: "Crispy Puffs, French Fries, Pops and Nuggets",
   },
   {
     id: "cakes",
-    label: "Signature Cakes",
+    label: "Cool Cakes",
     emoji: "🎂",
-    image: "/images/blackforest.jpg",
-    description: "Black Forest, Red Velvet & Fruit Cakes",
-  },
-  {
-    id: "pastries",
-    label: "Gourmet Pastries",
-    emoji: "🍰",
-    image: "/images/chocoalmond.jpg",
-    description: "Choco Almond & Fruit Pastry Slices",
-  },
-  {
-    id: "savouries",
-    label: "Hot Fast Food",
-    emoji: "🍕",
-    image: "/images/vegpizza.jpg",
-    description: "Pizzas, Burgers & Grilled Sandwiches",
-  },
-  {
-    id: "shakes",
-    label: "Thick Milkshakes",
-    emoji: "🥤",
-    image: "/images/oreomilkshake.jpg",
-    description: "Oreo, Kulfi & Strawberry Shakes",
-  },
-  {
-    id: "party",
-    label: "Party Essentials",
-    emoji: "🎁",
-    image: "/images/hero-custom-wedding-cake.jpg",
-    description: "Combos & Celebration Bundles",
+    image: "/images/cakes/black-forest-cake.jpg",
+    description: "18 In-Store Flavors (0.5 kg & 1 kg)",
   },
 ];
 
@@ -57,7 +64,9 @@ export default function OurMenuSection({ onSelectCategory }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [egglessOnly, setEgglessOnly] = useState(false);
   const [addedItemMap, setAddedItemMap] = useState({});
+  const [isSeriesPaused, setIsSeriesPaused] = useState(false);
   const gridRef = useRef(null);
+  const trackRef = useRef(null);
 
   const handleSelectCat = (catId) => {
     setSelectedCat(catId);
@@ -67,6 +76,13 @@ export default function OurMenuSection({ onSelectCategory }) {
         gridRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 80);
+  };
+
+  const scrollTrack = (direction) => {
+    if (trackRef.current && trackRef.current.parentElement) {
+      const scrollAmount = direction === "left" ? -280 : 280;
+      trackRef.current.parentElement.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
   };
 
   const [selectedWeightMap, setSelectedWeightMap] = useState({});
@@ -117,11 +133,11 @@ export default function OurMenuSection({ onSelectCategory }) {
 
         {/* Section Header */}
         <div className="our-menu-header">
-          <span className="our-menu-eyebrow">Authentic Shop Menu &amp; Quality</span>
+          <span className="our-menu-eyebrow">Fresh Kitchen &amp; Fast Food Menu</span>
           <span className="section-badge">ONLINE MENU &amp; INSTANT ORDERING</span>
-          <h2 className="our-menu-title">Fresh Cool Cakes &amp; Counter Specials</h2>
+          <h2 className="our-menu-title">Fresh Pizzas, Burgers &amp; Fast Food</h2>
           <p className="our-menu-subtitle">
-            Exact shop menu card prices for 1/2 Kg (0.5 kg) and 1 Kg cakes with local door delivery in Narsipatnam town.
+            Oven-hot 8-inch pizzas, crispy burgers, toasted sandwiches, wok noodles &amp; fried rice with local door delivery in Narsipatnam town.
           </p>
         </div>
 
@@ -158,6 +174,124 @@ export default function OurMenuSection({ onSelectCategory }) {
           })}
         </div>
 
+        {/* Continuous Moving Series Carousel Row (Pause on Touch / Hover) */}
+        <div className="series-motion-container">
+          <div className="series-motion-header">
+            <div className="series-motion-title-wrap">
+              <span className="series-motion-badge">Series Row</span>
+              <h3 className="series-motion-title">
+                {selectedCat === 'all' ? 'Kitchen Specials Moving Series' : `${CATEGORIES.find(c => c.id === selectedCat)?.label || ''} Series Row`}
+              </h3>
+            </div>
+
+            <div className="series-motion-controls">
+              <button
+                type="button"
+                className="series-status-indicator"
+                onClick={() => setIsSeriesPaused((prev) => !prev)}
+                title="Tap to pause or resume motion"
+              >
+                {isSeriesPaused ? (
+                  <>⏸️ <span>Paused (Tap to Move)</span></>
+                ) : (
+                  <>🟢 <span>Moving in Series • Touch to Stop</span></>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="series-nav-arrow"
+                onClick={() => scrollTrack("left")}
+                aria-label="Scroll left"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="series-nav-arrow"
+                onClick={() => scrollTrack("right")}
+                aria-label="Scroll right"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="series-motion-wrapper"
+            onMouseEnter={() => setIsSeriesPaused(true)}
+            onMouseLeave={() => setIsSeriesPaused(false)}
+            onTouchStart={() => setIsSeriesPaused(true)}
+            onTouchEnd={() => setIsSeriesPaused(false)}
+          >
+            <div
+              ref={trackRef}
+              className={`series-motion-track${isSeriesPaused ? " is-paused" : ""}`}
+            >
+              {[...(filteredProducts.slice(0, 10)), ...(filteredProducts.slice(0, 10))].map((product, idx) => {
+                const isItemAdded = addedItemMap[product.id];
+                return (
+                  <div
+                    key={`${product.id}-series-${idx}`}
+                    className="series-item-pill"
+                    onClick={() => setQuickViewProduct(product)}
+                  >
+                    <div className="series-item-thumb">
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        sizes="240px"
+                      />
+                      <div className="series-diet-badge-top">
+                        {product.isVeg ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #16a34a', borderRadius: '3px', background: '#ffffff' }} title="Pure Vegetarian">
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} />
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', border: '1.5px solid #dc2626', borderRadius: '3px', background: '#ffffff' }} title="Non-Vegetarian">
+                            <span style={{ width: '0', height: '0', borderLeft: '3px solid transparent', borderRight: '3px solid transparent', borderBottom: '6px solid #dc2626' }} />
+                          </span>
+                        )}
+                      </div>
+                      {product.tag && (
+                        <span className="series-tag-top">{product.tag}</span>
+                      )}
+                    </div>
+
+                    <div className="series-item-body">
+                      <h4 className="series-item-title" title={product.name}>{product.name}</h4>
+                      <p className="series-item-desc">{product.description}</p>
+
+                      <div className="series-item-footer">
+                        <span className="series-item-price">₹{product.price}</span>
+                        <button
+                          type="button"
+                          className="series-item-add-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCartWithWeight(product);
+                          }}
+                        >
+                          {isItemAdded ? (
+                            <>
+                              <Check size={13} /> Added!
+                            </>
+                          ) : (
+                            <>
+                              <Plus size={13} /> Add
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
         {/* Toolbar */}
         <div className="our-menu-toolbar" ref={gridRef}>
           <div className="our-menu-toolbar-inner">
@@ -165,7 +299,7 @@ export default function OurMenuSection({ onSelectCategory }) {
               <Search size={18} color="#947e74" />
               <input
                 type="text"
-                placeholder="Search cakes, puffs, milkshakes, pizzas..."
+                placeholder="Search pizzas, burgers, sandwiches, noodles, puffs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search products"
@@ -235,6 +369,15 @@ export default function OurMenuSection({ onSelectCategory }) {
 
                   <div className="product-details">
                     <div className="product-meta">
+                      {product.isVeg ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '15px', height: '15px', border: '1.5px solid #16a34a', borderRadius: '3px', background: '#ffffff' }} title="Pure Vegetarian">
+                          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a' }} />
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '15px', height: '15px', border: '1.5px solid #dc2626', borderRadius: '3px', background: '#ffffff' }} title="Non-Vegetarian">
+                          <span style={{ width: '0', height: '0', borderLeft: '3.5px solid transparent', borderRight: '3.5px solid transparent', borderBottom: '6px solid #dc2626' }} />
+                        </span>
+                      )}
                       <span className="product-rating">★ {product.rating}</span>
                       <span className="product-weight">{weight}</span>
                     </div>
@@ -256,9 +399,9 @@ export default function OurMenuSection({ onSelectCategory }) {
                                 flex: 1,
                                 padding: '4px 8px',
                                 borderRadius: '99px',
-                                border: isSelected ? '1.5px solid #e11d48' : '1px solid #e2e8f0',
-                                background: isSelected ? '#fff1f2' : '#ffffff',
-                                color: isSelected ? '#e11d48' : '#64748b',
+                                border: isSelected ? '1.5px solid #ea580c' : '1px solid #e2e8f0',
+                                background: isSelected ? '#fff7ed' : '#ffffff',
+                                color: isSelected ? '#ea580c' : '#64748b',
                                 fontSize: '0.78rem',
                                 fontWeight: '700',
                                 cursor: 'pointer',
@@ -299,26 +442,17 @@ export default function OurMenuSection({ onSelectCategory }) {
         {/* Red Note Banner at Menu Bottom matching shop menu board */}
         <div style={{
           marginTop: '32px',
-          padding: '20px 24px',
-          background: '#09090b',
-          border: '2px solid #ef4444',
+          padding: '16px 20px',
+          background: 'linear-gradient(135deg, #fff1f2 0%, #fee2e2 100%)',
           borderRadius: '16px',
-          textAlign: 'center',
-          boxShadow: '0 8px 25px rgba(239, 68, 68, 0.25)'
+          border: '1.5px solid #fecdd3',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
         }}>
-          <h4 style={{
-            color: '#ef4444',
-            fontFamily: 'var(--font-outfit)',
-            fontSize: '1.75rem',
-            fontWeight: '900',
-            letterSpacing: '1px',
-            textTransform: 'lowercase',
-            margin: 0
-          }}>
-            eggless extra 100
-          </h4>
-          <p style={{ color: '#f87171', fontSize: '0.9rem', margin: '6px 0 0 0', fontWeight: '600' }}>
-            (For 100% Pure Eggless cake preparation, extra ₹100 charge applies)
+          <span style={{ fontSize: '1.5rem' }}>📢</span>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#9f1239', fontWeight: '600', lineHeight: 1.5 }}>
+            <strong>Direct Kitchen Note:</strong> We use fresh vegetables, pure dairy mozzarella &amp; cottage cheese, and premium cuts. Fast food items take 8–15 minutes fresh from our kitchen.
           </p>
         </div>
 
