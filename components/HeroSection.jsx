@@ -3,110 +3,166 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { 
   Volume2, VolumeX, Play, Pause, ChevronDown, 
-  Sparkles, Award, Clock, Heart, ShieldCheck 
+  Sparkles, Award, Clock, ShieldCheck 
 } from 'lucide-react';
+
+const TOTAL_FRAMES = 120;
 
 export default function HeroSection() {
   const containerRef = useRef(null);
-  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
+  const [currentFrame, setCurrentFrame] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
-  const [videoDuration, setVideoDuration] = useState(10);
+  const [imagesLoaded, setImagesLoaded] = useState(0);
+  const [isAutoPlay, setIsAutoPlay] = useState(false);
 
-  // Smooth scroll scrubbing with requestAnimationFrame
-  const animationFrameRef = useRef(null);
-  const targetTimeRef = useRef(0);
+  // Store preloaded HTMLImageElements
+  const imagesRef = useRef([]);
+  const isReadyRef = useRef(false);
+  const animFrameIdRef = useRef(null);
+  const autoPlayFrameRef = useRef(0);
 
+  // Draw a specific frame to the canvas (aspect ratio 'cover')
+  const drawFrame = useCallback((index) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = imagesRef.current[index];
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    const cw = canvas.width;
+    const ch = canvas.height;
+
+    // Cover math (similar to CSS object-fit: cover)
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    const canvasRatio = cw / ch;
+
+    let drawW, drawH, drawX, drawY;
+
+    if (canvasRatio > imgRatio) {
+      drawW = cw;
+      drawH = cw / imgRatio;
+      drawX = 0;
+      drawY = (ch - drawH) / 2;
+    } else {
+      drawH = ch;
+      drawW = ch * imgRatio;
+      drawX = (cw - drawW) / 2;
+      drawY = 0;
+    }
+
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+  }, []);
+
+  // Set high-DPI canvas size matching window
+  const updateCanvasSize = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      drawFrame(currentFrame);
+    }
+  }, [currentFrame, drawFrame]);
+
+  // Preload all 120 WebP frames
+  useEffect(() => {
+    let loaded = 0;
+    const imgArray = [];
+
+    // Preload frame 0 immediately
+    const firstImg = new Image();
+    firstImg.src = `/hero-frames/frame_000.webp`;
+    firstImg.onload = () => {
+      drawFrame(0);
+    };
+
+    for (let i = 0; i < TOTAL_FRAMES; i++) {
+      const img = new Image();
+      const numStr = String(i).padStart(3, '0');
+      img.src = `/hero-frames/frame_${numStr}.webp`;
+      img.onload = () => {
+        loaded++;
+        setImagesLoaded(loaded);
+        if (i === 0) drawFrame(0);
+        if (loaded >= 15) isReadyRef.current = true;
+      };
+      imgArray.push(img);
+    }
+    imagesRef.current = imgArray;
+
+    window.addEventListener('resize', updateCanvasSize);
+    updateCanvasSize();
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+    };
+  }, [drawFrame, updateCanvasSize]);
+
+  // Handle true frame-by-frame scroll binding
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const windowHeight = window.innerHeight;
     const totalScrollable = containerRef.current.offsetHeight - windowHeight;
-    
+
     if (totalScrollable <= 0) return;
 
-    // Calculate progress from 0.0 to 1.0
+    // Scroll progress 0.0 to 1.0
     const currentScroll = -rect.top;
     const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
     setScrollProgress(progress);
 
-    // If video duration is available, target time is mapped to scroll
-    if (videoRef.current && videoDuration > 0) {
-      targetTimeRef.current = progress * (videoDuration - 0.1);
+    // Exact frame index calculation (0 to 119)
+    const targetIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.floor(progress * (TOTAL_FRAMES - 1))));
+    
+    if (!isAutoPlay) {
+      setCurrentFrame(targetIndex);
+      drawFrame(targetIndex);
     }
-  }, [videoDuration]);
+  }, [drawFrame, isAutoPlay]);
 
-  // Buttery-smooth video scrub loop
-  useEffect(() => {
-    let active = true;
-
-    const scrubLoop = () => {
-      const video = videoRef.current;
-      if (video && video.readyState >= 2 && !video.seeking) {
-        const diff = targetTimeRef.current - video.currentTime;
-        // Smooth lerp when scrubbing
-        if (Math.abs(diff) > 0.04) {
-          video.currentTime += diff * 0.35;
-        }
-      }
-      if (active) {
-        animationFrameRef.current = requestAnimationFrame(scrubLoop);
-      }
-    };
-
-    animationFrameRef.current = requestAnimationFrame(scrubLoop);
-
-    return () => {
-      active = false;
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, []);
-
-  // Listen to window scroll
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // Video loaded metadata
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      setVideoDuration(videoRef.current.duration || 10);
-      setIsVideoLoaded(true);
+  // Optional Autoplay loop
+  useEffect(() => {
+    if (!isAutoPlay) {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+      return;
     }
-  };
 
-  // Toggle Mute / Sound
-  const toggleMute = () => {
-    if (videoRef.current) {
-      const nextMuted = !isMuted;
-      videoRef.current.muted = nextMuted;
-      setIsMuted(nextMuted);
-      if (!nextMuted && videoRef.current.paused) {
-        videoRef.current.play().catch(() => {});
+    let lastTime = performance.now();
+    const fpsInterval = 1000 / 24; // 24 fps playback
+
+    const loop = (now) => {
+      const elapsed = now - lastTime;
+      if (elapsed > fpsInterval) {
+        lastTime = now - (elapsed % fpsInterval);
+        autoPlayFrameRef.current = (autoPlayFrameRef.current + 1) % TOTAL_FRAMES;
+        setCurrentFrame(autoPlayFrameRef.current);
+        drawFrame(autoPlayFrameRef.current);
       }
-    }
-  };
+      animFrameIdRef.current = requestAnimationFrame(loop);
+    };
 
-  // Toggle Play / Pause
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
+    animFrameIdRef.current = requestAnimationFrame(loop);
 
-  // Smooth scroll helper
+    return () => {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+    };
+  }, [isAutoPlay, drawFrame]);
+
+  // Smooth scroll helper to next section
   const scrollToNext = () => {
     if (containerRef.current) {
       const nextPos = containerRef.current.offsetTop + containerRef.current.offsetHeight;
@@ -114,26 +170,18 @@ export default function HeroSection() {
     }
   };
 
-  // Stage opacities based on scrollProgress (0.0 -> 1.0)
-  // Stage 1: Intro Hero (0.0 to 0.35)
-  const stage1Opacity = Math.max(0, Math.min(1, (0.35 - scrollProgress) / 0.25));
-  const stage1Transform = `translateY(${scrollProgress * -80}px)`;
+  // Stage 1 (Frame 0 -> 40): Grand Hero Headline
+  const stage1Opacity = Math.max(0, Math.min(1, (0.35 - scrollProgress) / 0.22));
+  const stage1Transform = `translateY(${scrollProgress * -70}px)`;
 
-  // Stage 2: Floating Features (0.35 to 0.75)
+  // Stage 2 (Frame 40 -> 85): Floating Highlight Pills
   const stage2Opacity = scrollProgress >= 0.28 && scrollProgress <= 0.78
-    ? Math.min(
-        (scrollProgress - 0.28) / 0.12,
-        (0.78 - scrollProgress) / 0.12
-      )
+    ? Math.min((scrollProgress - 0.28) / 0.12, (0.78 - scrollProgress) / 0.12)
     : 0;
-  const stage2Scale = 0.95 + Math.min(0.08, scrollProgress * 0.1);
 
-  // Stage 3: Invitation to Menu (0.75 to 1.0)
+  // Stage 3 (Frame 85 -> 120): Final Call to Action
   const stage3Opacity = Math.max(0, Math.min(1, (scrollProgress - 0.72) / 0.2));
-  const stage3Transform = `translateY(${(1 - scrollProgress) * 40}px)`;
-
-  // Video dynamic scale
-  const videoScale = 1 + scrollProgress * 0.08;
+  const stage3Transform = `translateY(${(1 - scrollProgress) * 35}px)`;
 
   return (
     <section 
@@ -161,73 +209,59 @@ export default function HeroSection() {
           justifyContent: 'center'
         }}
       >
-        {/* Background Video Layer */}
-        <div 
-          className="hero-video-wrapper"
+        {/* ========================================================
+            CANVAS FRAME-BY-FRAME RENDERER (Apple-Style)
+            ======================================================== */}
+        <canvas
+          ref={canvasRef}
           style={{
             position: 'absolute',
             inset: 0,
             width: '100%',
             height: '100%',
-            transform: `scale(${videoScale})`,
-            transition: 'transform 0.1s ease-out',
+            objectFit: 'cover',
+            display: 'block',
             zIndex: 1
           }}
-        >
-          <video
-            ref={videoRef}
-            src="/videos/video-erasio.mp4"
-            className="hero-scroll-video"
-            playsInline
-            muted={isMuted}
-            autoPlay
-            loop
-            preload="auto"
-            onLoadedMetadata={handleLoadedMetadata}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-              display: 'block'
-            }}
-          />
+        />
 
-          {/* Cinematic Vignette & Gradient Overlays for readable text */}
-          <div 
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(circle at center, rgba(11,15,23,0.3) 0%, rgba(11,15,23,0.75) 75%, rgba(11,15,23,0.95) 100%)',
-              pointerEvents: 'none'
-            }} 
-          />
-          <div 
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '160px',
-              background: 'linear-gradient(to bottom, rgba(9,13,22,0.9) 0%, transparent 100%)',
-              pointerEvents: 'none'
-            }} 
-          />
-          <div 
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: '200px',
-              background: 'linear-gradient(to top, rgba(9,13,22,1) 0%, rgba(9,13,22,0.6) 50%, transparent 100%)',
-              pointerEvents: 'none'
-            }} 
-          />
-        </div>
+        {/* Cinematic Vignette Overlays for crisp text contrast */}
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at center, rgba(9,13,22,0.25) 0%, rgba(9,13,22,0.7) 75%, rgba(9,13,22,0.95) 100%)',
+            pointerEvents: 'none',
+            zIndex: 2
+          }} 
+        />
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '160px',
+            background: 'linear-gradient(to bottom, rgba(9,13,22,0.92) 0%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 2
+          }} 
+        />
+        <div 
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '200px',
+            background: 'linear-gradient(to top, rgba(9,13,22,1) 0%, rgba(9,13,22,0.65) 50%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 2
+          }} 
+        />
 
         {/* ========================================================
-            STAGE 1: GRAND HERO INTRO (Scroll: 0% -> 35%)
+            STAGE 1: GRAND INTRO (Frames 0 -> 40)
             ======================================================== */}
         <div 
           className="hero-stage hero-stage-1"
@@ -240,7 +274,7 @@ export default function HeroSection() {
             opacity: stage1Opacity,
             transform: stage1Transform,
             pointerEvents: stage1Opacity > 0.15 ? 'auto' : 'none',
-            transition: 'opacity 0.2s ease-out, transform 0.2s ease-out'
+            transition: 'opacity 0.15s ease-out, transform 0.15s ease-out'
           }}
         >
           <div style={{ maxWidth: '680px' }}>
@@ -391,7 +425,7 @@ export default function HeroSection() {
         </div>
 
         {/* ========================================================
-            STAGE 2: CINEMATIC CRAFT REVEAL (Scroll: 35% -> 75%)
+            STAGE 2: FRAME-BY-FRAME CRAFT REVEAL (Frames 40 -> 85)
             ======================================================== */}
         <div 
           className="hero-stage hero-stage-2"
@@ -402,14 +436,13 @@ export default function HeroSection() {
             maxWidth: '1240px',
             padding: '0 24px',
             opacity: stage2Opacity,
-            transform: `scale(${stage2Scale})`,
             pointerEvents: stage2Opacity > 0.2 ? 'auto' : 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out'
+            transition: 'opacity 0.2s ease-out'
           }}
         >
           {/* Centered Golden Eyebrow */}
@@ -427,7 +460,7 @@ export default function HeroSection() {
               textShadow: '0 2px 8px rgba(0,0,0,0.8)'
             }}
           >
-            <Sparkles size={16} /> The Art of Live Baking
+            <Sparkles size={16} /> Live Master Decor in Action
           </div>
 
           <h2 
@@ -522,7 +555,7 @@ export default function HeroSection() {
         </div>
 
         {/* ========================================================
-            STAGE 3: CALL TO EXPLORE MENU (Scroll: 75% -> 100%)
+            STAGE 3: CALL TO EXPLORE MENU (Frames 85 -> 120)
             ======================================================== */}
         <div 
           className="hero-stage hero-stage-3"
@@ -540,7 +573,7 @@ export default function HeroSection() {
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out'
+            transition: 'opacity 0.2s ease-out, transform 0.2s ease-out'
           }}
         >
           <div 
@@ -600,9 +633,8 @@ export default function HeroSection() {
         </div>
 
         {/* ========================================================
-            FLOATING CONTROLS & HUD
+            HUD CONTROLS: Autoplay Toggle & Frame Indicator
             ======================================================== */}
-        {/* Floating Sound & Play Toggle in Bottom Right */}
         <div 
           style={{
             position: 'absolute',
@@ -614,11 +646,11 @@ export default function HeroSection() {
             gap: '8px'
           }}
         >
-          {/* Mute / Unmute Button */}
+          {/* Autoplay / Scroll Mode Pill */}
           <button
             type="button"
-            onClick={toggleMute}
-            aria-label={isMuted ? "Unmute video sound" : "Mute video sound"}
+            onClick={() => setIsAutoPlay(!isAutoPlay)}
+            aria-label={isAutoPlay ? "Switch to Scroll Scrub Mode" : "Switch to Autoplay Mode"}
             style={{
               background: 'rgba(15, 23, 42, 0.75)',
               backdropFilter: 'blur(10px)',
@@ -637,46 +669,21 @@ export default function HeroSection() {
               transition: 'all 0.2s ease'
             }}
           >
-            {isMuted ? (
+            {isAutoPlay ? (
               <>
-                <VolumeX size={15} color="#94a3b8" />
-                <span>Sound Off</span>
+                <Pause size={14} color="#fb923c" />
+                <span style={{ color: '#fb923c' }}>Playing (Tap for Scroll)</span>
               </>
             ) : (
               <>
-                <Volume2 size={15} color="#fb923c" />
-                <span style={{ color: '#fb923c' }}>Sound On</span>
+                <Play size={14} color="#94a3b8" />
+                <span>Scroll Mode</span>
               </>
             )}
           </button>
-
-          {/* Continuous Play / Scrub Toggle */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            aria-label={isPlaying ? "Pause video" : "Play video"}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'rgba(15, 23, 42, 0.75)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-          </button>
         </div>
 
-        {/* Scroll Indicator Prompt (Visible during Stage 1) */}
+        {/* Scroll Indicator Prompt (Stage 1) */}
         {scrollProgress < 0.25 && (
           <div 
             onClick={scrollToNext}
@@ -697,7 +704,7 @@ export default function HeroSection() {
             }}
           >
             <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>
-              Scroll To Experience Live Craft
+              Scroll To Reveal Frame By Frame
             </span>
             <div 
               style={{
@@ -724,7 +731,7 @@ export default function HeroSection() {
           </div>
         )}
 
-        {/* Cinematic Scroll Progress Bar at very bottom */}
+        {/* Golden Scroll Progress Bar */}
         <div 
           style={{
             position: 'absolute',
@@ -739,10 +746,10 @@ export default function HeroSection() {
           <div 
             style={{
               height: '100%',
-              width: `${scrollProgress * 100}%`,
+              width: `${(currentFrame / (TOTAL_FRAMES - 1)) * 100}%`,
               background: 'linear-gradient(90deg, #ea580c 0%, #f43f5e 50%, #fb923c 100%)',
               boxShadow: '0 0 10px rgba(251, 146, 60, 0.8)',
-              transition: 'width 0.05s linear'
+              transition: 'width 0.04s linear'
             }}
           />
         </div>
