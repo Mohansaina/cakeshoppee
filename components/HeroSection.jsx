@@ -6,7 +6,7 @@ import {
   Sparkles, Award, Clock, ShieldCheck 
 } from 'lucide-react';
 
-const TOTAL_FRAMES = 120;
+const TOTAL_FRAMES = 140;
 
 export default function HeroSection() {
   const containerRef = useRef(null);
@@ -107,7 +107,7 @@ export default function HeroSection() {
 
     // Preload frame 0 immediately
     const firstImg = new Image();
-    firstImg.src = `/hero-frames/frame_000.webp`;
+    firstImg.src = `/hero-frames/frame_000.webp?v=flow-v2`;
     firstImg.onload = () => {
       if (firstImg.decode) {
         firstImg.decode().then(() => drawBlendFrame(0)).catch(() => drawBlendFrame(0));
@@ -119,7 +119,7 @@ export default function HeroSection() {
     for (let i = 0; i < TOTAL_FRAMES; i++) {
       const img = new Image();
       const numStr = String(i).padStart(3, '0');
-      img.src = `/hero-frames/frame_${numStr}.webp`;
+      img.src = `/hero-frames/frame_${numStr}.webp?v=flow-v2`;
       
       const onImageReady = () => {
         loaded++;
