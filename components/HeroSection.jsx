@@ -80,19 +80,31 @@ export default function HeroSection() {
     const imgA = imagesRef.current[frameA];
     if (!imgA || !imgA.complete || imgA.naturalWidth === 0) return;
 
-    // 1. Draw primary frame
-    ctx.globalAlpha = 1;
-    ctx.drawImage(imgA, bounds.x, bounds.y, bounds.w, bounds.h);
+    // Fast path: if near integer boundary, avoid second full-screen draw call
+    if (frameB === frameA || rawFraction < 0.03) {
+      ctx.globalAlpha = 1;
+      ctx.drawImage(imgA, bounds.x, bounds.y, bounds.w, bounds.h);
+      return;
+    }
 
-    // 2. Optical crossfade blend with next frame using Hermite smoothstep (zero boundary acceleration)
-    if (frameB !== frameA && rawFraction > 0.001) {
+    if (rawFraction > 0.97) {
       const imgB = imagesRef.current[frameB];
       if (imgB && imgB.complete && imgB.naturalWidth > 0) {
-        const smoothAlpha = rawFraction * rawFraction * (3 - 2 * rawFraction);
-        ctx.globalAlpha = smoothAlpha;
-        ctx.drawImage(imgB, bounds.x, bounds.y, bounds.w, bounds.h);
         ctx.globalAlpha = 1;
+        ctx.drawImage(imgB, bounds.x, bounds.y, bounds.w, bounds.h);
+        return;
       }
+    }
+
+    // Dual-frame crossfade
+    ctx.globalAlpha = 1;
+    ctx.drawImage(imgA, bounds.x, bounds.y, bounds.w, bounds.h);
+    const imgB = imagesRef.current[frameB];
+    if (imgB && imgB.complete && imgB.naturalWidth > 0) {
+      const smoothAlpha = rawFraction * rawFraction * (3 - 2 * rawFraction);
+      ctx.globalAlpha = smoothAlpha;
+      ctx.drawImage(imgB, bounds.x, bounds.y, bounds.w, bounds.h);
+      ctx.globalAlpha = 1;
     }
   }, []);
 
@@ -137,11 +149,11 @@ export default function HeroSection() {
     }
   }, []);
 
-  // Update canvas resolution and cache aspect-fit bounds
+  // Update canvas resolution (capped at DPR 1.25 for 1280x720 video to guarantee maximum 60-120fps)
   const updateCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
     const rect = canvas.getBoundingClientRect();
 
     if (rect.width > 0 && rect.height > 0) {
@@ -228,20 +240,20 @@ export default function HeroSection() {
 
     const renderLoop = () => {
       if (!isAutoPlay) {
-        // 1. Smooth momentum interpolation for canvas frame
+        // 1. Snappy & ultra-fluid momentum interpolation for canvas frame
         const frameDiff = targetFrameRef.current - currentFrameRef.current;
         if (Math.abs(frameDiff) > 0.001) {
-          currentFrameRef.current += frameDiff * 0.055;
+          currentFrameRef.current += frameDiff * 0.095;
           drawBlendFrame(currentFrameRef.current);
         } else if (currentFrameRef.current !== targetFrameRef.current) {
           currentFrameRef.current = targetFrameRef.current;
           drawBlendFrame(currentFrameRef.current);
         }
 
-        // 2. Smooth momentum interpolation for text reveal & overlays
+        // 2. Snappy momentum interpolation for text reveal & overlays
         const progDiff = targetProgressRef.current - currentProgressRef.current;
         if (Math.abs(progDiff) > 0.0002) {
-          currentProgressRef.current += progDiff * 0.07;
+          currentProgressRef.current += progDiff * 0.10;
           updateVisuals(currentProgressRef.current);
         } else if (currentProgressRef.current !== targetProgressRef.current) {
           currentProgressRef.current = targetProgressRef.current;
