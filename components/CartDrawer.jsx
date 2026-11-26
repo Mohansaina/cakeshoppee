@@ -107,6 +107,7 @@ export default function CartDrawer() {
   const [deliveryEta, setDeliveryEta] = useState(null); // e.g. "20-25 mins"
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
+  const [showMapPreview, setShowMapPreview] = useState(false);
   
   // Additional order details
   const [cakeMessage, setCakeMessage] = useState('');
