@@ -67,12 +67,15 @@ export default function CartDrawer() {
 
   // Quick 1-Tap Narsipatnam Popular Spots
   const QUICK_SPOTS = [
-    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "RTC Complex Road", landmark: "Near RTC Main Gate", lat: 17.6710, lng: 82.6150, dist: 0.9, eta: "20-25 mins" },
+    { label: "📍 Tagarapu Veedhi", area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office", lat: 17.6675, lng: 82.6115, dist: 0.3, eta: "15-20 mins" },
     { label: "🛍️ Abes Centre / Main Rd", area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center", lat: 17.66635, lng: 82.61015, dist: 0.1, eta: "15-20 mins" },
+    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "RTC Complex Road", landmark: "Near RTC Main Gate", lat: 17.6710, lng: 82.6150, dist: 0.9, eta: "20-25 mins" },
+    { label: "🏘️ Ayyannapalem", area: "Other Narsipatnam Locality", street: "Ayyannapalem Road", landmark: "Near Ayyannapalem Junction", lat: 17.6660, lng: 82.6090, dist: 0.4, eta: "15-20 mins" },
     { label: "🏥 Area Hospital", area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Near Area Hospital", lat: 17.6625, lng: 82.6130, dist: 0.7, eta: "20-25 mins" },
     { label: "🛕 Sai Baba Temple", area: "Balighattam & Temple Road", street: "Temple Road", landmark: "Near Shirdi Sai Temple", lat: 17.6540, lng: 82.6030, dist: 1.6, eta: "25-30 mins" },
     { label: "🎓 College Road", area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College", lat: 17.6740, lng: 82.6080, dist: 1.1, eta: "20-25 mins" },
     { label: "🏘️ Pedaboddepalli", area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Pedaboddepalli Junction", lat: 17.6820, lng: 82.6200, dist: 2.1, eta: "25-35 mins" },
+    { label: "🏡 Shanti Nagar", area: "Shanti Nagar / Housing Board", street: "Shanti Nagar Main Road", landmark: "Near Housing Board Colony", lat: 17.6690, lng: 82.6050, dist: 0.8, eta: "20-25 mins" },
     { label: "🌿 Balighattam", area: "Balighattam & Temple Road", street: "Balighattam Road", landmark: "Near Varaha River", lat: 17.6580, lng: 82.6050, dist: 1.4, eta: "25-30 mins" }
   ];
 
@@ -151,12 +154,14 @@ export default function CartDrawer() {
             if (geo.success) {
               setDetectedAddress(geo.address);
               if (geo.area) setSelectedArea(geo.area);
-              if (geo.street && (!streetName || !streetName.trim())) setStreetName(geo.street);
-              if (geo.landmark && (!landmark || !landmark.trim())) setLandmark(geo.landmark);
+              if (geo.street) setStreetName(geo.street);
+              if (geo.landmark) setLandmark(geo.landmark);
               if (geo.pincode) setPincode(geo.pincode);
               if (geo.distanceKm !== undefined) setDeliveryDistance(geo.distanceKm);
               if (geo.estimatedTime) setDeliveryEta(geo.estimatedTime);
-              if (!houseNumber || !houseNumber.trim()) setHouseNumber('My Current Location');
+              if (!houseNumber || !houseNumber.trim() || houseNumber === 'My Current Location') {
+                setHouseNumber('My Current Location');
+              }
               success = true;
             }
           }
