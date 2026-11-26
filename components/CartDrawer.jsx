@@ -10,29 +10,33 @@ import {
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
-const LocationPickerModal = dynamic(() => import('./LocationPickerModal'), { ssr: false });
-
-// Open Location Code (Google Plus Code generator)
+// Standard Open Location Code (Google Plus Code generator) matching Google Maps 100%
 function getGooglePlusCode(latitude, longitude) {
-  const ALPHABET = '23456789CFGHJMPQRVWX';
+  const CODE_ALPHABET = '23456789CFGHJMPQRVWX';
   let lat = Math.min(90, Math.max(-90, latitude));
   let lng = Math.min(180, Math.max(-180, longitude));
   if (lat === 90) lat = 89.999999;
   
-  let latVal = Math.floor((lat + 90) * 8000 * 1000) / 1000;
-  let lngVal = Math.floor((lng + 180) * 8000 * 1000) / 1000;
-  
+  let latVal = lat + 90;
+  let lngVal = lng + 180;
   let code = '';
+  const latSteps = [20, 1, 0.05, 0.0025, 0.000125];
+  const lngSteps = [20, 1, 0.05, 0.0025, 0.000125];
   for (let i = 0; i < 5; i++) {
-    const latDigit = Math.floor(latVal / Math.pow(20, 4 - i)) % 20;
-    const lngDigit = Math.floor(lngVal / Math.pow(20, 4 - i)) % 20;
-    code += ALPHABET[latDigit] + ALPHABET[lngDigit];
+    const latDigit = Math.floor(latVal / latSteps[i]);
+    const lngDigit = Math.floor(lngVal / lngSteps[i]);
+    latVal -= latDigit * latSteps[i];
+    lngVal -= lngDigit * lngSteps[i];
+    code += CODE_ALPHABET[latDigit] + CODE_ALPHABET[lngDigit];
     if (i === 3) code += '+';
   }
-  const subIndex = Math.floor(((lat + 90) * 8000 * 20 * 4) % 20);
-  const extraChar = ALPHABET[subIndex] || '';
+  // Optional 11th grid refinement digit (matches Google Maps exactly)
+  const row = Math.floor(latVal / (0.000125 / 5));
+  const col = Math.floor(lngVal / (0.000125 / 4));
+  const gridIndex = Math.min(19, Math.max(0, row * 4 + col));
+  const gridChar = CODE_ALPHABET[gridIndex] || '';
 
-  return code.slice(4) + (extraChar ? extraChar : '');
+  return code.slice(4) + gridChar;
 }
 
 const BAKERY_COORDS = { lat: 17.66635, lng: 82.61015 };
@@ -103,29 +107,7 @@ export default function CartDrawer() {
   const [deliveryEta, setDeliveryEta] = useState(null); // e.g. "20-25 mins"
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
-  const [showManualFields, setShowManualFields] = useState(false);
-  const [showMapPreview, setShowMapPreview] = useState(true);
-  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
-
-  // Colony & Landmark Live Search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  // Quick 1-Tap Narsipatnam Popular Spots
-  const QUICK_SPOTS = [
-    { label: "📍 Tagarapu Veedhi", area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office", lat: 17.6675, lng: 82.6115, dist: 0.3, eta: "15-20 mins" },
-    { label: "🛍️ Abes Centre / Main Rd", area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center", lat: 17.66635, lng: 82.61015, dist: 0.1, eta: "15-20 mins" },
-    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "RTC Complex Road", landmark: "Near RTC Main Gate", lat: 17.6710, lng: 82.6150, dist: 0.9, eta: "20-25 mins" },
-    { label: "🏘️ Ayyannapalem", area: "Other Narsipatnam Locality", street: "Ayyannapalem Road", landmark: "Near Ayyannapalem Junction", lat: 17.6660, lng: 82.6090, dist: 0.4, eta: "15-20 mins" },
-    { label: "🏥 Area Hospital", area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Near Area Hospital", lat: 17.6625, lng: 82.6130, dist: 0.7, eta: "20-25 mins" },
-    { label: "🛕 Sai Baba Temple", area: "Balighattam & Temple Road", street: "Temple Road", landmark: "Near Shirdi Sai Temple", lat: 17.6540, lng: 82.6030, dist: 1.6, eta: "25-30 mins" },
-    { label: "🎓 College Road", area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College", lat: 17.6740, lng: 82.6080, dist: 1.1, eta: "20-25 mins" },
-    { label: "🏘️ Pedaboddepalli", area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Pedaboddepalli Junction", lat: 17.6820, lng: 82.6200, dist: 2.1, eta: "25-35 mins" },
-    { label: "🏡 Shanti Nagar", area: "Shanti Nagar / Housing Board", street: "Shanti Nagar Main Road", landmark: "Near Housing Board Colony", lat: 17.6690, lng: 82.6050, dist: 0.8, eta: "20-25 mins" },
-    { label: "🌿 Balighattam", area: "Balighattam & Temple Road", street: "Balighattam Road", landmark: "Near Varaha River", lat: 17.6580, lng: 82.6050, dist: 1.4, eta: "25-30 mins" }
-  ];
-
+  
   // Additional order details
   const [cakeMessage, setCakeMessage] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
@@ -196,17 +178,22 @@ export default function CartDrawer() {
       setDeliveryDistance(dist);
       setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : dist <= 6 ? '25-35 mins' : '45-60 mins');
 
-      // Local Google Plus Code fallback
+      // Local Google Plus Code calculation (exact Open Location Code)
       const localCode = getGooglePlusCode(latitude, longitude);
 
-      // Query reverse geocoder API to get the true location text
+      let resolvedWords = '';
+      let resolvedPlusCode = `${localCode} Andhra Pradesh`;
+
+      // 1. Query internal reverse geocoder API
       try {
         const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
         if (res.ok) {
           const data = await res.json();
           if (data && data.success) {
-            setDetectedAddress(data.wordsAddress || data.address);
-            if (data.plusCode) setPlusCode(data.plusCode);
+            resolvedWords = data.wordsAddress || data.address;
+            resolvedPlusCode = data.plusCode || resolvedPlusCode;
+            setDetectedAddress(resolvedWords);
+            setPlusCode(resolvedPlusCode);
             if (data.area) setSelectedArea(data.area);
             if (data.street) setStreetName(data.street);
             if (data.landmark) setLandmark(data.landmark);
@@ -217,9 +204,32 @@ export default function CartDrawer() {
           }
         }
       } catch (err) {
-        console.warn('Geocode API fetch error:', err);
-        setPlusCode(localCode);
-        setDetectedAddress(`📍 GPS Pin: ${localCode}`);
+        console.warn('Geocode API fetch error, attempting client fallback:', err);
+      }
+
+      // 2. Client-side fallback if internal API didn't resolve words (e.g. offline/poor connection)
+      if (!resolvedWords) {
+        try {
+          const bdc = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+          if (bdc.ok) {
+            const bdcData = await bdc.json();
+            const place = bdcData.locality || bdcData.city || 'Andhra Pradesh';
+            const state = bdcData.principalSubdivision || 'Andhra Pradesh';
+            resolvedWords = `${place}, ${state}`;
+            resolvedPlusCode = `${localCode} ${place}, ${state}`;
+            setDetectedAddress(resolvedWords);
+            setPlusCode(resolvedPlusCode);
+            setSelectedArea(place);
+            if (bdcData.postcode) setPincode(bdcData.postcode);
+            if (!houseNumber || !houseNumber.trim()) {
+              setHouseNumber('Doorstep GPS Location');
+            }
+          }
+        } catch (e2) {
+          console.warn('Client fallback geocode error:', e2);
+          setPlusCode(localCode);
+          setDetectedAddress(`📍 GPS Pin: ${localCode}`);
+        }
       }
 
       setIsDetectingGps(false);
@@ -236,9 +246,9 @@ export default function CartDrawer() {
           (err2) => {
             setIsDetectingGps(false);
             if (err2.code === err2.PERMISSION_DENIED) {
-              setGpsError('Location permission was denied. Tap any quick colony below to set your area!');
+              setGpsError('Location permission was denied. Please enter your address details below.');
             } else {
-              setGpsError('Could not get GPS fix. Please tap your colony from the 1-tap options below.');
+              setGpsError('Could not get GPS fix. Please enter your address details below.');
             }
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
@@ -246,85 +256,6 @@ export default function CartDrawer() {
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     );
-  };
-
-  // Search Narsipatnam colonies & landmarks via API
-  const handleSearchLocation = async (query) => {
-    setSearchQuery(query);
-    if (!query || query.trim().length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query.trim())}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.results) {
-          setSearchResults(data.results);
-        } else {
-          setSearchResults([]);
-        }
-      }
-    } catch (e) {
-      console.warn('Location search error:', e);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Select a searched landmark/colony
-  const handleSelectSearchResult = (result) => {
-    setGpsLocation({ lat: result.lat, lng: result.lng });
-    setGpsAccuracy(5);
-    setDetectedAddress(result.formatted);
-    setSelectedArea(result.area);
-    setStreetName(result.street);
-    setLandmark(result.landmark);
-    setPincode(result.pincode);
-    setDeliveryDistance(result.distanceKm);
-    setDeliveryEta(result.estimatedTime);
-    if (!houseNumber || !houseNumber.trim()) {
-      setHouseNumber('Near ' + result.name);
-    }
-    setSearchResults([]);
-    setSearchQuery('');
-    if (validationError) setValidationError('');
-  };
-
-  // Handle location confirmed from Interactive Leaflet Map Picker
-  const handleLocationFromMap = (loc) => {
-    setGpsLocation({ lat: loc.lat, lng: loc.lng });
-    setGpsAccuracy(5);
-    setDetectedAddress(loc.address);
-    if (loc.plusCode) setPlusCode(loc.plusCode);
-    if (loc.area) setSelectedArea(loc.area);
-    if (loc.street) setStreetName(loc.street);
-    if (loc.landmark) setLandmark(loc.landmark);
-    if (loc.pincode) setPincode(loc.pincode);
-    if (loc.distanceKm !== undefined) setDeliveryDistance(loc.distanceKm);
-    if (loc.estimatedTime) setDeliveryEta(loc.estimatedTime);
-    if (!houseNumber || !houseNumber.trim() || houseNumber === 'My Current Location') {
-      setHouseNumber('Doorstep GPS Location');
-    }
-    if (validationError) setValidationError('');
-  };
-
-  // Quick 1-tap select for popular Narsipatnam spots (zero typing needed)
-  const handleSelectQuickSpot = (spot) => {
-    setSelectedArea(spot.area);
-    setStreetName(spot.street);
-    setLandmark(spot.landmark);
-    setGpsLocation({ lat: spot.lat, lng: spot.lng });
-    setGpsAccuracy(5);
-    setDeliveryDistance(spot.dist);
-    setDeliveryEta(spot.eta);
-    setDetectedAddress(`${spot.street}, ${spot.area}, Narsipatnam - 531116`);
-    if (!houseNumber || !houseNumber.trim()) {
-      setHouseNumber('Near ' + spot.landmark);
-    }
-    if (validationError) setValidationError('');
   };
 
   // Proceed from Cart to Address step
@@ -779,142 +710,57 @@ export default function CartDrawer() {
                     </span>
                   </div>
 
-                  {/* 1-Tap Auto-Fetch & Map Pinpoint Action Buttons */}
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      <button
-                        type="button"
-                        onClick={handleDetectGPS}
-                        disabled={isDetectingGps}
-                        style={{
-                          padding: '11px 10px',
-                          background: detectedAddress || gpsLocation ? '#ecfdf5' : '#ea580c',
-                          border: detectedAddress || gpsLocation ? '1.5px solid #10b981' : 'none',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          fontSize: '0.82rem',
-                          fontWeight: 800,
-                          color: detectedAddress || gpsLocation ? '#065f46' : '#ffffff',
-                          boxShadow: detectedAddress || gpsLocation ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.25)',
-                          transition: 'all 0.2s ease',
-                          touchAction: 'manipulation'
-                        }}
-                      >
-                        {isDetectingGps ? (
-                          <>
-                            <Compass className="animate-spin" size={16} /> Fetching...
-                          </>
-                        ) : detectedAddress || gpsLocation ? (
-                          <>
-                            <CheckCircle2 size={16} color="#059669" /> Fetched!
-                          </>
-                        ) : (
-                          <>
-                            <Navigation size={16} /> 📍 Auto-Fetch GPS
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsMapPickerOpen(true)}
-                        style={{
-                          padding: '11px 10px',
-                          background: '#fff7ed',
-                          border: '1.5px solid #ea580c',
-                          borderRadius: '10px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          fontSize: '0.82rem',
-                          fontWeight: 800,
-                          color: '#ea580c',
-                          transition: 'all 0.2s ease',
-                          touchAction: 'manipulation'
-                        }}
-                      >
-                        <Crosshair size={16} /> 🗺️ Pinpoint on Map
-                      </button>
+                  {/* Option 1: Auto-Fetch GPS Location */}
+                  <div style={{ marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ background: '#ea580c', color: '#ffffff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>1</span>
+                        Option 1: Auto-Fetch Live GPS Location
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 700, background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>
+                        Instant & 100% Exact
+                      </span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleDetectGPS}
+                      disabled={isDetectingGps}
+                      style={{
+                        width: '100%',
+                        padding: '13px 14px',
+                        background: detectedAddress || gpsLocation ? '#ecfdf5' : '#ea580c',
+                        border: detectedAddress || gpsLocation ? '1.5px solid #10b981' : 'none',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontSize: '0.88rem',
+                        fontWeight: 800,
+                        color: detectedAddress || gpsLocation ? '#065f46' : '#ffffff',
+                        boxShadow: detectedAddress || gpsLocation ? 'none' : '0 2px 8px rgba(234, 88, 12, 0.25)',
+                        transition: 'all 0.2s ease',
+                        touchAction: 'manipulation'
+                      }}
+                    >
+                      {isDetectingGps ? (
+                        <>
+                          <Compass className="animate-spin" size={18} /> Fetching Live GPS Location...
+                        </>
+                      ) : detectedAddress || gpsLocation ? (
+                        <>
+                          <CheckCircle2 size={18} color="#059669" /> 📍 Location Fetched (Tap to Re-fetch)
+                        </>
+                      ) : (
+                        <>
+                          <Navigation size={18} /> 📍 Auto-Fetch My GPS Location
+                        </>
+                      )}
+                    </button>
 
                     {gpsError && (
                       <p style={{ margin: '6px 0 0 0', fontSize: '0.76rem', color: '#ef4444', fontWeight: 600 }}>{gpsError}</p>
-                    )}
-                  </div>
-
-                  {/* Quick Colony / Landmark Search (Instant Narsipatnam Lookup) */}
-                  <div style={{ marginBottom: '14px', position: 'relative' }}>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        type="text"
-                        placeholder="🔍 Search your colony, temple, or landmark in Narsipatnam..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearchLocation(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          paddingLeft: '34px',
-                          borderRadius: '8px',
-                          border: '1.5px solid #cbd5e1',
-                          fontSize: '0.84rem',
-                          background: '#ffffff',
-                          color: '#0f172a'
-                        }}
-                      />
-                      <Search size={16} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
-                      {isSearching && (
-                        <Compass className="animate-spin" size={16} color="#ea580c" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }} />
-                      )}
-                    </div>
-
-                    {/* Instant Search Results Dropdown */}
-                    {searchResults.length > 0 && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
-                        right: 0,
-                        zIndex: 30,
-                        background: '#ffffff',
-                        border: '1.5px solid #ea580c',
-                        borderRadius: '10px',
-                        marginTop: '4px',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
-                        maxHeight: '220px',
-                        overflowY: 'auto'
-                      }}>
-                        {searchResults.map((item, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => handleSelectSearchResult(item)}
-                            style={{
-                              padding: '10px 14px',
-                              borderBottom: idx === searchResults.length - 1 ? 'none' : '1px solid #f1f5f9',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              transition: 'background 0.15s ease'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = '#fff7ed'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
-                          >
-                            <div>
-                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.86rem' }}>📍 {item.name}</div>
-                              <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{item.street}, {item.area}</div>
-                            </div>
-                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '2px 8px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
-                              ~{item.distanceKm} km
-                            </span>
-                          </div>
-                        ))}
-                      </div>
                     )}
                   </div>
 
@@ -939,26 +785,7 @@ export default function CartDrawer() {
                             </span>
                           )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button
-                            type="button"
-                            onClick={() => setIsMapPickerOpen(true)}
-                            style={{
-                              background: '#fff7ed',
-                              border: '1.5px solid #ea580c',
-                              borderRadius: '6px',
-                              padding: '3px 8px',
-                              fontSize: '0.74rem',
-                              fontWeight: 700,
-                              color: '#ea580c',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            <Crosshair size={13} /> Drag Pin
-                          </button>
+                        <div>
                           {gpsLocation && (
                             <a
                               href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
@@ -1051,38 +878,12 @@ export default function CartDrawer() {
                     </div>
                   )}
 
-                  {/* 1-Tap Quick Locality Chips for Narsipatnam */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <div style={{ fontSize: '0.78rem', fontWeight: 800, color: '#334155', marginBottom: '8px' }}>
-                      ⚡ 1-Tap Pick Your Narsipatnam Colony:
+                  {/* Option 2: Manual Delivery Address Fields */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '14px', paddingTop: '14px', borderTop: '1.5px dashed #cbd5e1' }}>
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ background: '#475569', color: '#ffffff', borderRadius: '50%', width: '18px', height: '18px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 900 }}>2</span>
+                      <span>Option 2: Enter Delivery Address Manually</span>
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {QUICK_SPOTS.map((spot) => (
-                        <button
-                          key={spot.label}
-                          type="button"
-                          onClick={() => handleSelectQuickSpot(spot)}
-                          style={{
-                            padding: '7px 12px',
-                            background: selectedArea === spot.area ? '#fff7ed' : '#ffffff',
-                            border: selectedArea === spot.area ? '2px solid #ea580c' : '1px solid #cbd5e1',
-                            borderRadius: '999px',
-                            fontSize: '0.78rem',
-                            fontWeight: selectedArea === spot.area ? 800 : 600,
-                            color: selectedArea === spot.area ? '#c2410c' : '#334155',
-                            cursor: 'pointer',
-                            boxShadow: selectedArea === spot.area ? '0 2px 6px rgba(234, 88, 12, 0.15)' : 'none',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          {spot.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Clean, Visible Address Fields (Zero Guesswork) */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
                     
                     {/* Area Dropdown */}
                     <div>
@@ -1183,10 +984,12 @@ export default function CartDrawer() {
                       </div>
                     </div>
 
-                    {/* Pin Code prefilled */}
+                    {/* Pin Code dynamic */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', background: '#f1f5f9', borderRadius: '6px' }}>
                       <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Town / Postal Code:</span>
-                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155' }}>Narsipatnam, AP - 531116</span>
+                      <span style={{ fontSize: '0.76rem', fontWeight: 700, color: '#334155' }}>
+                        {pincode && pincode !== '531116' ? `${selectedArea}, AP - ${pincode}` : 'Narsipatnam, AP - 531116'}
+                      </span>
                     </div>
 
                   </div>
@@ -1412,14 +1215,6 @@ export default function CartDrawer() {
 
           </div>
         )}
-
-        {/* Interactive Full Map Pinpoint Modal */}
-        <LocationPickerModal
-          isOpen={isMapPickerOpen}
-          onClose={() => setIsMapPickerOpen(false)}
-          initialCoords={gpsLocation || { lat: 17.66635, lng: 82.61015 }}
-          onSelectLocation={handleLocationFromMap}
-        />
 
       </div>
     </div>

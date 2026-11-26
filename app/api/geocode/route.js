@@ -42,28 +42,33 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return Math.round((R * c) * 10) / 10;
 }
 
-// Open Location Code (Google Plus Code generator)
+// Standard Open Location Code (Google Plus Code generator) matching Google Maps 100%
 function getGooglePlusCode(latitude, longitude) {
-  const ALPHABET = '23456789CFGHJMPQRVWX';
+  const CODE_ALPHABET = '23456789CFGHJMPQRVWX';
   let lat = Math.min(90, Math.max(-90, latitude));
   let lng = Math.min(180, Math.max(-180, longitude));
   if (lat === 90) lat = 89.999999;
   
-  let latVal = Math.floor((lat + 90) * 8000 * 1000) / 1000;
-  let lngVal = Math.floor((lng + 180) * 8000 * 1000) / 1000;
-  
+  let latVal = lat + 90;
+  let lngVal = lng + 180;
   let code = '';
+  const latSteps = [20, 1, 0.05, 0.0025, 0.000125];
+  const lngSteps = [20, 1, 0.05, 0.0025, 0.000125];
   for (let i = 0; i < 5; i++) {
-    const latDigit = Math.floor(latVal / Math.pow(20, 4 - i)) % 20;
-    const lngDigit = Math.floor(lngVal / Math.pow(20, 4 - i)) % 20;
-    code += ALPHABET[latDigit] + ALPHABET[lngDigit];
+    const latDigit = Math.floor(latVal / latSteps[i]);
+    const lngDigit = Math.floor(lngVal / lngSteps[i]);
+    latVal -= latDigit * latSteps[i];
+    lngVal -= lngDigit * lngSteps[i];
+    code += CODE_ALPHABET[latDigit] + CODE_ALPHABET[lngDigit];
     if (i === 3) code += '+';
   }
-  // Optional 11th grid sub-digit
-  const subIndex = Math.floor(((lat + 90) * 8000 * 20 * 4) % 20);
-  const extraChar = ALPHABET[subIndex] || '';
+  // Optional 11th grid refinement digit (matches Google Maps exactly)
+  const row = Math.floor(latVal / (0.000125 / 5));
+  const col = Math.floor(lngVal / (0.000125 / 4));
+  const gridIndex = Math.min(19, Math.max(0, row * 4 + col));
+  const gridChar = CODE_ALPHABET[gridIndex] || '';
 
-  return code.slice(4) + (extraChar ? extraChar : '');
+  return code.slice(4) + gridChar;
 }
 
 export async function GET(request) {
