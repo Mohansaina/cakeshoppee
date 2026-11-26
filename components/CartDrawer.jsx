@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { 
   X, Trash2, Plus, Minus, Send, ShoppingBag, Printer, 
   AlertCircle, MapPin, Navigation, CheckCircle2, ArrowLeft, ArrowRight,
-  Clock, Phone, User, Home, Building2, Compass, ShieldCheck
+  Clock, Phone, User, Home, Building2, Compass, ShieldCheck, Search
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
@@ -53,20 +53,27 @@ export default function CartDrawer() {
   const [gpsLocation, setGpsLocation] = useState(null); // { lat, lng }
   const [gpsAccuracy, setGpsAccuracy] = useState(null); // in meters
   const [detectedAddress, setDetectedAddress] = useState('');
+  const [deliveryDistance, setDeliveryDistance] = useState(null); // in km from bakery
+  const [deliveryEta, setDeliveryEta] = useState(null); // e.g. "20-25 mins"
   const [isDetectingGps, setIsDetectingGps] = useState(false);
   const [gpsError, setGpsError] = useState('');
   const [showManualFields, setShowManualFields] = useState(false);
   const [showMapPreview, setShowMapPreview] = useState(true);
 
+  // Colony & Landmark Live Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
   // Quick 1-Tap Narsipatnam Popular Spots
   const QUICK_SPOTS = [
-    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "Bus Stand Road", landmark: "Near RTC Main Gate" },
-    { label: "🛍️ Abes Centre / Main Rd", area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Near Abes Centre / Beside Himalaya Juice" },
-    { label: "🏥 Area Hospital", area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Near Area Hospital" },
-    { label: "🛕 Sai Baba Temple", area: "Balighattam & Temple Road", street: "Temple Road", landmark: "Near Shirdi Sai Temple" },
-    { label: "🎓 College Road", area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College" },
-    { label: "🏘️ Pedaboddepalli", area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Pedaboddepalli Junction" },
-    { label: "🌿 Balighattam", area: "Balighattam & Temple Road", street: "Balighattam Road", landmark: "Near Varaha River / Temple" }
+    { label: "🏢 RTC Complex", area: "Near RTC Bus Stand / Complex", street: "RTC Complex Road", landmark: "Near RTC Main Gate", lat: 17.6710, lng: 82.6150, dist: 0.9, eta: "20-25 mins" },
+    { label: "🛍️ Abes Centre / Main Rd", area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center", lat: 17.66635, lng: 82.61015, dist: 0.1, eta: "15-20 mins" },
+    { label: "🏥 Area Hospital", area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Near Area Hospital", lat: 17.6625, lng: 82.6130, dist: 0.7, eta: "20-25 mins" },
+    { label: "🛕 Sai Baba Temple", area: "Balighattam & Temple Road", street: "Temple Road", landmark: "Near Shirdi Sai Temple", lat: 17.6540, lng: 82.6030, dist: 1.6, eta: "25-30 mins" },
+    { label: "🎓 College Road", area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College", lat: 17.6740, lng: 82.6080, dist: 1.1, eta: "20-25 mins" },
+    { label: "🏘️ Pedaboddepalli", area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Pedaboddepalli Junction", lat: 17.6820, lng: 82.6200, dist: 2.1, eta: "25-35 mins" },
+    { label: "🌿 Balighattam", area: "Balighattam & Temple Road", street: "Balighattam Road", landmark: "Near Varaha River", lat: 17.6580, lng: 82.6050, dist: 1.4, eta: "25-30 mins" }
   ];
 
   // Additional order details
@@ -118,7 +125,7 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Handle GPS location auto-detect & reverse-geocoding address fetch with two-pass fallback
+  // Handle GPS location auto-detect & reverse-geocoding via dedicated server API & client fallback
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -134,91 +141,61 @@ export default function CartDrawer() {
         setGpsAccuracy(Math.round(accuracy));
       }
 
-      // Reverse-geocode coordinates to fetch human-readable address
+      // Call our robust server-side geocoding API route
       try {
-        let fetchedAddr = '';
-        let fetchedStreet = '';
-        let fetchedArea = '';
-        let fetchedPostcode = '531116';
-
-        // Provider 1: OpenStreetMap Nominatim reverse geocoding
+        let success = false;
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.address) {
-              const a = data.address;
-              fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || a.village || '';
-              fetchedArea = a.suburb || a.residential || a.village || a.town || a.county || 'Narsipatnam';
-              fetchedPostcode = a.postcode || '531116';
-              fetchedAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}, Narsipatnam`;
+          const apiRes = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
+          if (apiRes.ok) {
+            const geo = await apiRes.json();
+            if (geo.success) {
+              setDetectedAddress(geo.address);
+              if (geo.area) setSelectedArea(geo.area);
+              if (geo.street && (!streetName || !streetName.trim())) setStreetName(geo.street);
+              if (geo.landmark && (!landmark || !landmark.trim())) setLandmark(geo.landmark);
+              if (geo.pincode) setPincode(geo.pincode);
+              if (geo.distanceKm !== undefined) setDeliveryDistance(geo.distanceKm);
+              if (geo.estimatedTime) setDeliveryEta(geo.estimatedTime);
+              if (!houseNumber || !houseNumber.trim()) setHouseNumber('My Current Location');
+              success = true;
             }
           }
-        } catch (e) {
-          console.warn('Nominatim reverse geocode error, trying BigDataCloud fallback:', e);
+        } catch (apiErr) {
+          console.warn('Local geocode API error, trying client fallback:', apiErr);
         }
 
-        // Provider 2: BigDataCloud client API fallback if Nominatim was blocked or failed
-        if (!fetchedAddr) {
+        // Client-side fallback if server API route was unreachable
+        if (!success) {
           try {
-            const res2 = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
-            if (res2.ok) {
-              const data2 = await res2.json();
-              fetchedStreet = data2.locality || data2.principalSubdivision || '';
-              fetchedArea = data2.city || 'Narsipatnam';
-              fetchedAddr = `${data2.locality || ''}, ${data2.city || 'Narsipatnam'}, ${data2.principalSubdivision || 'AP'}`;
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.address) {
+                const a = data.address;
+                const fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || '';
+                const fetchedArea = a.suburb || a.residential || a.town || 'Narsipatnam';
+                const fullAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}`;
+                setDetectedAddress(fullAddr);
+                if (fetchedStreet) setStreetName(fetchedStreet);
+                if (a.postcode) setPincode(a.postcode);
+                setLandmark(`Near ${fetchedStreet || 'GPS Pin'}`);
+                if (!houseNumber) setHouseNumber('My Current Location');
+                success = true;
+              }
             }
-          } catch (e2) {
-            console.warn('BigDataCloud reverse geocode fallback error:', e2);
+          } catch (e) {
+            console.warn('Client fallback geocode error:', e);
           }
         }
 
-        if (fetchedAddr) {
-          setDetectedAddress(fetchedAddr);
-          if (fetchedStreet && (!streetName || !streetName.trim())) {
-            setStreetName(fetchedStreet);
-          }
-          if (fetchedPostcode) {
-            setPincode(fetchedPostcode);
-          }
-
-          // Smart Narsipatnam Locality Matcher
-          const fullLower = (fetchedAddr + ' ' + fetchedStreet + ' ' + fetchedArea).toLowerCase();
-          if (fullLower.includes('rtc') || fullLower.includes('bus stand') || fullLower.includes('complex')) {
-            setSelectedArea("Near RTC Bus Stand / Complex");
-          } else if (fullLower.includes('balighattam') || fullLower.includes('temple')) {
-            setSelectedArea("Balighattam & Temple Road");
-          } else if (fullLower.includes('pedda') || fullLower.includes('boddepalli')) {
-            setSelectedArea("Peddaboddepalli Area");
-          } else if (fullLower.includes('college') || fullLower.includes('station')) {
-            setSelectedArea("College Road / Station Road");
-          } else if (fullLower.includes('tagarapu')) {
-            setSelectedArea("Tagarapu Veedhi");
-          } else if (fullLower.includes('shanti') || fullLower.includes('housing')) {
-            setSelectedArea("Shanti Nagar / Housing Board");
-          } else if (fullLower.includes('dharmavaram') || fullLower.includes('kotauratla')) {
-            setSelectedArea("Dharmavaram / Kotauratla Road");
-          } else if (fullLower.includes('lingarajupeta')) {
-            setSelectedArea("Lingarajupeta");
-          } else if (fullLower.includes('main road') || fullLower.includes('abes') || fullLower.includes('himalaya')) {
-            setSelectedArea("Near Abes Centre (Main Road)");
-          }
-
-          // Auto-set clean landmark & house number defaults
-          if (!landmark || !landmark.trim()) {
-            setLandmark(`Near ${fetchedStreet || 'GPS Pin Location'}`);
-          }
-          if (!houseNumber || !houseNumber.trim()) {
-            setHouseNumber('My Current Location');
-          }
-        } else {
+        if (!success) {
           setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
           if (!landmark) setLandmark('Attached GPS Location Pin');
           if (!houseNumber) setHouseNumber('My Current Location');
           if (!streetName) setStreetName('Narsipatnam');
         }
       } catch (err) {
-        console.warn('Failed to parse reverse geocoded address:', err);
+        console.warn('Failed to parse location:', err);
         setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
       } finally {
         setIsDetectingGps(false);
@@ -226,20 +203,20 @@ export default function CartDrawer() {
       }
     };
 
-    // Tier 1: Try high-accuracy GPS (8s timeout)
+    // Tier 1: High-accuracy GPS (8s timeout)
     navigator.geolocation.getCurrentPosition(
       (pos) => processPosition(pos),
       (err) => {
-        // Tier 2 Fallback: If high accuracy times out indoors, fallback to standard Wi-Fi/cellular accuracy
-        console.log('Tier 1 GPS timed out or failed, falling back to standard accuracy:', err.message);
+        // Tier 2 Fallback: Standard accuracy (cellular/Wi-Fi)
+        console.log('Tier 1 GPS timed out, falling back to standard accuracy:', err.message);
         navigator.geolocation.getCurrentPosition(
           (pos) => processPosition(pos),
           (err2) => {
             setIsDetectingGps(false);
             if (err2.code === err2.PERMISSION_DENIED) {
-              setGpsError('Location permission was denied. Tap any quick spot below for instant 1-tap ordering!');
+              setGpsError('Location permission was denied. Tap any quick spot or search below!');
             } else {
-              setGpsError('Could not get GPS fix. Please select your nearby spot from the 1-tap options below.');
+              setGpsError('Could not get GPS fix. Please tap a nearby spot or search your colony below.');
             }
           },
           { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
@@ -249,12 +226,61 @@ export default function CartDrawer() {
     );
   };
 
+  // Search Narsipatnam colonies & landmarks via API
+  const handleSearchLocation = async (query) => {
+    setSearchQuery(query);
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/geocode?q=${encodeURIComponent(query.trim())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.results) {
+          setSearchResults(data.results);
+        } else {
+          setSearchResults([]);
+        }
+      }
+    } catch (e) {
+      console.warn('Location search error:', e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Select a searched landmark/colony
+  const handleSelectSearchResult = (result) => {
+    setGpsLocation({ lat: result.lat, lng: result.lng });
+    setGpsAccuracy(5);
+    setDetectedAddress(result.formatted);
+    setSelectedArea(result.area);
+    setStreetName(result.street);
+    setLandmark(result.landmark);
+    setPincode(result.pincode);
+    setDeliveryDistance(result.distanceKm);
+    setDeliveryEta(result.estimatedTime);
+    if (!houseNumber || !houseNumber.trim()) {
+      setHouseNumber('Near ' + result.name);
+    }
+    setSearchResults([]);
+    setSearchQuery('');
+    if (validationError) setValidationError('');
+  };
+
   // Quick 1-tap select for popular Narsipatnam spots (zero typing needed)
   const handleSelectQuickSpot = (spot) => {
     setSelectedArea(spot.area);
     setStreetName(spot.street);
     setLandmark(spot.landmark);
-    setDetectedAddress(`${spot.label}: ${spot.street}, ${spot.area}`);
+    setGpsLocation({ lat: spot.lat, lng: spot.lng });
+    setGpsAccuracy(5);
+    setDeliveryDistance(spot.dist);
+    setDeliveryEta(spot.eta);
+    setDetectedAddress(`${spot.street}, ${spot.area}, Narsipatnam - 531116`);
     if (!houseNumber || !houseNumber.trim()) {
       setHouseNumber('Near ' + spot.landmark);
     }
@@ -328,7 +354,10 @@ export default function CartDrawer() {
       text += `🚩 *Landmark:* ${finalLandmark}\n`;
       text += `📮 *Pin Code:* ${pincode.trim() || '531116'}\n`;
       if (detectedAddress) {
-        text += `✨ *Auto-Fetched Location:* ${detectedAddress}\n`;
+        text += `✨ *Verified Address:* ${detectedAddress}\n`;
+      }
+      if (deliveryDistance !== null) {
+        text += `🛵 *Distance from Shop:* ~${deliveryDistance} km (Est: ${deliveryEta || '20-30 mins'})\n`;
       }
       if (gpsLocation) {
         text += `🗺️ *Live GPS Pin:* https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}\n`;
@@ -751,6 +780,76 @@ export default function CartDrawer() {
                     )}
                   </div>
 
+                  {/* Quick Colony / Landmark Search (Instant Narsipatnam Lookup) */}
+                  <div style={{ marginBottom: '14px', position: 'relative' }}>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        placeholder="🔍 Search your colony, temple, or landmark in Narsipatnam..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchLocation(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          paddingLeft: '34px',
+                          borderRadius: '8px',
+                          border: '1.5px solid #cbd5e1',
+                          fontSize: '0.84rem',
+                          background: '#ffffff',
+                          color: '#0f172a'
+                        }}
+                      />
+                      <Search size={16} color="#64748b" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                      {isSearching && (
+                        <Compass className="animate-spin" size={16} color="#ea580c" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                      )}
+                    </div>
+
+                    {/* Instant Search Results Dropdown */}
+                    {searchResults.length > 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        zIndex: 30,
+                        background: '#ffffff',
+                        border: '1.5px solid #ea580c',
+                        borderRadius: '10px',
+                        marginTop: '4px',
+                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                        maxHeight: '220px',
+                        overflowY: 'auto'
+                      }}>
+                        {searchResults.map((item, idx) => (
+                          <div
+                            key={idx}
+                            onClick={() => handleSelectSearchResult(item)}
+                            style={{
+                              padding: '10px 14px',
+                              borderBottom: idx === searchResults.length - 1 ? 'none' : '1px solid #f1f5f9',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              transition: 'background 0.15s ease'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#fff7ed'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#ffffff'}
+                          >
+                            <div>
+                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.86rem' }}>📍 {item.name}</div>
+                              <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{item.street}, {item.area}</div>
+                            </div>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '2px 8px', borderRadius: '999px', whiteSpace: 'nowrap' }}>
+                              ~{item.distanceKm} km
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Live Auto-Fetched Address Card (Customer can see perfectly) */}
                   {(detectedAddress || gpsLocation) && (
                     <div style={{
@@ -787,6 +886,15 @@ export default function CartDrawer() {
                       <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
                         {detectedAddress || 'GPS Pin Attached (Narsipatnam)'}
                       </div>
+
+                      {/* Delivery Distance & Time Estimate */}
+                      {deliveryDistance !== null && (
+                        <div style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '4px 10px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 700 }}>
+                            🛵 ~{deliveryDistance} km from Cake Shoppee • Est. Delivery: {deliveryEta || '20-30 mins'}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Embedded Live Google Maps Pin View (Customer sees their exact spot) */}
                       {gpsLocation && (
