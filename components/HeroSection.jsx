@@ -11,8 +11,11 @@ const TOTAL_FRAMES = 140;
 export default function HeroSection() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
+  const vignetteRef = useRef(null);
+  const promptRef = useRef(null);
+  const textRevealRef = useRef(null);
+  const progressBarRef = useRef(null);
 
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(0);
   const [isAutoPlay, setIsAutoPlay] = useState(false);
 
@@ -24,12 +27,13 @@ export default function HeroSection() {
   // High-precision sub-frame lerp tracking
   const targetFrameRef = useRef(0);
   const currentFrameRef = useRef(0);
-  const lastDrawnFloatRef = useRef(-1);
+  const targetProgressRef = useRef(0);
+  const currentProgressRef = useRef(0);
 
   // Cached canvas bounds for maximum 60fps/120fps performance
   const boundsRef = useRef({ w: 0, h: 0, x: 0, y: 0 });
 
-  // Draw continuous blended frames to canvas
+  // Draw continuous blended frames to canvas with S-curve Hermite smoothstep
   const drawBlendFrame = useCallback((floatIndex) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -42,26 +46,55 @@ export default function HeroSection() {
     const safeFloat = Math.min(TOTAL_FRAMES - 1, Math.max(0, floatIndex));
     const frameA = Math.floor(safeFloat);
     const frameB = Math.min(TOTAL_FRAMES - 1, frameA + 1);
-    const fraction = safeFloat - frameA;
+    const rawFraction = safeFloat - frameA;
 
     const imgA = imagesRef.current[frameA];
     if (!imgA || !imgA.complete || imgA.naturalWidth === 0) return;
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
 
     // 1. Draw primary frame
     ctx.globalAlpha = 1;
     ctx.drawImage(imgA, bounds.x, bounds.y, bounds.w, bounds.h);
 
-    // 2. Optical crossfade blend with next frame for liquid-smooth continuity
-    if (fraction > 0.02 && frameB !== frameA) {
+    // 2. Optical crossfade blend with next frame using Hermite smoothstep (zero boundary acceleration)
+    if (frameB !== frameA && rawFraction > 0.001) {
       const imgB = imagesRef.current[frameB];
       if (imgB && imgB.complete && imgB.naturalWidth > 0) {
-        ctx.globalAlpha = fraction;
+        const smoothAlpha = rawFraction * rawFraction * (3 - 2 * rawFraction);
+        ctx.globalAlpha = smoothAlpha;
         ctx.drawImage(imgB, bounds.x, bounds.y, bounds.w, bounds.h);
         ctx.globalAlpha = 1;
       }
+    }
+  }, []);
+
+  // Update visual elements directly via DOM refs (zero React re-renders during scroll)
+  const updateVisuals = useCallback((progress) => {
+    // 1. Text reveals softly after video completes: 0.72 -> 0.88
+    const textOpacity = progress < 0.72 ? 0 : Math.min(1, (progress - 0.72) / 0.16);
+    const textTranslateY = Math.max(0, (1 - textOpacity) * 32);
+    if (textRevealRef.current) {
+      textRevealRef.current.style.opacity = textOpacity;
+      textRevealRef.current.style.transform = `translateY(${textTranslateY}px)`;
+      textRevealRef.current.style.pointerEvents = textOpacity > 0.3 ? 'auto' : 'none';
+    }
+
+    // 2. Vignette dark overlay: 0.20 -> 0.80
+    const darkOverlayOpacity = 0.20 + textOpacity * 0.60;
+    if (vignetteRef.current) {
+      vignetteRef.current.style.background = `radial-gradient(circle at center, rgba(9,13,22,${darkOverlayOpacity * 0.45}) 0%, rgba(9,13,22,${darkOverlayOpacity}) 75%, rgba(9,13,22,${darkOverlayOpacity + 0.15}) 100%)`;
+    }
+
+    // 3. Initial prompt: clean, disappears in first ~6% of scroll
+    const promptOpacity = Math.max(0, 1 - progress * 16);
+    if (promptRef.current) {
+      promptRef.current.style.opacity = promptOpacity;
+      promptRef.current.style.pointerEvents = promptOpacity > 0.05 ? 'auto' : 'none';
+    }
+
+    // 4. Golden progress bar: fills across 0% -> 72%
+    if (progressBarRef.current) {
+      const pct = Math.min(100, Math.max(0, (progress / 0.72) * 100));
+      progressBarRef.current.style.width = `${pct}%`;
     }
   }, []);
 
@@ -77,6 +110,12 @@ export default function HeroSection() {
       const ch = Math.round(rect.height * dpr);
       canvas.width = cw;
       canvas.height = ch;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+      }
 
       // Aspect cover calculation (1280x720 is 16:9)
       const imgRatio = 16 / 9;
@@ -100,7 +139,7 @@ export default function HeroSection() {
     }
   }, [drawBlendFrame]);
 
-  // Preload and GPU-decode all 120 WebP frames
+  // Preload and GPU-decode all WebP frames
   useEffect(() => {
     let loaded = 0;
     const imgArray = [];
@@ -144,19 +183,33 @@ export default function HeroSection() {
     };
   }, [drawBlendFrame, updateCanvasSize]);
 
-  // Liquid-smooth continuous lerp loop
+  // Ultra-buttery momentum lerp render loop
   useEffect(() => {
     let active = true;
 
     const renderLoop = () => {
       if (!isAutoPlay) {
-        const diff = targetFrameRef.current - currentFrameRef.current;
-        // Silk-smooth exponential damping
-        if (Math.abs(diff) > 0.005) {
-          currentFrameRef.current += diff * 0.09;
+        // 1. Smooth momentum interpolation for canvas frame
+        const frameDiff = targetFrameRef.current - currentFrameRef.current;
+        if (Math.abs(frameDiff) > 0.001) {
+          currentFrameRef.current += frameDiff * 0.055;
+          drawBlendFrame(currentFrameRef.current);
+        } else if (currentFrameRef.current !== targetFrameRef.current) {
+          currentFrameRef.current = targetFrameRef.current;
           drawBlendFrame(currentFrameRef.current);
         }
+
+        // 2. Smooth momentum interpolation for text reveal & overlays
+        const progDiff = targetProgressRef.current - currentProgressRef.current;
+        if (Math.abs(progDiff) > 0.0002) {
+          currentProgressRef.current += progDiff * 0.07;
+          updateVisuals(currentProgressRef.current);
+        } else if (currentProgressRef.current !== targetProgressRef.current) {
+          currentProgressRef.current = targetProgressRef.current;
+          updateVisuals(currentProgressRef.current);
+        }
       }
+
       if (active) {
         animFrameIdRef.current = requestAnimationFrame(renderLoop);
       }
@@ -168,9 +221,9 @@ export default function HeroSection() {
       active = false;
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [isAutoPlay, drawBlendFrame]);
+  }, [isAutoPlay, drawBlendFrame, updateVisuals]);
 
-  // Scroll handler: continuous float progress
+  // Scroll handler: pure calculation, 0 state re-renders
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -182,9 +235,9 @@ export default function HeroSection() {
     // Scroll progress from 0.0 to 1.0
     const currentScroll = -rect.top;
     const progress = Math.max(0, Math.min(1, currentScroll / totalScrollable));
-    setScrollProgress(progress);
+    targetProgressRef.current = progress;
 
-    // Continuous floating-point target frame (0.0 to 119.0)
+    // Video completes smoothly across the first 72% of scroll runway
     const videoProgress = Math.min(1, progress / 0.72);
     const targetFloat = videoProgress * (TOTAL_FRAMES - 1);
     
@@ -232,17 +285,6 @@ export default function HeroSection() {
     }
   };
 
-  // Video completes smoothly across the first 72% of scroll runway
-  // Text reveals softly after video completes: 0.70 -> 0.88
-  const textOpacity = scrollProgress < 0.70 ? 0 : Math.min(1, (scrollProgress - 0.70) / 0.16);
-  const textTranslateY = Math.max(0, (1 - textOpacity) * 35);
-
-  // Vignette overlay gets darker when text reveals to ensure white/gold typography pops
-  const darkOverlayOpacity = 0.25 + textOpacity * 0.55;
-
-  // Initial scroll prompt (only at the very top, disappears immediately upon scrolling)
-  const promptOpacity = Math.max(0, 1 - scrollProgress * 14);
-
   return (
     <section 
       id="hero" 
@@ -250,7 +292,7 @@ export default function HeroSection() {
       className="hero-scroll-container"
       style={{
         position: 'relative',
-        height: '560vh',
+        height: '700vh',
         background: '#090d16',
         color: '#ffffff'
       }}
@@ -287,13 +329,14 @@ export default function HeroSection() {
 
         {/* Dynamic Dark Vignette (Darkens when text appears for maximum contrast) */}
         <div 
+          ref={vignetteRef}
           style={{
             position: 'absolute',
             inset: 0,
-            background: `radial-gradient(circle at center, rgba(9,13,22,${darkOverlayOpacity * 0.5}) 0%, rgba(9,13,22,${darkOverlayOpacity}) 75%, rgba(9,13,22,${darkOverlayOpacity + 0.15}) 100%)`,
+            background: 'radial-gradient(circle at center, rgba(9,13,22,0.09) 0%, rgba(9,13,22,0.20) 75%, rgba(9,13,22,0.35) 100%)',
             pointerEvents: 'none',
             zIndex: 2,
-            transition: 'background 0.15s ease'
+            willChange: 'background'
           }} 
         />
         <div 
@@ -324,59 +367,59 @@ export default function HeroSection() {
         {/* ========================================================
             INITIAL PROMPT (Clean, vanishes immediately upon scroll)
             ======================================================== */}
-        {promptOpacity > 0.01 && (
+        <div 
+          ref={promptRef}
+          onClick={scrollToNext}
+          style={{
+            position: 'absolute',
+            bottom: '36px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '8px',
+            color: '#ffffff',
+            cursor: 'pointer',
+            opacity: 1,
+            textShadow: '0 2px 10px rgba(0,0,0,0.8)',
+            willChange: 'opacity'
+          }}
+        >
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            Scroll To Play Video ↓
+          </span>
           <div 
-            onClick={scrollToNext}
             style={{
-              position: 'absolute',
-              bottom: '36px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 15,
+              width: '26px',
+              height: '42px',
+              borderRadius: '999px',
+              border: '2px solid rgba(255,255,255,0.6)',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '8px',
-              color: '#ffffff',
-              cursor: 'pointer',
-              opacity: promptOpacity,
-              transition: 'opacity 0.15s ease-out',
-              textShadow: '0 2px 10px rgba(0,0,0,0.8)'
+              justifyContent: 'center',
+              paddingTop: '6px',
+              background: 'rgba(0,0,0,0.35)',
+              backdropFilter: 'blur(8px)'
             }}
           >
-            <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Scroll To Play Video ↓
-            </span>
             <div 
+              className="scroll-wheel-dot"
               style={{
-                width: '26px',
-                height: '42px',
-                borderRadius: '999px',
-                border: '2px solid rgba(255,255,255,0.6)',
-                display: 'flex',
-                justifyContent: 'center',
-                paddingTop: '6px',
-                background: 'rgba(0,0,0,0.35)',
-                backdropFilter: 'blur(8px)'
+                width: '4px',
+                height: '8px',
+                borderRadius: '2px',
+                background: '#fb923c'
               }}
-            >
-              <div 
-                className="scroll-wheel-dot"
-                style={{
-                  width: '4px',
-                  height: '8px',
-                  borderRadius: '2px',
-                  background: '#fb923c'
-                }}
-              />
-            </div>
+            />
           </div>
-        )}
+        </div>
 
         {/* ========================================================
             FINAL TEXT REVEAL: ONLY APPEARS AFTER VIDEO COMPLETES
             ======================================================== */}
         <div 
+          ref={textRevealRef}
           className="hero-final-reveal"
           style={{
             position: 'absolute',
@@ -384,15 +427,15 @@ export default function HeroSection() {
             width: '100%',
             maxWidth: '1240px',
             padding: '0 24px',
-            opacity: textOpacity,
-            transform: `translateY(${textTranslateY}px)`,
-            pointerEvents: textOpacity > 0.3 ? 'auto' : 'none',
+            opacity: 0,
+            transform: 'translateY(32px)',
+            pointerEvents: 'none',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            transition: 'opacity 0.2s ease-out, transform 0.2s ease-out'
+            willChange: 'opacity, transform'
           }}
         >
           {/* Live Bakery Badge */}
@@ -631,12 +674,13 @@ export default function HeroSection() {
           }}
         >
           <div 
+            ref={progressBarRef}
             style={{
               height: '100%',
-              width: `${Math.min(100, (scrollProgress / 0.72) * 100)}%`,
+              width: '0%',
               background: 'linear-gradient(90deg, #ea580c 0%, #f43f5e 50%, #fb923c 100%)',
               boxShadow: '0 0 10px rgba(251, 146, 60, 0.8)',
-              transition: 'width 0.04s linear'
+              willChange: 'width'
             }}
           />
         </div>
