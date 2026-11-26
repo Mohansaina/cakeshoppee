@@ -50,17 +50,22 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
 }
 
 const NARSIPATNAM_AREAS = [
-  "Near Abes Centre (Main Road)",
-  "Beside Himalaya Juice Center (Main Road)",
-  "Near RTC Bus Stand / Complex",
-  "Peddaboddepalli Area",
-  "Balighattam & Temple Road",
-  "Lingarajupeta",
-  "College Road / Station Road",
+  "Abes Centre (Main Road)",
   "Tagarapu Veedhi",
+  "RTC Complex Area",
+  "Area Hospital Road",
+  "Balighattam & Temple Road",
+  "College Road / Station Road",
+  "Peddaboddepalli Area",
   "Shanti Nagar / Housing Board",
+  "Ayyannapalem",
+  "Lingarajupeta",
   "Dharmavaram / Kotauratla Road",
-  "Other Narsipatnam Locality"
+  "NTR Stadium / Municipality",
+  "Cinema Road Area",
+  "Gandhi Park Area",
+  "Court / Sub-Jail Area",
+  "Other Locality / Outstation"
 ];
 
 export default function CartDrawer() {

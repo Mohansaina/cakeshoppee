@@ -12,19 +12,21 @@ const BAKERY_LOCATION = {
 
 // Curated Narsipatnam landmarks & localities for search and reference
 const NARSIPATNAM_LANDMARKS = [
-  { name: "Near Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Near Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
-  { name: "RTC Bus Stand / Complex", aliases: ["rtc", "bus stand", "bus complex", "depot"], lat: 17.6710, lng: 82.6150, area: "Near RTC Bus Stand / Complex", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
-  { name: "Area Hospital & Police Station", aliases: ["hospital", "area hospital", "police station", "dsp office"], lat: 17.6625, lng: 82.6130, area: "Other Narsipatnam Locality", street: "Hospital Road", landmark: "Opposite Area Hospital" },
+  { name: "Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
+  { name: "Tagarapu Veedhi", aliases: ["tagarapu", "tagarapu veedhi", "tagarapu street"], lat: 17.6675, lng: 82.6115, area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office" },
+  { name: "RTC Bus Stand / Complex", aliases: ["rtc", "bus stand", "bus complex", "depot"], lat: 17.6710, lng: 82.6150, area: "RTC Complex Area", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
+  { name: "Area Hospital & Police Station", aliases: ["hospital", "area hospital", "police station", "dsp office"], lat: 17.6625, lng: 82.6130, area: "Area Hospital Road", street: "Hospital Road", landmark: "Opposite Area Hospital" },
   { name: "Balighattam & Shirdi Sai Temple", aliases: ["balighattam", "sai temple", "sai baba", "varaha river"], lat: 17.6540, lng: 82.6030, area: "Balighattam & Temple Road", street: "Balighattam Main Road", landmark: "Near Shirdi Sai Baba Temple" },
   { name: "Govt Degree College & College Road", aliases: ["college", "degree college", "college road", "junior college"], lat: 17.6740, lng: 82.6080, area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College" },
-  { name: "Peddaboddepalli Area", aliases: ["peddaboddepalli", "pedaboddepalli", "boddepalli"], lat: 17.6820, lng: 82.6200, area: "Peddaboddepalli Area", street: "Peddaboddepalli Road", landmark: "Near Boddepalli Centre" },
-  { name: "Tagarapu Veedhi", aliases: ["tagarapu", "tagarapu veedhi", "tagarapu street"], lat: 17.6675, lng: 82.6115, area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office" },
-  { name: "Ayyannapalem", aliases: ["ayyannapalem", "ayanna palem"], lat: 17.6660, lng: 82.6090, area: "Other Narsipatnam Locality", street: "Ayyannapalem Road", landmark: "Near Ayyannapalem" },
-  { name: "NTR Stadium & Municipal Office", aliases: ["ntr stadium", "stadium", "municipal", "municipality"], lat: 17.6650, lng: 82.6120, area: "Near Abes Centre (Main Road)", street: "Municipality Road", landmark: "Near NTR Stadium Gate" },
+  { name: "Peddaboddepalli Area", aliases: ["peddaboddepalli", "pedaboddepalli", "boddepalli"], lat: 17.6820, lng: 82.6200, area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Boddepalli Centre" },
+  { name: "Ayyannapalem", aliases: ["ayyannapalem", "ayanna palem"], lat: 17.6660, lng: 82.6090, area: "Ayyannapalem", street: "Ayyannapalem Road", landmark: "Near Ayyannapalem Junction" },
+  { name: "NTR Stadium & Municipal Office", aliases: ["ntr stadium", "stadium", "municipal", "municipality"], lat: 17.6650, lng: 82.6120, area: "NTR Stadium Area", street: "Municipality Road", landmark: "Near NTR Stadium Gate" },
   { name: "Shanti Nagar & Housing Board", aliases: ["shanti nagar", "shantinagar", "housing board", "colony"], lat: 17.6690, lng: 82.6050, area: "Shanti Nagar / Housing Board", street: "Shanti Nagar Road", landmark: "Near Housing Board Colony" },
   { name: "Lingarajupeta", aliases: ["lingarajupeta", "lingaraju peta"], lat: 17.6590, lng: 82.6180, area: "Lingarajupeta", street: "Lingarajupeta Road", landmark: "Near Primary School" },
   { name: "Dharmavaram & Kotauratla Road", aliases: ["dharmavaram", "kotauratla", "station road"], lat: 17.6760, lng: 82.6250, area: "Dharmavaram / Kotauratla Road", street: "Kotauratla Road", landmark: "Near Bypass Junction" },
-  { name: "Sri Kanya & Jagadamba Theatres", aliases: ["theatre", "sri kanya", "jagadamba", "cinema hall"], lat: 17.6680, lng: 82.6140, area: "Near Abes Centre (Main Road)", street: "Cinema Road", landmark: "Near Sri Kanya Theatre" }
+  { name: "Sri Kanya & Jagadamba Theatres", aliases: ["theatre", "sri kanya", "jagadamba", "cinema hall"], lat: 17.6680, lng: 82.6140, area: "Cinema Road Area", street: "Cinema Road", landmark: "Near Sri Kanya Theatre" },
+  { name: "Gandhi Park & Main Road", aliases: ["gandhi park", "post office"], lat: 17.6670, lng: 82.6105, area: "Gandhi Park Area", street: "Main Road", landmark: "Near Gandhi Park" },
+  { name: "Court & Sub-Jail Area", aliases: ["court", "sub-jail", "sub collector"], lat: 17.6635, lng: 82.6080, area: "Court / Sub-Jail Area", street: "Court Road", landmark: "Near Sub-Collector Office" }
 ];
 
 // Haversine formula to calculate distance in km
@@ -191,24 +193,30 @@ export async function GET(request) {
       let finalStreet = street;
       let finalLandmark = '';
 
-      if (minDistance <= 1.2 && distance <= 3.5) {
+      function cleanPrefix(str) {
+        if (!str) return '';
+        return str.replace(/^(Near|Beside|Opposite|Behind)\s+/i, '').trim();
+      }
+
+      if (minDistance <= 0.8 && distance <= 3.5) {
         // Customer is inside Narsipatnam town
         matchedArea = closestLandmark.area;
         finalStreet = street || closestLandmark.street;
-        finalLandmark = closestLandmark.landmark || `Near ${closestLandmark.name}`;
+        const cleanName = cleanPrefix(closestLandmark.name);
+        finalLandmark = cleanPrefix(closestLandmark.landmark) || cleanName;
         
         const distMeters = Math.round(minDistance * 1000);
-        if (distMeters <= 180) {
+        if (distMeters <= 150) {
           wordsAddress = (finalStreet && finalStreet !== closestLandmark.area ? `${finalStreet}, ` : '') + `${closestLandmark.area}, Narsipatnam`;
-        } else if (distMeters <= 500) {
-          wordsAddress = `Near ${closestLandmark.landmark || closestLandmark.name}, ${closestLandmark.area}, Narsipatnam`;
+        } else if (distMeters <= 450) {
+          wordsAddress = `Near ${cleanName}, ${closestLandmark.area}, Narsipatnam`;
         } else {
           wordsAddress = `${closestLandmark.area}, Narsipatnam`;
         }
 
         wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
         wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
-        wordsAddress = wordsAddress.replace(/Near Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
+        wordsAddress = wordsAddress.replace(/Abes Centre \(Main Road\), Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
 
         finalAddress = `${wordsAddress} - 531116`;
         plusCodeFull = `${plusCodeLocal} Narsipatnam, Andhra Pradesh`;

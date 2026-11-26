@@ -31,6 +31,7 @@ export default function LocationPickerModal({
 
   const [currentCoords, setCurrentCoords] = useState(initialCoords || DEFAULT_CENTER);
   const [addressPreview, setAddressPreview] = useState('Fetching exact address...');
+  const [plusCodePreview, setPlusCodePreview] = useState('');
   const [distanceInfo, setDistanceInfo] = useState('');
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,16 +46,17 @@ export default function LocationPickerModal({
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
-          const cleanDisplay = data.wordsAddress || data.address || (data.area ? `${data.area}, Narsipatnam` : 'Narsipatnam, AP');
+          const cleanDisplay = data.wordsAddress || data.address || `${data.area}, Andhra Pradesh`;
           setAddressPreview(cleanDisplay);
+          if (data.plusCode) setPlusCodePreview(data.plusCode);
           setDistanceInfo(`~${data.distanceKm} km from shop • ${data.estimatedTime || '20-30 mins'}`);
           return data;
         }
       }
-      setAddressPreview(`Narsipatnam, Andhra Pradesh`);
+      setAddressPreview(`Andhra Pradesh`);
     } catch (e) {
       console.warn('Map geocode error:', e);
-      setAddressPreview(`Narsipatnam, Andhra Pradesh`);
+      setAddressPreview(`Andhra Pradesh`);
     } finally {
       setIsLoadingAddress(false);
     }
@@ -464,9 +466,14 @@ export default function LocationPickerModal({
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
               {isLoadingAddress ? 'Detecting exact address...' : addressPreview}
             </div>
+            {plusCodePreview && !isLoadingAddress && (
+              <div style={{ fontSize: '0.74rem', color: '#0369a1', fontWeight: 600, marginTop: '2px' }}>
+                🌐 Plus Code: {plusCodePreview}
+              </div>
+            )}
           </div>
 
           <button
