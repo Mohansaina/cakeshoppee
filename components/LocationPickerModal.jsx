@@ -45,7 +45,10 @@ export default function LocationPickerModal({
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
-          setAddressPreview(data.address);
+          const cleanDisplay = data.area && data.area !== 'Other Narsipatnam Locality'
+            ? `${data.area}, Narsipatnam`
+            : (data.address && !data.address.includes('SH11') ? data.address : `📍 Pinned at Narsipatnam (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+          setAddressPreview(cleanDisplay);
           setDistanceInfo(`~${data.distanceKm} km from shop • ${data.estimatedTime || '20-30 mins'}`);
           return data;
         }

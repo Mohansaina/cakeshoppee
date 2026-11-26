@@ -12,6 +12,20 @@ import { useCart } from '@/context/CartContext';
 
 const LocationPickerModal = dynamic(() => import('./LocationPickerModal'), { ssr: false });
 
+const BAKERY_COORDS = { lat: 17.66635, lng: 82.61015 };
+
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return Math.round((R * c) * 10) / 10;
+}
+
 const NARSIPATNAM_AREAS = [
   "Near Abes Centre (Main Road)",
   "Beside Himalaya Juice Center (Main Road)",
@@ -132,7 +146,7 @@ export default function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Handle GPS location auto-detect & reverse-geocoding via dedicated server API & client fallback
+  // Handle GPS location auto-detect: Captures 100% exact mobile coordinates & matches nearest colony cleanly
   const handleDetectGPS = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -141,94 +155,66 @@ export default function CartDrawer() {
     setIsDetectingGps(true);
     setGpsError('');
 
-    const processPosition = async (position) => {
+    const processPosition = (position) => {
       const { latitude, longitude, accuracy } = position.coords;
       setGpsLocation({ lat: latitude, lng: longitude });
       if (accuracy) {
         setGpsAccuracy(Math.round(accuracy));
       }
 
-      // Call our robust server-side geocoding API route
-      try {
-        let success = false;
-        try {
-          const apiRes = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
-          if (apiRes.ok) {
-            const geo = await apiRes.json();
-            if (geo.success) {
-              setDetectedAddress(geo.address);
-              if (geo.area) setSelectedArea(geo.area);
-              if (geo.street) setStreetName(geo.street);
-              if (geo.landmark) setLandmark(geo.landmark);
-              if (geo.pincode) setPincode(geo.pincode);
-              if (geo.distanceKm !== undefined) setDeliveryDistance(geo.distanceKm);
-              if (geo.estimatedTime) setDeliveryEta(geo.estimatedTime);
-              if (!houseNumber || !houseNumber.trim() || houseNumber === 'My Current Location') {
-                setHouseNumber('My Current Location');
-              }
-              success = true;
-            }
-          }
-        } catch (apiErr) {
-          console.warn('Local geocode API error, trying client fallback:', apiErr);
-        }
+      // Calculate exact distance from Cake Shoppee bakery
+      const dist = getDistanceKm(BAKERY_COORDS.lat, BAKERY_COORDS.lng, latitude, longitude);
+      setDeliveryDistance(dist);
+      setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : '30-40 mins');
 
-        // Client-side fallback if server API route was unreachable
-        if (!success) {
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data && data.address) {
-                const a = data.address;
-                const fetchedStreet = a.road || a.residential || a.suburb || a.neighbourhood || '';
-                const fetchedArea = a.suburb || a.residential || a.town || 'Narsipatnam';
-                const fullAddr = data.display_name ? data.display_name.split(',').slice(0, 4).join(', ') : `${fetchedStreet}, ${fetchedArea}`;
-                setDetectedAddress(fullAddr);
-                if (fetchedStreet) setStreetName(fetchedStreet);
-                if (a.postcode) setPincode(a.postcode);
-                setLandmark(`Near ${fetchedStreet || 'GPS Pin'}`);
-                if (!houseNumber) setHouseNumber('My Current Location');
-                success = true;
-              }
-            }
-          } catch (e) {
-            console.warn('Client fallback geocode error:', e);
-          }
+      // Find closest verified Narsipatnam colony from our list
+      let closestSpot = QUICK_SPOTS[0];
+      let minDist = 99999;
+      for (const spot of QUICK_SPOTS) {
+        const d = getDistanceKm(latitude, longitude, spot.lat, spot.lng);
+        if (d < minDist) {
+          minDist = d;
+          closestSpot = spot;
         }
-
-        if (!success) {
-          setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
-          if (!landmark) setLandmark('Attached GPS Location Pin');
-          if (!houseNumber) setHouseNumber('My Current Location');
-          if (!streetName) setStreetName('Narsipatnam');
-        }
-      } catch (err) {
-        console.warn('Failed to parse location:', err);
-        setDetectedAddress(`📍 GPS Pin: ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (Narsipatnam)`);
-      } finally {
-        setIsDetectingGps(false);
-        if (validationError) setValidationError('');
       }
+
+      // If user is within 600m of a known colony, auto-select it
+      if (minDist <= 0.6) {
+        setSelectedArea(closestSpot.area);
+        if (!streetName || !streetName.trim()) {
+          setStreetName(closestSpot.street);
+        }
+        if (!landmark || !landmark.trim()) {
+          setLandmark(closestSpot.landmark);
+        }
+      }
+
+      // Set clean, 100% accurate text that NEVER displays confusing highway names
+      setDetectedAddress(`Live GPS Pin Attached (${dist} km from Cake Shoppee)`);
+      if (!houseNumber || !houseNumber.trim()) {
+        setHouseNumber('My Current Location');
+      }
+
+      setIsDetectingGps(false);
+      if (validationError) setValidationError('');
     };
 
-    // Tier 1: High-accuracy GPS (8s timeout)
+    // Use high accuracy GPS with maximumAge: 0 for 100% live satellite accuracy
     navigator.geolocation.getCurrentPosition(
       (pos) => processPosition(pos),
       (err) => {
-        // Tier 2 Fallback: Standard accuracy (cellular/Wi-Fi)
-        console.log('Tier 1 GPS timed out, falling back to standard accuracy:', err.message);
+        console.log('Tier 1 GPS timeout, falling back:', err.message);
         navigator.geolocation.getCurrentPosition(
           (pos) => processPosition(pos),
           (err2) => {
             setIsDetectingGps(false);
             if (err2.code === err2.PERMISSION_DENIED) {
-              setGpsError('Location permission was denied. Tap any quick spot or search below!');
+              setGpsError('Location permission was denied. Tap any quick colony below to set your area!');
             } else {
-              setGpsError('Could not get GPS fix. Please tap a nearby spot or search your colony below.');
+              setGpsError('Could not get GPS fix. Please tap your colony from the 1-tap options below.');
             }
           },
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
         );
       },
       { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
@@ -358,8 +344,8 @@ export default function CartDrawer() {
     setValidationError('');
     saveProfileToLocalStorage();
 
-    const finalHouseNumber = houseNumber && houseNumber.trim() ? houseNumber.trim() : (detectedAddress ? 'Deliver to Detected Location' : 'Near Main Road');
-    const finalStreet = streetName && streetName.trim() ? streetName.trim() : (detectedAddress || 'Narsipatnam');
+    const finalHouseNumber = houseNumber && houseNumber.trim() ? houseNumber.trim() : (gpsLocation ? 'Deliver to GPS Doorstep Pin' : 'Near Main Road');
+    const finalStreet = streetName && streetName.trim() ? streetName.trim() : selectedArea;
     const finalLandmark = landmark && landmark.trim() ? landmark.trim() : (gpsLocation ? 'Live GPS Pin Attached' : 'Narsipatnam');
 
     // Construct beautiful formatted WhatsApp message
@@ -375,18 +361,19 @@ export default function CartDrawer() {
     if (orderType === 'delivery') {
       text += `\n📍 *DELIVERY ADDRESS:*\n`;
       text += `🏠 *House/Door/Flat:* ${finalHouseNumber}\n`;
-      text += `🛣️ *Street/Colony:* ${finalStreet}\n`;
-      text += `🏛️ *Locality:* ${selectedArea}\n`;
-      text += `🚩 *Landmark:* ${finalLandmark}\n`;
-      text += `📮 *Pin Code:* ${pincode.trim() || '531116'}\n`;
-      if (detectedAddress) {
-        text += `✨ *Verified Address:* ${detectedAddress}\n`;
+      text += `🏛️ *Colony / Locality:* ${selectedArea}\n`;
+      if (streetName && streetName.trim() && streetName.trim() !== selectedArea) {
+        text += `🛣️ *Street/Road:* ${streetName.trim()}\n`;
       }
+      if (landmark && landmark.trim()) {
+        text += `🚩 *Landmark:* ${landmark.trim()}\n`;
+      }
+      text += `📮 *Town:* Narsipatnam, AP - 531116\n`;
       if (deliveryDistance !== null) {
-        text += `🛵 *Distance from Shop:* ~${deliveryDistance} km (Est: ${deliveryEta || '20-30 mins'})\n`;
+        text += `🛵 *Distance from Shop:* ~${deliveryDistance} km (${deliveryEta || '20-30 mins'})\n`;
       }
       if (gpsLocation) {
-        text += `🗺️ *Live GPS Pin:* https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}\n`;
+        text += `🗺️ *Live Google Maps Pin:* https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}\n`;
       }
     } else {
       text += `\n🏪 *Pickup Location:* Cake Shoppee Counter, Near Abes Centre, beside Himalaya Juice Center, Main Road, Narsipatnam.\n`;
@@ -954,8 +941,13 @@ export default function CartDrawer() {
                         </div>
                       </div>
 
-                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.45 }}>
-                        {detectedAddress || 'GPS Pin Attached (Narsipatnam)'}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>📍 Live Doorstep GPS Pin Attached</span>
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#475569' }}>
+                          Satellite Coordinates: <strong>{gpsLocation ? `${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}` : 'Captured'}</strong>
+                        </div>
                       </div>
 
                       {/* Delivery Distance & Time Estimate */}
