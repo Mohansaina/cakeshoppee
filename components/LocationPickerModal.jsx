@@ -7,7 +7,7 @@ import { X, Check, MapPin, Navigation, Compass, Search, Crosshair } from 'lucide
 const DEFAULT_CENTER = { lat: 17.66635, lng: 82.61015 };
 
 const NARSIPATNAM_GRID = [
-  { name: "Abes Centre (Main Road)", lat: 17.66635, lng: 82.61015, area: "Abes Centre", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
+  { name: "Abes Centre (Main Road)", lat: 17.66635, lng: 82.61015, area: "Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
   { name: "Tagarapu Veedhi", lat: 17.6675, lng: 82.6115, area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office" },
   { name: "RTC Bus Stand & Complex", lat: 17.6710, lng: 82.6150, area: "RTC Complex Area", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
   { name: "Area Hospital & DSP Office", lat: 17.6625, lng: 82.6130, area: "Area Hospital Road", street: "Hospital Road", landmark: "Near Area Hospital" },
@@ -236,27 +236,49 @@ export default function LocationPickerModal({
     };
   }, [isOpen]);
 
-  // Handle GPS Auto-detect button inside the map
+  // Handle GPS Auto-detect button inside the map - Bulletproof on mobile devices
   const handleLocateMe = () => {
     if (!navigator.geolocation) return;
     setIsLocatingUser(true);
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCurrentCoords({ lat: latitude, lng: longitude });
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setView([latitude, longitude], 17);
-          markerRef.current.setLatLng([latitude, longitude]);
-        }
-        fetchAddressForCoords(latitude, longitude);
-        setIsLocatingUser(false);
-      },
-      () => {
-        setIsLocatingUser(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-    );
+    let hasHandled = false;
+
+    const onPosSuccess = (pos) => {
+      if (hasHandled) return;
+      hasHandled = true;
+      const { latitude, longitude } = pos.coords;
+      setCurrentCoords({ lat: latitude, lng: longitude });
+      if (mapInstanceRef.current && markerRef.current) {
+        mapInstanceRef.current.setView([latitude, longitude], 17);
+        markerRef.current.setLatLng([latitude, longitude]);
+      }
+      fetchAddressForCoords(latitude, longitude);
+      setIsLocatingUser(false);
+    };
+
+    const onPosError = () => {
+      // Tier 2: Try network location with cached age up to 5 mins
+      navigator.geolocation.getCurrentPosition(
+        onPosSuccess,
+        () => {
+          if (hasHandled) return;
+          hasHandled = true;
+          setIsLocatingUser(false);
+        },
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+      );
+    };
+
+    // Tier 1: Try high accuracy with 60s cache
+    try {
+      navigator.geolocation.getCurrentPosition(
+        onPosSuccess,
+        onPosError,
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    } catch (e) {
+      setIsLocatingUser(false);
+    }
   };
 
   // Fly to selected quick colony

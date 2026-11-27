@@ -12,7 +12,7 @@ const BAKERY_LOCATION = {
 
 // High-density Narsipatnam Municipal Colonies, Landmarks & Wards
 const NARSIPATNAM_LANDMARKS = [
-  { name: "Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Abes Centre", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
+  { name: "Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
   { name: "Tagarapu Veedhi", aliases: ["tagarapu", "tagarapu veedhi", "tagarapu street"], lat: 17.6675, lng: 82.6115, area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office" },
   { name: "RTC Bus Stand & Complex", aliases: ["rtc", "bus stand", "bus complex", "depot"], lat: 17.6710, lng: 82.6150, area: "RTC Complex Area", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
   { name: "Area Hospital & DSP Office", aliases: ["hospital", "area hospital", "police station", "dsp office"], lat: 17.6625, lng: 82.6130, area: "Area Hospital Road", street: "Hospital Road", landmark: "Near Area Hospital" },
@@ -139,10 +139,10 @@ export async function GET(request) {
       let detectedState = 'Andhra Pradesh';
       let detectedPincode = '531116';
 
-      // 1. Try reverse geocoding via OpenStreetMap Nominatim with 2-second timeout
+      // 1. Try reverse geocoding via OpenStreetMap Nominatim with 4-second timeout
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2200);
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
 
         const osmRes = await fetch(
           `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
@@ -164,7 +164,7 @@ export async function GET(request) {
             if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
               detectedStreet = rawRoad;
             }
-            detectedNeighbourhood = a.neighbourhood || a.suburb || a.residential || '';
+            detectedNeighbourhood = a.neighbourhood || a.suburb || a.hamlet || a.quarter || '';
             detectedVillage = a.village || a.town || a.city || '';
             detectedMandal = a.county || '';
             if (a.state) detectedState = a.state;
@@ -179,7 +179,7 @@ export async function GET(request) {
       if (!detectedNeighbourhood && !detectedStreet) {
         try {
           const controller2 = new AbortController();
-          const timeoutId2 = setTimeout(() => controller2.abort(), 1800);
+          const timeoutId2 = setTimeout(() => controller2.abort(), 3000);
 
           const bdcRes = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
@@ -204,10 +204,20 @@ export async function GET(request) {
       const plusCodeLocal = getGooglePlusCode(lat, lng);
 
       // 4. Construct accurate, natural human-readable address
-      const isBadName = (str) => !str || /^(andhra pradesh|india|unknown|null|undefined)$/i.test(String(str).trim());
+      // Filter out generic administrative, town, mandal, or highway names
+      const GENERIC_EXCLUSIONS = [
+        'narsipatnam urban', 'narsipatnam mandal', 'narsipatnam',
+        'andhra pradesh', 'india', 'anakapalli', 'anakapalli district',
+        'unknown', 'null', 'undefined'
+      ];
+      const isBadName = (str) => {
+        if (!str) return true;
+        const s = String(str).toLowerCase().trim();
+        return GENERIC_EXCLUSIONS.includes(s) || s.startsWith('sh') || s.startsWith('mdr') || s.startsWith('state highway');
+      };
 
       let resolvedArea = '';
-      let resolvedStreet = detectedStreet || '';
+      let resolvedStreet = (!isBadName(detectedStreet)) ? detectedStreet : '';
       let resolvedLandmark = '';
       let wordsAddress = '';
       let finalAddress = '';
@@ -215,8 +225,21 @@ export async function GET(request) {
 
       // Check if coordinates fall within the Narsipatnam delivery cluster (<= 25 km)
       if (distance <= 25) {
-        // High-accuracy town / colony matching
-        resolvedArea = (!isBadName(detectedNeighbourhood)) ? detectedNeighbourhood : closestLandmark.area;
+        // If OSM found an authentic specific village or colony (e.g. Ayyannapalem, Balighattam, Peddaboddepalli)
+        const specificOsmArea = [detectedNeighbourhood, detectedVillage].find(n => !isBadName(n));
+        
+        // Match against Narsipatnam 26-ward colony grid
+        resolvedArea = closestLandmark.area;
+        if (specificOsmArea && specificOsmArea.toLowerCase() !== 'narsipatnam') {
+          // Verify if specificOsmArea matches any alias
+          const aliasMatch = NARSIPATNAM_LANDMARKS.find(l => 
+            l.aliases.some(al => specificOsmArea.toLowerCase().includes(al))
+          );
+          if (aliasMatch) {
+            resolvedArea = aliasMatch.area;
+          }
+        }
+
         if (!resolvedStreet && closestLandmark.street) {
           resolvedStreet = closestLandmark.street;
         }
@@ -228,7 +251,7 @@ export async function GET(request) {
         finalAddress = `${streetPart}${resolvedArea}, Narsipatnam - 531116`;
         plusCodeFull = `${plusCodeLocal} Narsipatnam, Andhra Pradesh`;
       } else {
-        // Out-of-town / rural village
+        // Out-of-town / rural location
         const placeCandidate = [
           detectedVillage,
           detectedNeighbourhood,
@@ -250,7 +273,7 @@ export async function GET(request) {
         plusCodeLocal: plusCodeLocal,
         area: resolvedArea,
         village: detectedVillage || resolvedArea,
-        mandal: detectedMandal || "Narsipatnam",
+        mandal: "Narsipatnam",
         street: resolvedStreet,
         landmark: resolvedLandmark,
         pincode: detectedPincode || "531116",
@@ -258,7 +281,7 @@ export async function GET(request) {
         lng: lng,
         distanceKm: distance,
         estimatedTime: distance <= 1.5 ? "15-20 mins" : distance <= 3.5 ? "20-30 mins" : distance <= 8 ? "30-40 mins" : "45-60 mins",
-        isWithinDeliveryRange: distance <= 25,
+        isWithinDeliveryRange: distance <= 15,
         mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
       });
     }
