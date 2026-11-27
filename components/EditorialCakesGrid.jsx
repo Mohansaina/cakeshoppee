@@ -2,53 +2,53 @@
 
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles, ChevronDown } from 'lucide-react';
+import { Sparkles, ChevronRight } from 'lucide-react';
 
 const SIGNATURE_CAKES = [
   {
     id: 1,
     title: "Cocomelon Rainbow 2-Tier",
-    tagline: "Handcrafted Sugar Art &bull; Kids Theme",
+    tagline: "Handcrafted Sugar Art • Kids Theme",
     src: "/images/bespoke-theme-1.jpg",
     alt: "Cocomelon Rainbow 2-Tier Theme Cake - Cake Shoppee",
-    glowColor: "rgba(251, 146, 60, 0.25)",
-    accentColor: "#fb923c"
+    glowColor: "rgba(251, 146, 60, 0.22)",
+    accentColor: "#ea580c"
   },
   {
     id: 2,
     title: "Jungle Safari 3D Animals",
-    tagline: "Hand-Sculpted Fondant &bull; Jungle Adventure",
+    tagline: "Hand-Sculpted Fondant • Jungle Adventure",
     src: "/images/bespoke-theme-2.jpg",
     alt: "Jungle Safari 2-Tier Animal Theme Cake - Cake Shoppee",
-    glowColor: "rgba(34, 197, 94, 0.22)",
-    accentColor: "#4ade80"
+    glowColor: "rgba(34, 197, 94, 0.20)",
+    accentColor: "#16a34a"
   },
   {
     id: 3,
     title: "Lavender & 24K Edible Gold",
-    tagline: "Royal Anniversary &bull; Sugar Lace & Gold Leaf",
+    tagline: "Royal Anniversary • Sugar Lace & Gold Leaf",
     src: "/images/bespoke-theme-3.jpg",
     alt: "Lavender & Gold Stars 2-Tier Theme Cake - Cake Shoppee",
-    glowColor: "rgba(192, 132, 252, 0.28)",
-    accentColor: "#c084fc"
+    glowColor: "rgba(192, 132, 252, 0.22)",
+    accentColor: "#9333ea"
   },
   {
     id: 4,
     title: "Turquoise Drip Teddy Bear",
-    tagline: "Milestone Celebration &bull; Chocolate Drip & Macarons",
+    tagline: "Milestone Celebration • Chocolate Drip & Macarons",
     src: "/images/bespoke-theme-4.jpg",
     alt: "Turquoise Drip Teddy Bear 2-Tier Cake - Cake Shoppee",
-    glowColor: "rgba(56, 189, 248, 0.24)",
-    accentColor: "#38bdf8"
+    glowColor: "rgba(56, 189, 248, 0.20)",
+    accentColor: "#0284c7"
   },
   {
     id: 5,
     title: "Grand Royal 2-Tier Wedding Cake",
-    tagline: "Handcrafted Live Patisserie &bull; Signature Centrepiece",
+    tagline: "Handcrafted Live Patisserie • Signature Centrepiece",
     src: "/images/bespoke-wedding-cake.jpg",
     alt: "Grand Royal 2-Tier Celebration Cake - Cake Shoppee",
-    glowColor: "rgba(244, 114, 182, 0.25)",
-    accentColor: "#f472b6"
+    glowColor: "rgba(244, 114, 182, 0.22)",
+    accentColor: "#db2777"
   }
 ];
 
@@ -77,7 +77,7 @@ export default function EditorialCakesGrid() {
     const renderLoop = () => {
       const diff = targetProgressRef.current - currentProgressRef.current;
       if (Math.abs(diff) > 0.0005) {
-        currentProgressRef.current += diff * 0.095;
+        currentProgressRef.current += diff * 0.10;
       } else {
         currentProgressRef.current = targetProgressRef.current;
       }
@@ -89,10 +89,10 @@ export default function EditorialCakesGrid() {
       // 1. Update Ambient Glow Stage
       if (stageGlowRef.current) {
         const activeItem = SIGNATURE_CAKES[activeInt];
-        stageGlowRef.current.style.background = `radial-gradient(circle at 50% 50%, ${activeItem.glowColor} 0%, rgba(9, 13, 22, 0) 70%)`;
+        stageGlowRef.current.style.background = `radial-gradient(circle at 50% 50%, ${activeItem.glowColor} 0%, rgba(255, 255, 255, 0) 70%)`;
       }
 
-      // 3. Update 3D Perspective Cards
+      // 2. Update 3D Perspective Cards
       SIGNATURE_CAKES.forEach((_, i) => {
         const cardEl = cardRefs.current[i];
         if (!cardEl) return;
@@ -120,11 +120,11 @@ export default function EditorialCakesGrid() {
         } else {
           // In view or stacked behind in depth
           const stackPos = rel; // 0 for hero card, 1 for 1st behind, 2 for 2nd behind
-          const translateY = stackPos * 26;
-          const translateZ = -stackPos * 50;
-          const scale = Math.max(0.72, 1 - stackPos * 0.055);
-          const opacity = Math.max(0, 1 - stackPos * 0.32);
-          const brightness = Math.max(0.45, 1 - stackPos * 0.18);
+          const translateY = stackPos * 24;
+          const translateZ = -stackPos * 45;
+          const scale = Math.max(0.75, 1 - stackPos * 0.05);
+          const opacity = Math.max(0, 1 - stackPos * 0.30);
+          const brightness = Math.max(0.70, 1 - stackPos * 0.12);
 
           cardEl.style.opacity = opacity;
           cardEl.style.transform = `translate3d(0, ${translateY}px, ${translateZ}px) scale(${scale})`;
@@ -133,12 +133,13 @@ export default function EditorialCakesGrid() {
           cardEl.style.pointerEvents = stackPos < 0.3 ? 'auto' : 'none';
         }
 
-        // 4. Update Navigation Rail Dots
+        // 3. Update Navigation Rail Dots
         const dotEl = dotRefs.current[i];
         if (dotEl) {
           const isActive = Math.abs(rel) < 0.5;
-          dotEl.style.opacity = isActive ? '1' : '0.25';
+          dotEl.style.opacity = isActive ? '1' : '0.3';
           dotEl.style.transform = isActive ? 'scale(1.4)' : 'scale(1)';
+          dotEl.style.background = isActive ? '#ea580c' : 'rgba(234, 88, 12, 0.35)';
         }
       });
 
@@ -183,9 +184,9 @@ export default function EditorialCakesGrid() {
       id="curated-showcase" 
       style={{
         position: 'relative',
-        height: '420vh',
-        background: '#070a12',
-        color: '#ffffff'
+        height: '280vh',
+        background: 'linear-gradient(180deg, #fdfbf7 0%, #fff7ed 45%, #faf5ef 100%)',
+        color: '#1e293b'
       }}
     >
       {/* Sticky Viewport Stage */}
@@ -204,13 +205,13 @@ export default function EditorialCakesGrid() {
           perspectiveOrigin: '50% 50%'
         }}
       >
-        {/* Dynamic Spotlight Glow Backdrop */}
+        {/* Dynamic Warm Ambient Glow Backdrop (No black!) */}
         <div 
           ref={stageGlowRef}
           style={{
             position: 'absolute',
             inset: 0,
-            background: 'radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.25) 0%, rgba(9, 13, 22, 0) 70%)',
+            background: 'radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.22) 0%, rgba(255, 255, 255, 0) 70%)',
             pointerEvents: 'none',
             zIndex: 1,
             transition: 'background 0.5s ease',
@@ -218,56 +219,70 @@ export default function EditorialCakesGrid() {
           }} 
         />
 
-        {/* Top Header Bar (Clean, consistent fonts matching site) */}
+        {/* Top Header Bar (Warm Bakery Luxury Aesthetics) */}
         <div 
           style={{
             position: 'absolute',
-            top: '28px',
+            top: '24px',
             left: '0',
             right: '0',
-            padding: '0 32px',
+            padding: '0 24px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 40
+            gap: '6px',
+            zIndex: 40,
+            textAlign: 'center'
           }}
         >
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.16)',
+            background: 'rgba(255, 255, 255, 0.92)',
+            border: '1.5px solid rgba(251, 146, 60, 0.3)',
             padding: '7px 18px',
             borderRadius: '999px',
+            boxShadow: '0 4px 16px rgba(234, 88, 12, 0.08)',
             backdropFilter: 'blur(10px)',
             WebkitBackdropFilter: 'blur(10px)'
           }}>
-            <Sparkles size={13} color="#fb923c" />
+            <Sparkles size={14} color="#ea580c" />
             <span style={{
               fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
-              fontSize: '0.82rem',
-              fontWeight: 700,
+              fontSize: '0.84rem',
+              fontWeight: 800,
               letterSpacing: '0.08em',
-              color: '#ffffff',
+              color: '#9a3412',
               textTransform: 'uppercase'
             }}>
-              Signature Gallery
+              Signature Gallery &bull; Handcrafted Cakes
             </span>
           </div>
+
+          <span style={{
+            fontSize: '0.82rem',
+            color: '#78716c',
+            fontWeight: 600,
+            letterSpacing: '0.02em'
+          }}>
+            Scroll to reveal signature theme creations
+          </span>
         </div>
 
-        {/* 3D Depth Card Stage */}
+        {/* 3D Depth Card Stage — Natural 3:4 Vertical Portrait Ratio (NO ZOOMING IN ON PC!) */}
         <div 
           style={{
             position: 'relative',
-            width: 'min(90vw, 860px)',
-            height: 'min(70vh, 580px)',
+            width: 'min(90vw, 440px)',
+            height: 'min(72vh, 580px)',
             transformStyle: 'preserve-3d',
             zIndex: 10,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            marginTop: '36px'
           }}
         >
           {SIGNATURE_CAKES.map((cake, index) => (
@@ -279,84 +294,146 @@ export default function EditorialCakesGrid() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                borderRadius: '24px',
+                borderRadius: '26px',
                 overflow: 'hidden',
                 cursor: 'pointer',
-                background: '#090d16',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
-                boxShadow: '0 25px 70px rgba(0, 0, 0, 0.75), 0 0 40px rgba(0, 0, 0, 0.5)',
+                background: '#ffffff',
+                border: '2px solid rgba(251, 146, 60, 0.28)',
+                boxShadow: '0 24px 60px rgba(67, 34, 18, 0.14), 0 4px 18px rgba(0, 0, 0, 0.05)',
                 willChange: 'transform, opacity, filter',
                 transformStyle: 'preserve-3d',
-                userSelect: 'none'
+                userSelect: 'none',
+                display: 'flex',
+                flexDirection: 'column'
               }}
             >
-              {/* Full-Bleed Cake Art Photo */}
-              <Image
-                src={cake.src}
-                alt={cake.alt}
-                fill
-                priority={index <= 1}
-                sizes="(max-width: 860px) 90vw, 860px"
-                quality={95}
-                style={{
-                  objectFit: 'cover',
-                  objectPosition: 'center top'
-                }}
-              />
-
-              {/* Subtle Ambient Edge Glow */}
+              {/* Full Uncropped Cake Art Photo (Natural Portrait Fit, Never Zoomed) */}
               <div 
                 style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '24px',
-                  boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.15)',
-                  pointerEvents: 'none'
-                }} 
-              />
+                  position: 'relative',
+                  width: '100%',
+                  flex: 1,
+                  background: 'radial-gradient(circle at center, #ffffff 40%, #fef7ee 100%)',
+                  overflow: 'hidden'
+                }}
+              >
+                <Image
+                  src={cake.src}
+                  alt={cake.alt}
+                  fill
+                  priority={index <= 1}
+                  sizes="(max-width: 640px) 90vw, 440px"
+                  quality={95}
+                  style={{
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    padding: '12px'
+                  }}
+                />
+              </div>
+
+              {/* Bottom Card Caption Ribbon */}
+              <div 
+                style={{
+                  padding: '14px 20px',
+                  background: 'linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0.95) 100%)',
+                  borderTop: '1px solid #fed7aa',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '12px'
+                }}
+              >
+                <div>
+                  <h3 
+                    style={{
+                      fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
+                      fontSize: '1rem',
+                      fontWeight: 800,
+                      color: '#1e293b',
+                      margin: '0 0 2px 0',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {cake.title}
+                  </h3>
+                  <p 
+                    style={{
+                      fontSize: '0.74rem',
+                      color: '#64748b',
+                      margin: 0,
+                      fontWeight: 500
+                    }}
+                  >
+                    {cake.tagline}
+                  </p>
+                </div>
+
+                <div 
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    background: '#fff7ed',
+                    color: '#ea580c',
+                    flexShrink: 0
+                  }}
+                >
+                  <ChevronRight size={18} />
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Minimal Right Navigation Track */}
+        {/* Right Navigation Rail Dots (Warm Bakery Styling) */}
         <div 
           style={{
             position: 'absolute',
-            right: '28px',
+            right: '24px',
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
+            gap: '10px',
             zIndex: 40
           }}
         >
-          {SIGNATURE_CAKES.map((item, index) => (
-            <div
-              key={item.id}
-              ref={(el) => setDotRef(el, index)}
+          {SIGNATURE_CAKES.map((cake, i) => (
+            <div 
+              key={`dot-${cake.id}`}
+              ref={(el) => setDotRef(el, i)}
               style={{
-                width: '8px',
-                height: '8px',
+                width: '7px',
+                height: '7px',
                 borderRadius: '50%',
-                background: '#fb923c',
-                opacity: index === 0 ? 1 : 0.25,
-                transition: 'opacity 0.25s ease, transform 0.25s ease',
-                boxShadow: '0 0 10px rgba(251, 146, 60, 0.8)'
+                background: 'rgba(234, 88, 12, 0.35)',
+                transition: 'all 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
+                cursor: 'pointer'
+              }}
+              onClick={() => {
+                if (containerRef.current) {
+                  const scrollable = containerRef.current.offsetHeight - window.innerHeight;
+                  const targetScroll = containerRef.current.offsetTop + (i / (SIGNATURE_CAKES.length - 1)) * scrollable;
+                  window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+                }
               }}
             />
           ))}
         </div>
 
-        {/* Bottom Scroll Hint */}
+        {/* Bottom Scroll Cue */}
         <div 
           style={{
             position: 'absolute',
-            bottom: '24px',
+            bottom: '22px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            color: '#94a3b8',
+            color: '#78716c',
             fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
             fontSize: '0.78rem',
             fontWeight: 600,
@@ -364,8 +441,7 @@ export default function EditorialCakesGrid() {
             zIndex: 40
           }}
         >
-          <span>Scroll to cycle through signature creations</span>
-          <ChevronDown size={14} />
+          <span>Tap any cake to design your bespoke theme</span>
         </div>
       </div>
     </section>
