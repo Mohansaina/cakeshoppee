@@ -10,23 +10,34 @@ const BAKERY_LOCATION = {
   pincode: "531116"
 };
 
-// Curated Narsipatnam landmarks & localities for search and reference
+// High-density Narsipatnam Municipal Colonies, Landmarks & Wards
 const NARSIPATNAM_LANDMARKS = [
-  { name: "Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Abes Centre (Main Road)", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
+  { name: "Abes Centre (Main Road)", aliases: ["abes", "abes center", "main road", "himalaya juice"], lat: 17.66635, lng: 82.61015, area: "Abes Centre", street: "Main Road", landmark: "Beside Himalaya Juice Center" },
   { name: "Tagarapu Veedhi", aliases: ["tagarapu", "tagarapu veedhi", "tagarapu street"], lat: 17.6675, lng: 82.6115, area: "Tagarapu Veedhi", street: "Tagarapu Veedhi", landmark: "Behind Municipal Office" },
-  { name: "RTC Bus Stand / Complex", aliases: ["rtc", "bus stand", "bus complex", "depot"], lat: 17.6710, lng: 82.6150, area: "RTC Complex Area", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
-  { name: "Area Hospital & Police Station", aliases: ["hospital", "area hospital", "police station", "dsp office"], lat: 17.6625, lng: 82.6130, area: "Area Hospital Road", street: "Hospital Road", landmark: "Opposite Area Hospital" },
-  { name: "Balighattam & Shirdi Sai Temple", aliases: ["balighattam", "sai temple", "sai baba", "varaha river"], lat: 17.6540, lng: 82.6030, area: "Balighattam & Temple Road", street: "Balighattam Main Road", landmark: "Near Shirdi Sai Baba Temple" },
-  { name: "Govt Degree College & College Road", aliases: ["college", "degree college", "college road", "junior college"], lat: 17.6740, lng: 82.6080, area: "College Road / Station Road", street: "College Road", landmark: "Near Govt Degree College" },
-  { name: "Peddaboddepalli Area", aliases: ["peddaboddepalli", "pedaboddepalli", "boddepalli"], lat: 17.6820, lng: 82.6200, area: "Peddaboddepalli Area", street: "Peddaboddepalli Main Road", landmark: "Near Boddepalli Centre" },
-  { name: "Ayyannapalem", aliases: ["ayyannapalem", "ayanna palem"], lat: 17.6660, lng: 82.6090, area: "Ayyannapalem", street: "Ayyannapalem Road", landmark: "Near Ayyannapalem Junction" },
+  { name: "RTC Bus Stand & Complex", aliases: ["rtc", "bus stand", "bus complex", "depot"], lat: 17.6710, lng: 82.6150, area: "RTC Complex Area", street: "RTC Complex Road", landmark: "Near RTC Main Entrance" },
+  { name: "Area Hospital & DSP Office", aliases: ["hospital", "area hospital", "police station", "dsp office"], lat: 17.6625, lng: 82.6130, area: "Area Hospital Road", street: "Hospital Road", landmark: "Near Area Hospital" },
+  { name: "Balighattam & Sai Baba Temple", aliases: ["balighattam", "sai temple", "sai baba", "varaha river"], lat: 17.6540, lng: 82.6030, area: "Balighattam", street: "Balighattam Road", landmark: "Near Shirdi Sai Baba Temple" },
+  { name: "Govt Degree & Junior College", aliases: ["college", "degree college", "college road", "junior college"], lat: 17.6740, lng: 82.6080, area: "College Road", street: "College Road", landmark: "Near Govt Degree College" },
+  { name: "Peddaboddepalli", aliases: ["peddaboddepalli", "pedaboddepalli", "boddepalli"], lat: 17.6820, lng: 82.6200, area: "Peddaboddepalli", street: "Boddepalli Main Road", landmark: "Near Boddepalli Centre" },
+  { name: "Ayyannapalem", aliases: ["ayyannapalem", "ayanna palem"], lat: 17.6660, lng: 82.6090, area: "Ayyannapalem", street: "Ayyannapalem Road", landmark: "Near Subhash Statue Junction" },
   { name: "NTR Stadium & Municipal Office", aliases: ["ntr stadium", "stadium", "municipal", "municipality"], lat: 17.6650, lng: 82.6120, area: "NTR Stadium Area", street: "Municipality Road", landmark: "Near NTR Stadium Gate" },
-  { name: "Shanti Nagar & Housing Board", aliases: ["shanti nagar", "shantinagar", "housing board", "colony"], lat: 17.6690, lng: 82.6050, area: "Shanti Nagar / Housing Board", street: "Shanti Nagar Road", landmark: "Near Housing Board Colony" },
+  { name: "Shanti Nagar & Housing Board", aliases: ["shanti nagar", "shantinagar", "housing board", "colony"], lat: 17.6690, lng: 82.6050, area: "Shanti Nagar", street: "Housing Board Colony Road", landmark: "Near Housing Board Colony" },
   { name: "Lingarajupeta", aliases: ["lingarajupeta", "lingaraju peta"], lat: 17.6590, lng: 82.6180, area: "Lingarajupeta", street: "Lingarajupeta Road", landmark: "Near Primary School" },
-  { name: "Dharmavaram & Kotauratla Road", aliases: ["dharmavaram", "kotauratla", "station road"], lat: 17.6760, lng: 82.6250, area: "Dharmavaram / Kotauratla Road", street: "Kotauratla Road", landmark: "Near Bypass Junction" },
-  { name: "Sri Kanya & Jagadamba Theatres", aliases: ["theatre", "sri kanya", "jagadamba", "cinema hall"], lat: 17.6680, lng: 82.6140, area: "Cinema Road Area", street: "Cinema Road", landmark: "Near Sri Kanya Theatre" },
-  { name: "Gandhi Park & Main Road", aliases: ["gandhi park", "post office"], lat: 17.6670, lng: 82.6105, area: "Gandhi Park Area", street: "Main Road", landmark: "Near Gandhi Park" },
-  { name: "Court & Sub-Jail Area", aliases: ["court", "sub-jail", "sub collector"], lat: 17.6635, lng: 82.6080, area: "Court / Sub-Jail Area", street: "Court Road", landmark: "Near Sub-Collector Office" }
+  { name: "Cinema Road & Sri Kanya Theatre", aliases: ["theatre", "sri kanya", "jagadamba", "cinema hall"], lat: 17.6680, lng: 82.6140, area: "Cinema Road", street: "Cinema Road", landmark: "Near Sri Kanya Theatre" },
+  { name: "Gandhi Park & Old Post Office", aliases: ["gandhi park", "post office"], lat: 17.6670, lng: 82.6105, area: "Gandhi Park Area", street: "Main Road", landmark: "Near Gandhi Park" },
+  { name: "Court Complex & Sub-Jail", aliases: ["court", "sub-jail", "sub collector"], lat: 17.6635, lng: 82.6080, area: "Court Complex Area", street: "Court Road", landmark: "Near Sub-Collector Office" },
+  { name: "Saraswathi Nagar", aliases: ["saraswathi nagar", "saraswathi temple"], lat: 17.6720, lng: 82.6120, area: "Saraswathi Nagar", street: "Saraswathi Nagar Road", landmark: "Near Saraswathi Temple" },
+  { name: "Sundaraiah Nagar", aliases: ["sundaraiah nagar", "sundarayya"], lat: 17.6750, lng: 82.6170, area: "Sundaraiah Nagar", street: "Sundaraiah Nagar Road", landmark: "Near Community Hall" },
+  { name: "Bapuji Nagar", aliases: ["bapuji nagar", "bapuji"], lat: 17.6685, lng: 82.6070, area: "Bapuji Nagar", street: "Bapuji Nagar Road", landmark: "Near Bapuji Park" },
+  { name: "Teachers Colony", aliases: ["teachers colony"], lat: 17.6715, lng: 82.6060, area: "Teachers Colony", street: "Teachers Colony Road", landmark: "Near Teachers Colony Hall" },
+  { name: "Venkatanagaram", aliases: ["venkatanagaram", "venkata nagaram"], lat: 17.6640, lng: 82.6160, area: "Venkatanagaram", street: "Venkatanagaram Road", landmark: "Near Venkatanagaram Centre" },
+  { name: "Neelampeta", aliases: ["neelampeta", "neelam peta"], lat: 17.6610, lng: 82.6060, area: "Neelampeta", street: "Neelampeta Road", landmark: "Near Neelampeta Junction" },
+  { name: "Dharmavaram", aliases: ["dharmavaram", "kotauratla road"], lat: 17.6760, lng: 82.6250, area: "Dharmavaram", street: "Kotauratla Road", landmark: "Near Bypass Junction" },
+  { name: "Komatipalem", aliases: ["komatipalem", "komati veedhi"], lat: 17.6615, lng: 82.6210, area: "Komatipalem", street: "Komatipalem Veedhi", landmark: "Near Komatipalem Centre" },
+  { name: "Pedagollapalle", aliases: ["pedagollapalle", "gollapalle"], lat: 17.6580, lng: 82.6230, area: "Pedagollapalle", street: "Pedagollapalle Road", landmark: "Near Primary School" },
+  { name: "Chinagollapalle", aliases: ["chinagollapalle"], lat: 17.6550, lng: 82.6260, area: "Chinagollapalle", street: "Chinagollapalle Road", landmark: "Near Chinagollapalle Centre" },
+  { name: "Vemulapudi Road", aliases: ["vemulapudi", "vemulapudi road"], lat: 17.6690, lng: 82.6220, area: "Vemulapudi Road Area", street: "Vemulapudi Road", landmark: "Near Bypass Bridge" },
+  { name: "Burugupalem", aliases: ["burugupalem", "burugu palem"], lat: 17.6880, lng: 82.6120, area: "Burugupalem", street: "Burugupalem Road", landmark: "Near Burugupalem Centre" }
 ];
 
 // Haversine formula to calculate distance in km
@@ -62,7 +73,6 @@ function getGooglePlusCode(latitude, longitude) {
     code += CODE_ALPHABET[latDigit] + CODE_ALPHABET[lngDigit];
     if (i === 3) code += '+';
   }
-  // Optional 11th grid refinement digit (matches Google Maps exactly)
   const row = Math.floor(latVal / (0.000125 / 5));
   const col = Math.floor(lngVal / (0.000125 / 4));
   const gridIndex = Math.min(19, Math.max(0, row * 4 + col));
@@ -98,7 +108,7 @@ export async function GET(request) {
           lng: m.lng,
           pincode: "531116",
           distanceKm: dist,
-          estimatedTime: dist <= 2 ? "20-25 mins" : "30-40 mins",
+          estimatedTime: dist <= 1.5 ? "15-20 mins" : dist <= 3.5 ? "20-30 mins" : "30-40 mins",
           formatted: `${m.street}, ${m.area}, Narsipatnam - 531116`
         };
       });
@@ -110,77 +120,7 @@ export async function GET(request) {
     if (!isNaN(lat) && !isNaN(lng)) {
       const distance = calculateDistance(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, lat, lng);
       
-      let detectedVillage = '';
-      let detectedMandal = '';
-      let detectedDistrict = '';
-      let detectedState = 'Andhra Pradesh';
-      let detectedPincode = '';
-      let street = '';
-
-      // 1. Query OSM Nominatim at zoom=14 for true village/town/suburb level
-      try {
-        const osmRes14 = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&addressdetails=1`, {
-          headers: {
-            'User-Agent': 'CakeShoppeeBakery/1.0 (info@cakeshoppee.com)',
-            'Accept-Language': 'en'
-          },
-          next: { revalidate: 3600 }
-        });
-        if (osmRes14.ok) {
-          const d14 = await osmRes14.json();
-          if (d14 && d14.address) {
-            const addr = d14.address;
-            detectedVillage = addr.village || addr.suburb || addr.town || addr.residential || d14.name || '';
-            detectedMandal = addr.county || '';
-            detectedDistrict = addr.state_district || '';
-            detectedState = addr.state || 'Andhra Pradesh';
-            detectedPincode = addr.postcode || '';
-          }
-        }
-      } catch (e) {
-        console.warn('Server OSM zoom 14 error:', e);
-      }
-
-      // 2. Query OSM Nominatim at zoom=18 for street name (filter out technical highway codes)
-      try {
-        const osmRes18 = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
-          headers: {
-            'User-Agent': 'CakeShoppeeBakery/1.0 (info@cakeshoppee.com)',
-            'Accept-Language': 'en'
-          },
-          next: { revalidate: 3600 }
-        });
-        if (osmRes18.ok) {
-          const d18 = await osmRes18.json();
-          if (d18 && d18.address) {
-            const rawRoad = d18.address.road || '';
-            if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
-              street = rawRoad;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Server OSM zoom 18 error:', e);
-      }
-
-      // 3. Fallback to BigDataCloud if village is still empty
-      if (!detectedVillage) {
-        try {
-          const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
-          if (bdcRes.ok) {
-            const bdcData = await bdcRes.json();
-            detectedVillage = bdcData.locality || bdcData.city || '';
-            if (bdcData.principalSubdivision) detectedState = bdcData.principalSubdivision;
-          }
-        } catch (e2) {
-          console.warn('Server BigDataCloud fallback error:', e2);
-        }
-      }
-
-      // 4. Calculate Google Plus Code
-      const plusCodeLocal = getGooglePlusCode(lat, lng);
-
-      // 5. Check if user is within close proximity to a known Narsipatnam town landmark (<= 1.2 km)
+      // Find closest landmark in our comprehensive Narsipatnam grid
       let closestLandmark = NARSIPATNAM_LANDMARKS[0];
       let minDistance = 99999;
       for (const lm of NARSIPATNAM_LANDMARKS) {
@@ -191,50 +131,115 @@ export async function GET(request) {
         }
       }
 
-      let matchedArea = '';
+      let detectedStreet = '';
+      let detectedNeighbourhood = '';
+      let detectedVillage = '';
+      let detectedMandal = '';
+      let detectedDistrict = 'Anakapalli';
+      let detectedState = 'Andhra Pradesh';
+      let detectedPincode = '531116';
+
+      // 1. Try reverse geocoding via OpenStreetMap Nominatim with 2-second timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2200);
+
+        const osmRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+          {
+            headers: {
+              'User-Agent': 'CakeShoppeeBakery/2.0 (order@cakeshoppee.com; Narsipatnam)',
+              'Accept-Language': 'en'
+            },
+            signal: controller.signal
+          }
+        );
+        clearTimeout(timeoutId);
+
+        if (osmRes.ok) {
+          const d = await osmRes.json();
+          if (d && d.address) {
+            const a = d.address;
+            const rawRoad = a.road || a.pedestrian || a.path || '';
+            if (rawRoad && !/^(SH|MDR|NH|State Highway|Major District Road)/i.test(rawRoad)) {
+              detectedStreet = rawRoad;
+            }
+            detectedNeighbourhood = a.neighbourhood || a.suburb || a.residential || '';
+            detectedVillage = a.village || a.town || a.city || '';
+            detectedMandal = a.county || '';
+            if (a.state) detectedState = a.state;
+            if (a.postcode) detectedPincode = a.postcode;
+          }
+        }
+      } catch (e) {
+        // Fallback silently if Nominatim network times out
+      }
+
+      // 2. Try BigDataCloud if neighbourhood is still empty
+      if (!detectedNeighbourhood && !detectedStreet) {
+        try {
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(() => controller2.abort(), 1800);
+
+          const bdcRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`,
+            { signal: controller2.signal }
+          );
+          clearTimeout(timeoutId2);
+
+          if (bdcRes.ok) {
+            const bdc = await bdcRes.json();
+            if (bdc.locality && bdc.locality !== 'Andhra Pradesh') {
+              detectedNeighbourhood = bdc.locality;
+            }
+            if (bdc.principalSubdivision) detectedState = bdc.principalSubdivision;
+            if (bdc.postcode) detectedPincode = bdc.postcode;
+          }
+        } catch (e2) {
+          // Fallback silently
+        }
+      }
+
+      // 3. Compute Google Plus Code
+      const plusCodeLocal = getGooglePlusCode(lat, lng);
+
+      // 4. Construct accurate, natural human-readable address
+      const isBadName = (str) => !str || /^(andhra pradesh|india|unknown|null|undefined)$/i.test(String(str).trim());
+
+      let resolvedArea = '';
+      let resolvedStreet = detectedStreet || '';
+      let resolvedLandmark = '';
       let wordsAddress = '';
       let finalAddress = '';
       let plusCodeFull = '';
-      let finalStreet = street;
-      let finalLandmark = '';
 
-      function cleanPrefix(str) {
-        if (!str) return '';
-        return str.replace(/^(Near|Beside|Opposite|Behind)\s+/i, '').trim();
-      }
-
-      if (minDistance <= 0.8 && distance <= 3.5) {
-        // Customer is inside Narsipatnam town
-        matchedArea = closestLandmark.area;
-        finalStreet = street || closestLandmark.street;
-        const cleanName = cleanPrefix(closestLandmark.name);
-        finalLandmark = cleanPrefix(closestLandmark.landmark) || cleanName;
-        
-        const distMeters = Math.round(minDistance * 1000);
-        if (distMeters <= 150) {
-          wordsAddress = (finalStreet && finalStreet !== closestLandmark.area ? `${finalStreet}, ` : '') + `${closestLandmark.area}, Narsipatnam`;
-        } else if (distMeters <= 450) {
-          wordsAddress = `Near ${cleanName}, ${closestLandmark.area}, Narsipatnam`;
-        } else {
-          wordsAddress = `${closestLandmark.area}, Narsipatnam`;
+      // Check if coordinates fall within the Narsipatnam delivery cluster (<= 25 km)
+      if (distance <= 25) {
+        // High-accuracy town / colony matching
+        resolvedArea = (!isBadName(detectedNeighbourhood)) ? detectedNeighbourhood : closestLandmark.area;
+        if (!resolvedStreet && closestLandmark.street) {
+          resolvedStreet = closestLandmark.street;
         }
+        resolvedLandmark = closestLandmark.landmark;
 
-        wordsAddress = wordsAddress.replace(/Tagarapu Veedhi, Tagarapu Veedhi/g, 'Tagarapu Veedhi');
-        wordsAddress = wordsAddress.replace(/Lingarajupeta, Lingarajupeta/g, 'Lingarajupeta');
-        wordsAddress = wordsAddress.replace(/Abes Centre \(Main Road\), Abes Centre \(Main Road\)/g, 'Abes Centre, Main Road');
-
-        finalAddress = `${wordsAddress} - 531116`;
+        // Clean redundant strings
+        const streetPart = (resolvedStreet && resolvedStreet !== resolvedArea) ? `${resolvedStreet}, ` : '';
+        wordsAddress = `${streetPart}${resolvedArea}, Narsipatnam`;
+        finalAddress = `${streetPart}${resolvedArea}, Narsipatnam - 531116`;
         plusCodeFull = `${plusCodeLocal} Narsipatnam, Andhra Pradesh`;
       } else {
-        // Customer is outside town / in specific locality/village (e.g. Burugupalem, Makavarapalem)
-        const placeName = detectedVillage || (detectedMandal ? detectedMandal.replace(' Mandal', '') : 'Andhra Pradesh');
-        matchedArea = placeName;
-        finalStreet = street || placeName;
-        finalLandmark = detectedMandal ? `Near ${placeName} (${detectedMandal})` : `Near ${placeName}`;
+        // Out-of-town / rural village
+        const placeCandidate = [
+          detectedVillage,
+          detectedNeighbourhood,
+          detectedMandal ? detectedMandal.replace(' Mandal', '') : '',
+          closestLandmark.area
+        ].find(n => !isBadName(n)) || closestLandmark.area;
 
-        wordsAddress = `${placeName}, ${detectedState}`;
-        finalAddress = `${placeName}${detectedMandal ? `, ${detectedMandal}` : ''}, ${detectedState}${detectedPincode ? ` - ${detectedPincode}` : ''}`;
-        plusCodeFull = `${plusCodeLocal} ${placeName}, ${detectedState}`;
+        resolvedArea = placeCandidate;
+        wordsAddress = `${placeCandidate}, ${detectedState}`;
+        finalAddress = `${placeCandidate}, ${detectedState}${detectedPincode ? ` - ${detectedPincode}` : ''}`;
+        plusCodeFull = `${plusCodeLocal} ${placeCandidate}, ${detectedState}`;
       }
 
       return NextResponse.json({
@@ -243,16 +248,16 @@ export async function GET(request) {
         wordsAddress: wordsAddress,
         plusCode: plusCodeFull,
         plusCodeLocal: plusCodeLocal,
-        area: matchedArea,
-        village: detectedVillage || matchedArea,
-        mandal: detectedMandal,
-        street: finalStreet,
-        landmark: finalLandmark,
-        pincode: detectedPincode || (minDistance <= 1.2 ? "531116" : ""),
+        area: resolvedArea,
+        village: detectedVillage || resolvedArea,
+        mandal: detectedMandal || "Narsipatnam",
+        street: resolvedStreet,
+        landmark: resolvedLandmark,
+        pincode: detectedPincode || "531116",
         lat: lat,
         lng: lng,
         distanceKm: distance,
-        estimatedTime: distance <= 2 ? "20-25 mins" : distance <= 5 ? "25-35 mins" : distance <= 15 ? "35-50 mins" : "50-60 mins",
+        estimatedTime: distance <= 1.5 ? "15-20 mins" : distance <= 3.5 ? "20-30 mins" : distance <= 8 ? "30-40 mins" : "45-60 mins",
         isWithinDeliveryRange: distance <= 25,
         mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
       });
