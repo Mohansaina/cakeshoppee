@@ -313,19 +313,8 @@ export default function CartDrawer() {
     // Fallback if browser GPS fails, is denied, or blocked on non-SSL network
     const handleGpsFallback = async (reason) => {
       console.warn('GPS fallback triggered:', reason);
-      setGpsLocation(BAKERY_COORDS);
-      setDetectedAddress('Main Road, Beside Himalaya Juice Center, Narsipatnam - 531116');
-      setSelectedArea('Abes Centre (Main Road)');
-      setStreetName('Main Road');
-      setLandmark('Beside Himalaya Juice Center');
-      setPincode('531116');
-      setDeliveryDistance(0.1);
-      setDeliveryEta('15-20 mins');
-      if (!houseNumber || !houseNumber.trim()) {
-        setHouseNumber('Doorstep Location');
-      }
       setIsDetectingGps(false);
-      setGpsError(reason ? `${reason} Defaulted to shop location. Tap "Choose on Map" to set your doorstep pin.` : '');
+      setGpsError(reason ? `⚠️ ${reason} Please tap "Choose on Map" to set your doorstep pin, or paste a Google Maps link.` : '');
       if (validationError) setValidationError('');
     };
 
@@ -336,13 +325,13 @@ export default function CartDrawer() {
 
     let hasResolved = false;
 
-    // Safety timeout in case a mobile browser freezes the prompt
+    // Generous safety timer (25s) so mobile users have ample time to tap 'Allow' on Android/iOS
     const safetyTimer = setTimeout(() => {
       if (!hasResolved) {
         hasResolved = true;
-        handleGpsFallback('GPS response timed out.');
+        handleGpsFallback('GPS took too long to respond.');
       }
-    }, 12000);
+    }, 25000);
 
     const onPosSuccess = async (pos) => {
       if (hasResolved) return;
@@ -353,7 +342,7 @@ export default function CartDrawer() {
 
     const onPosError = (err) => {
       console.log('Tier 1 GPS error, attempting relaxed Tier 2:', err.message);
-      // Tier 2: Accept cached network/WiFi fix up to 5 minutes old with standard accuracy
+      // Tier 2: Accept network/WiFi/cell tower fix up to 10 minutes old (instant indoor fix)
       navigator.geolocation.getCurrentPosition(
         onPosSuccess,
         (err2) => {
@@ -366,19 +355,19 @@ export default function CartDrawer() {
             handleGpsFallback('GPS signal unavailable indoors.');
           }
         },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 }
       );
     };
 
-    // Tier 1: Try high accuracy with 60s cache (instant if recent fix exists)
+    // Tier 1: Try GPS with 2-minute cache allowance (instant if recent app fix exists)
     try {
       navigator.geolocation.getCurrentPosition(
         onPosSuccess,
         onPosError,
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 120000 }
       );
     } catch (e) {
-      handleGpsFallback('GPS could not be accessed.');
+      onPosError(e);
     }
   };
 

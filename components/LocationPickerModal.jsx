@@ -312,7 +312,7 @@ export default function LocationPickerModal({
     };
   }, [isOpen]);
 
-  // Handle GPS Auto-detect button inside the map - High accuracy with maximumAge: 0
+  // Handle GPS Auto-detect button inside the map - Resilient across all mobile devices
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       setGpsError('Geolocation is not supported by your browser.');
@@ -321,26 +321,35 @@ export default function LocationPickerModal({
     setIsLocatingUser(true);
     setGpsError('');
 
+    const applyPos = (pos) => {
+      const { latitude, longitude } = pos.coords;
+      setCurrentCoords({ lat: latitude, lng: longitude });
+      if (mapInstanceRef.current && markerRef.current) {
+        mapInstanceRef.current.setView([latitude, longitude], 17);
+        markerRef.current.setLatLng([latitude, longitude]);
+      }
+      fetchAddressForCoords(latitude, longitude);
+      setIsLocatingUser(false);
+    };
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCurrentCoords({ lat: latitude, lng: longitude });
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setView([latitude, longitude], 17);
-          markerRef.current.setLatLng([latitude, longitude]);
-        }
-        fetchAddressForCoords(latitude, longitude);
-        setIsLocatingUser(false);
-      },
+      applyPos,
       (err) => {
-        setIsLocatingUser(false);
-        if (err.code === 1) {
-          setGpsError('Location permission denied. Please drag the pin on the map.');
-        } else {
-          setGpsError('Could not get high-accuracy GPS fix. Please drag the pin on the map.');
-        }
+        // Fallback to relaxed accuracy (cellular/wifi fix)
+        navigator.geolocation.getCurrentPosition(
+          applyPos,
+          (err2) => {
+            setIsLocatingUser(false);
+            if (err2.code === 1) {
+              setGpsError('Location permission denied. Please drag the pin on map or paste a link.');
+            } else {
+              setGpsError('GPS signal weak indoors. Please drag the pin on map or paste a link.');
+            }
+          },
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 120000 }
     );
   };
 
