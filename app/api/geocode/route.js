@@ -84,9 +84,138 @@ function getGooglePlusCode(latitude, longitude) {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const lat = parseFloat(searchParams.get('lat'));
-    const lng = parseFloat(searchParams.get('lng'));
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
     const query = searchParams.get('q');
+    const rawUrl = searchParams.get('url') || searchParams.get('link');
+
+    // Scenario 0: Parse & extract location from a Google Maps link (e.g. maps.app.goo.gl, goo.gl/maps, google.com/maps)
+    if (rawUrl && rawUrl.trim().length > 5) {
+      let targetUrl = rawUrl.trim();
+      if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+        targetUrl = 'https://' + targetUrl;
+      }
+
+      // Follow redirects to unpack shortened Google Maps URLs
+      let resolvedUrl = targetUrl;
+      try {
+        const headRes = await fetch(targetUrl, {
+          method: 'GET',
+          redirect: 'follow',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-IN,en;q=0.9'
+          }
+        });
+        resolvedUrl = headRes.url || targetUrl;
+      } catch (err) {
+        console.warn('Redirect resolution fallback:', err);
+      }
+
+      const decoded = decodeURIComponent(resolvedUrl);
+      let parsedLat = null;
+      let parsedLng = null;
+      let placeName = '';
+
+      // Check /place/<placeName>/@<lat>,<lng>
+      const placeMatch = decoded.match(/\/place\/([^/@]+)\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (placeMatch) {
+        placeName = placeMatch[1].replace(/\+/g, ' ').trim();
+        parsedLat = parseFloat(placeMatch[2]);
+        parsedLng = parseFloat(placeMatch[3]);
+      }
+
+      // Check /search/<query>/@<lat>,<lng>
+      if (parsedLat === null) {
+        const searchMatch = decoded.match(/\/search\/([^/@]+)\/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (searchMatch) {
+          placeName = searchMatch[1].replace(/\+/g, ' ').trim();
+          parsedLat = parseFloat(searchMatch[2]);
+          parsedLng = parseFloat(searchMatch[3]);
+        }
+      }
+
+      // Check ?q=lat,lng or ?q=name
+      if (parsedLat === null) {
+        const qMatch = decoded.match(/[?&]q=([^&]+)/);
+        if (qMatch) {
+          const qVal = qMatch[1].replace(/\+/g, ' ').trim();
+          const coordsMatch = qVal.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+          if (coordsMatch) {
+            parsedLat = parseFloat(coordsMatch[1]);
+            parsedLng = parseFloat(coordsMatch[2]);
+          } else {
+            placeName = qVal;
+          }
+        }
+      }
+
+      // Check /@lat,lng
+      if (parsedLat === null) {
+        const atMatch = decoded.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (atMatch) {
+          parsedLat = parseFloat(atMatch[1]);
+          parsedLng = parseFloat(atMatch[2]);
+        }
+      }
+
+      // Check ll=lat,lng
+      if (parsedLat === null) {
+        const llMatch = decoded.match(/[?&]ll=(-?\d+\.\d+),(-?\d+\.\d+)/);
+        if (llMatch) {
+          parsedLat = parseFloat(llMatch[1]);
+          parsedLng = parseFloat(llMatch[2]);
+        }
+      }
+
+      if (parsedLat !== null && parsedLng !== null && !isNaN(parsedLat) && !isNaN(parsedLng)) {
+        const dist = calculateDistance(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, parsedLat, parsedLng);
+        const plusCode = getGooglePlusCode(parsedLat, parsedLng);
+        
+        let closestLandmark = NARSIPATNAM_LANDMARKS[0];
+        let minD = 99999;
+        for (const lm of NARSIPATNAM_LANDMARKS) {
+          const d = calculateDistance(parsedLat, parsedLng, lm.lat, lm.lng);
+          if (d < minD) {
+            minD = d;
+            closestLandmark = lm;
+          }
+        }
+
+        const cleanPlace = placeName && !placeName.startsWith('Location (') ? placeName : `${closestLandmark.street}, ${closestLandmark.area}, Narsipatnam`;
+        const mapsLink = `https://maps.google.com/?q=${parsedLat},${parsedLng}`;
+
+        return NextResponse.json({
+          success: true,
+          fromGoogleMapsLink: true,
+          provider: 'google_maps_link',
+          address: cleanPlace.includes('Narsipatnam') ? `${cleanPlace} - 531116` : `${cleanPlace}, Narsipatnam - 531116`,
+          wordsAddress: cleanPlace,
+          placeName: cleanPlace,
+          plusCode: `${plusCode} Narsipatnam, Andhra Pradesh`,
+          plusCodeLocal: plusCode,
+          area: closestLandmark.area,
+          street: closestLandmark.street,
+          landmark: closestLandmark.landmark,
+          pincode: "531116",
+          lat: parsedLat,
+          lng: parsedLng,
+          distanceKm: dist,
+          estimatedTime: dist <= 1.5 ? "15-20 mins" : dist <= 3.5 ? "20-30 mins" : dist <= 8 ? "30-40 mins" : "45-60 mins",
+          isWithinDeliveryRange: dist <= 15,
+          mapsUrl: mapsLink,
+          resolvedUrl: resolvedUrl
+        });
+      }
+
+      return NextResponse.json({
+        success: false,
+        error: 'Could not extract coordinates from the provided Google Maps link. Please verify the link format.'
+      }, { status: 400 });
+    }
+
+    const lat = parseFloat(latParam);
+    const lng = parseFloat(lngParam);
 
     // Scenario A: Landmark or colony search query
     if (query && query.trim().length > 1) {

@@ -176,6 +176,44 @@ export default function CartDrawer() {
   const [cakeMessage, setCakeMessage] = useState('');
   const [deliveryTime, setDeliveryTime] = useState('As soon as possible');
   const [validationError, setValidationError] = useState('');
+  const [mapsLinkInput, setMapsLinkInput] = useState('');
+  const [isResolvingMapsLink, setIsResolvingMapsLink] = useState(false);
+  const [mapsLinkCopied, setMapsLinkCopied] = useState(false);
+
+  // Parse and resolve any pasted Google Maps Link
+  const handleResolveMapsLink = async (overrideUrl) => {
+    const rawLink = (overrideUrl || mapsLinkInput).trim();
+    if (!rawLink) return;
+    setIsResolvingMapsLink(true);
+    setGpsError('');
+    try {
+      const res = await fetch(`/api/geocode?url=${encodeURIComponent(rawLink)}`);
+      const data = await res.json();
+      if (data && data.success && data.lat && data.lng) {
+        setGpsLocation({ lat: data.lat, lng: data.lng });
+        const text = data.address || data.wordsAddress || data.placeName;
+        setDetectedAddress(text);
+        if (data.plusCode) setPlusCode(data.plusCode);
+        if (data.street) setStreetName(data.street);
+        if (data.area) setSelectedArea(data.area);
+        if (data.landmark) setLandmark(data.landmark);
+        if (data.pincode) setPincode(data.pincode);
+        if (data.distanceKm !== undefined) setDeliveryDistance(data.distanceKm);
+        if (data.estimatedTime) setDeliveryEta(data.estimatedTime);
+        if (!houseNumber || !houseNumber.trim()) {
+          setHouseNumber('Doorstep Location');
+        }
+        setMapsLinkInput('');
+        if (validationError) setValidationError('');
+      } else {
+        setGpsError(data.error || 'Could not parse that Google Maps link. Please tap "Choose on Map".');
+      }
+    } catch (err) {
+      setGpsError('Network error while resolving link. Please try again or choose on map.');
+    } finally {
+      setIsResolvingMapsLink(false);
+    }
+  };
 
   // Restore saved customer profile from localStorage
   useEffect(() => {
@@ -878,6 +916,53 @@ export default function CartDrawer() {
                       </button>
                     </div>
 
+                    {/* Paste Google Maps Link Direct Input */}
+                    <div style={{ marginTop: '8px', padding: '8px 10px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>
+                          🔗 Or paste Google Maps link from your phone:
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <input
+                          type="text"
+                          placeholder="e.g. https://maps.app.goo.gl/... or google.com/maps..."
+                          value={mapsLinkInput}
+                          onChange={(e) => setMapsLinkInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleResolveMapsLink();
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '6px 8px',
+                            fontSize: '0.78rem',
+                            borderRadius: '6px',
+                            border: '1px solid #cbd5e1',
+                            background: '#ffffff',
+                            color: '#0f172a'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleResolveMapsLink()}
+                          disabled={isResolvingMapsLink || !mapsLinkInput.trim()}
+                          style={{
+                            padding: '6px 12px',
+                            background: mapsLinkInput.trim() ? '#ea580c' : '#cbd5e1',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '0.74rem',
+                            fontWeight: 700,
+                            cursor: mapsLinkInput.trim() ? 'pointer' : 'default',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {isResolvingMapsLink ? 'Fetching...' : 'Fetch'}
+                        </button>
+                      </div>
+                    </div>
+
                     {gpsError && (
                       <p style={{ margin: '6px 0 0 0', fontSize: '0.76rem', color: '#ef4444', fontWeight: 600 }}>{gpsError}</p>
                     )}
@@ -918,10 +1003,90 @@ export default function CartDrawer() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span>📍 {detectedAddress || `${selectedArea}, Andhra Pradesh`}</span>
                         </div>
+
+                        {/* Direct Google Maps Link Preview Box */}
+                        {gpsLocation && (
+                          <div style={{
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '8px',
+                            padding: '6px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '8px'
+                          }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', display: 'block' }}>
+                                🗺️ Live Google Maps Link:
+                              </span>
+                              <a
+                                href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  fontSize: '0.74rem',
+                                  color: '#2563eb',
+                                  fontWeight: 600,
+                                  textDecoration: 'underline',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  display: 'block'
+                                }}
+                              >
+                                https://maps.google.com/?q={gpsLocation.lat.toFixed(5)},{gpsLocation.lng.toFixed(5)}
+                              </a>
+                            </div>
+                            <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (navigator.clipboard) {
+                                    navigator.clipboard.writeText(`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`);
+                                  }
+                                  setMapsLinkCopied(true);
+                                  setTimeout(() => setMapsLinkCopied(false), 2000);
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: '#dbeafe',
+                                  color: '#1e40af',
+                                  border: '1px solid #93c5fd',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {mapsLinkCopied ? '✓ Copied' : 'Copy'}
+                              </button>
+                              <a
+                                href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  padding: '4px 8px',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 700,
+                                  background: '#2563eb',
+                                  color: '#ffffff',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center'
+                                }}
+                              >
+                                Open ↗
+                              </a>
+                            </div>
+                          </div>
+                        )}
                         {plusCode && (
                           <div style={{ fontSize: '0.8rem', color: '#0369a1', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <span>🌐 Plus Code:</span>

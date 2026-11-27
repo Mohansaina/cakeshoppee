@@ -94,6 +94,43 @@ export default function LocationPickerModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
+  const [mapsLinkInput, setMapsLinkInput] = useState('');
+  const [isResolvingLink, setIsResolvingLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // Handle parsing a Google Maps Link (maps.app.goo.gl or google.com/maps)
+  const handleResolveMapsLink = async (overrideUrl) => {
+    const rawLink = (overrideUrl || mapsLinkInput).trim();
+    if (!rawLink) return;
+    setIsResolvingLink(true);
+    setGpsError('');
+    try {
+      const res = await fetch(`/api/geocode?url=${encodeURIComponent(rawLink)}`);
+      const data = await res.json();
+      if (data && data.success && data.lat && data.lng) {
+        setCurrentCoords({ lat: data.lat, lng: data.lng });
+        if (mapInstanceRef.current && markerRef.current) {
+          mapInstanceRef.current.setView([data.lat, data.lng], 17);
+          markerRef.current.setLatLng([data.lat, data.lng]);
+        }
+        const text = data.address || data.wordsAddress || data.placeName;
+        setAddressPreview(text);
+        if (data.plusCode) setPlusCodePreview(data.plusCode);
+        if (data.street) setStreetName(data.street);
+        if (data.area) setNeighborhood(data.area);
+        if (data.landmark) setLandmark(data.landmark);
+        if (data.pincode) setPincode(data.pincode);
+        if (data.distanceKm) setDistanceInfo(`~${data.distanceKm} km from bakery • ${data.estimatedTime || '20-30 mins'}`);
+        setMapsLinkInput('');
+      } else {
+        setGpsError(data.error || 'Could not parse that Google Maps link. Please drag the pin on map.');
+      }
+    } catch (e) {
+      setGpsError('Network error while resolving link. Please try again or drag the pin.');
+    } finally {
+      setIsResolvingLink(false);
+    }
+  };
 
   // Fetch reverse-geocoded address with debouncing and race-condition cancellation
   const fetchAddressForCoords = (lat, lng) => {
@@ -358,6 +395,7 @@ export default function LocationPickerModal({
       lat: currentCoords.lat,
       lng: currentCoords.lng,
       address: geoData?.formattedAddress || geoData?.wordsAddress || geoData?.address || addressPreview,
+      wordsAddress: geoData?.wordsAddress || addressPreview,
       flatNumber: flatNumber.trim(),
       houseNumber: flatNumber.trim(),
       street: streetName || geoData?.street || '',
@@ -367,7 +405,8 @@ export default function LocationPickerModal({
       pincode: pincode || geoData?.pincode || '531116',
       plusCode: plusCodePreview || geoData?.plusCode || '',
       distanceKm: geoData?.distanceKm || 0,
-      estimatedTime: geoData?.estimatedTime || '20-30 mins'
+      estimatedTime: geoData?.estimatedTime || '20-30 mins',
+      mapsUrl: `https://maps.google.com/?q=${currentCoords.lat},${currentCoords.lng}`
     });
     onClose();
   };
@@ -438,7 +477,7 @@ export default function LocationPickerModal({
           </button>
         </div>
 
-        {/* Search Bar on Map */}
+        {/* Search Bar & Google Maps Link Input */}
         <div style={{ padding: '10px 14px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', position: 'relative' }}>
           <div style={{ position: 'relative' }}>
             <input
@@ -457,6 +496,46 @@ export default function LocationPickerModal({
               }}
             />
             <Search size={15} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+          </div>
+
+          {/* Paste Google Maps Link Direct Input */}
+          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+            <input
+              type="text"
+              placeholder="Or paste Google Maps link (e.g. maps.app.goo.gl/...)"
+              value={mapsLinkInput}
+              onChange={(e) => setMapsLinkInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleResolveMapsLink();
+              }}
+              style={{
+                flex: 1,
+                padding: '7px 10px',
+                borderRadius: '6px',
+                border: '1px dashed #ea580c',
+                fontSize: '0.78rem',
+                background: '#fffaf5',
+                color: '#0f172a'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => handleResolveMapsLink()}
+              disabled={isResolvingLink || !mapsLinkInput.trim()}
+              style={{
+                padding: '7px 12px',
+                background: mapsLinkInput.trim() ? '#ea580c' : '#cbd5e1',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: mapsLinkInput.trim() ? 'pointer' : 'default',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {isResolvingLink ? 'Fetching...' : 'Fetch Link'}
+            </button>
           </div>
 
           {/* Search Dropdown */}
@@ -586,10 +665,88 @@ export default function LocationPickerModal({
             </div>
           )}
 
+          {/* Live Google Maps Link Badge */}
+          <div style={{
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: '8px',
+            padding: '8px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px'
+          }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase' }}>
+                🗺️ Live Google Maps Link:
+              </div>
+              <a
+                href={`https://maps.google.com/?q=${currentCoords.lat},${currentCoords.lng}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  fontSize: '0.74rem',
+                  color: '#2563eb',
+                  textDecoration: 'underline',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  display: 'block'
+                }}
+              >
+                https://maps.google.com/?q={currentCoords.lat.toFixed(5)},{currentCoords.lng.toFixed(5)}
+              </a>
+            </div>
+            <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(`https://maps.google.com/?q=${currentCoords.lat},${currentCoords.lng}`);
+                  }
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }}
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  background: '#dbeafe',
+                  color: '#1e40af',
+                  border: '1px solid #93c5fd',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+              >
+                {linkCopied ? '✓ Copied' : 'Copy'}
+              </button>
+              <a
+                href={`https://maps.google.com/?q=${currentCoords.lat},${currentCoords.lng}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  padding: '4px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  background: '#2563eb',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center'
+                }}
+              >
+                Open ↗
+              </a>
+            </div>
+          </div>
+
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
               <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857' }}>
-                📍 SELECTED LOCATION
+                📍 DETECTED ADDRESS
               </span>
               {distanceInfo && (
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '1px 6px', borderRadius: '4px' }}>
