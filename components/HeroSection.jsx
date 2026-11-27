@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone, Clock, Award, ShieldCheck } from 'lucide-react';
+import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone } from 'lucide-react';
 
 export default function HeroSection() {
   const videoRef = useRef(null);
@@ -214,31 +214,6 @@ export default function HeroSection() {
           willChange: 'opacity, transform'
         }}
       >
-        {/* Bakery Heritage Eyebrow Pill */}
-        <div 
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(255, 255, 255, 0.14)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1.5px solid rgba(254, 215, 170, 0.35)',
-            padding: '7px 22px',
-            borderRadius: '999px',
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            color: '#fed7aa',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            marginBottom: '18px',
-            letterSpacing: '0.06em',
-            textTransform: 'uppercase'
-          }}
-        >
-          <Sparkles size={14} color="#fb923c" />
-          <span>Live Cake Counter &bull; Est. 2018 Narsipatnam</span>
-        </div>
-
         {/* Brand Headline: Warm Golden-Caramel Artisan Luxury */}
         <h1 
           style={{
@@ -303,8 +278,7 @@ export default function HeroSection() {
             gap: '14px', 
             flexWrap: 'wrap', 
             justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: '26px'
+            alignItems: 'center'
           }}
         >
           <a 
@@ -373,62 +347,6 @@ export default function HeroSection() {
             <Phone size={15} />
             <span>7660948403</span>
           </a>
-        </div>
-
-        {/* Feature Trust Pills */}
-        <div 
-          style={{
-            display: 'flex',
-            gap: '12px',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <span style={{
-            fontSize: '0.78rem',
-            color: '#fed7aa',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            padding: '5px 14px',
-            borderRadius: '999px',
-            border: '1px solid rgba(255, 255, 255, 0.12)'
-          }}>
-            <ShieldCheck size={13} color="#4ade80" />
-            100% Pure Dairy &amp; Eggless
-          </span>
-
-          <span style={{
-            fontSize: '0.78rem',
-            color: '#fed7aa',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            padding: '5px 14px',
-            borderRadius: '999px',
-            border: '1px solid rgba(255, 255, 255, 0.12)'
-          }}>
-            <Clock size={13} color="#38bdf8" />
-            Same-Day Door Delivery
-          </span>
-
-          <span style={{
-            fontSize: '0.78rem',
-            color: '#fed7aa',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            padding: '5px 14px',
-            borderRadius: '999px',
-            border: '1px solid rgba(255, 255, 255, 0.12)'
-          }}>
-            <Award size={13} color="#fb923c" />
-            Handcrafted Sugar Art
-          </span>
         </div>
       </div>
 
