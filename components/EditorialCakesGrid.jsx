@@ -2,7 +2,6 @@
 
 import React, { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles } from 'lucide-react';
 
 const SIGNATURE_CAKES = [
   {
@@ -186,56 +185,40 @@ export default function EditorialCakesGrid() {
           }} 
         />
 
-        {/* Clean Header Bar: Only the pure Signature Gallery title */}
+        {/* Standard Section Header matching the rest of the site */}
         <div 
+          className="section-header text-center"
           style={{
             position: 'absolute',
-            top: '28px',
-            left: '0',
-            right: '0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 40
+            top: '20px',
+            left: '16px',
+            right: '16px',
+            zIndex: 40,
+            marginBottom: 0
           }}
         >
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(255, 255, 255, 0.94)',
-            border: '1.5px solid rgba(251, 146, 60, 0.3)',
-            padding: '7px 22px',
-            borderRadius: '999px',
-            boxShadow: '0 4px 16px rgba(234, 88, 12, 0.08)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)'
-          }}>
-            <Sparkles size={14} color="#ea580c" />
-            <span style={{
-              fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
-              fontSize: '0.85rem',
-              fontWeight: 800,
-              letterSpacing: '0.08em',
-              color: '#9a3412',
-              textTransform: 'uppercase'
-            }}>
-              Signature Gallery
-            </span>
-          </div>
+          <span className="handwritten">Curated Masterpieces</span>
+          <br />
+          <span className="section-badge">SIGNATURE GALLERY</span>
+          <h2 className="section-title" style={{ margin: '4px 0 6px 0', fontSize: 'clamp(1.6rem, 2.8vw, 2.4rem)' }}>
+            Handcrafted Theme Creations
+          </h2>
+          <p className="section-subtitle" style={{ margin: 0, fontSize: 'clamp(0.85rem, 1.4vw, 0.95rem)' }}>
+            Multi-tier bespoke cakes finished live at our Narsipatnam boutique
+          </p>
         </div>
 
         {/* Series Pictures Stage: Natural 3:4 Vertical Portrait Fit (Clean, Zero Unwanted Text) */}
         <div 
           style={{
             position: 'relative',
-            width: 'min(90vw, 440px)',
-            height: 'min(74vh, 580px)',
+            width: 'min(88vw, 420px)',
+            height: 'min(64vh, 530px)',
             zIndex: 10,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: '20px'
+            marginTop: '84px'
           }}
         >
           {SIGNATURE_CAKES.map((cake, index) => (

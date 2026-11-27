@@ -2,47 +2,40 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone } from 'lucide-react';
+import { ChevronDown, Cake, UtensilsCrossed, Phone } from 'lucide-react';
 
 export default function HeroSection() {
   const videoRef = useRef(null);
   const [showContent, setShowContent] = useState(false);
 
-  // Set video speed to cinematic 0.75x
-  const handleLoadedMetadata = () => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = 0.75;
-    }
-  };
-
+  // Ensure immediate video start on low data and mobile devices
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.playbackRate = 0.75;
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay policy fallback
+        });
+      }
     }
   }, []);
 
-  // When video nears end (at 0.75x speed, ~4s into pour), reveal the content
+  // When video reaches end of pour cascade (~4.8s in 0.75x slow motion), smoothly reveal brand headline
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.currentTime >= 4.0 && !showContent) {
+    if (video.currentTime >= 4.8 && !showContent) {
       setShowContent(true);
-    }
-  };
-
-  const handleVideoEnded = () => {
-    setShowContent(true);
-    if (videoRef.current) {
-      videoRef.current.loop = true;
-      videoRef.current.playbackRate = 0.75;
-      videoRef.current.play().catch(() => {});
     }
   };
 
   // If user scrolls or taps, immediately show content without waiting
   useEffect(() => {
     const handleScrollOrTouch = () => {
-      if (window.scrollY > 20) {
+      if (window.scrollY > 15) {
         setShowContent(true);
       }
     };
@@ -75,11 +68,11 @@ export default function HeroSection() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#361d10',
+        background: '#321c10',
         color: '#ffffff'
       }}
     >
-      {/* Instant Initial Background Image (Guarantees ZERO black screen flash at the start) */}
+      {/* Instant Initial Background Image (Guarantees zero black screen even on slow network) */}
       <Image
         src="/hero-frames/frame_000.webp"
         alt="Cake Shoppee Live Cake Kitchen Narsipatnam"
@@ -94,19 +87,17 @@ export default function HeroSection() {
         }}
       />
 
-      {/* 60FPS Video Background Playing at 0.75x Speed */}
+      {/* Hardware-Accelerated Seamless Video Background (Preloaded, native 0.75x slow motion, zero stutter) */}
       <video
         ref={videoRef}
         autoPlay
+        loop
         muted
+        defaultMuted
         playsInline
+        preload="auto"
         poster="/hero-frames/frame_000.webp"
-        onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
-        onEnded={handleVideoEnded}
-        onPlay={() => {
-          if (videoRef.current) videoRef.current.playbackRate = 0.75;
-        }}
         style={{
           position: 'absolute',
           inset: 0,
@@ -115,7 +106,8 @@ export default function HeroSection() {
           objectFit: 'cover',
           objectPosition: 'center',
           zIndex: 2,
-          backgroundColor: 'transparent'
+          backgroundColor: 'transparent',
+          transform: 'translateZ(0)'
         }}
       >
         <source src="/videos/hero-scroll.mp4" type="video/mp4" />
@@ -128,7 +120,7 @@ export default function HeroSection() {
           inset: 0,
           background: showContent 
             ? 'radial-gradient(circle at center, rgba(30, 14, 6, 0.35) 0%, rgba(20, 10, 4, 0.65) 70%, rgba(15, 7, 3, 0.85) 100%)'
-            : 'radial-gradient(circle at center, rgba(20, 10, 4, 0.08) 0%, rgba(15, 7, 3, 0.3) 100%)',
+            : 'radial-gradient(circle at center, rgba(20, 10, 4, 0.08) 0%, rgba(15, 7, 3, 0.28) 100%)',
           zIndex: 3,
           pointerEvents: 'none',
           transition: 'background 0.8s ease'
@@ -186,8 +178,7 @@ export default function HeroSection() {
             letterSpacing: '0.04em'
           }}
         >
-          <Sparkles size={14} color="#fb923c" />
-          <span>Watching Live Patisserie Pour &bull; Tap to explore menu ↓</span>
+          <span>Live Patisserie Pour &bull; Tap to explore menu ↓</span>
         </div>
       )}
 
