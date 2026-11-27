@@ -5,7 +5,6 @@ import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import EditorialCakesGrid from '@/components/EditorialCakesGrid';
 import OurMenuSection from '@/components/OurMenuSection';
-import ShopMenuBoard from '@/components/ShopMenuBoard';
 import CelebrationCombos from '@/components/CelebrationCombos';
 import OccasionTreatsSection from '@/components/OccasionTreatsSection';
 import CustomCakeBuilder from '@/components/CustomCakeBuilder';
@@ -40,10 +39,7 @@ export default function HomePage() {
       {/* 5. Our Menu — Category tiles + filterable product grid (Pizzas & Savouries first, then Cakes) */}
       <OurMenuSection onSelectCategory={handleSelectCategory} />
 
-      {/* 6. Physical Shop Menu Board Card (Exact rates from physical menu card image) */}
-      <ShopMenuBoard />
-
-      {/* 7. Celebration Combos — party packages */}
+      {/* 6. Celebration Combos — party packages */}
       <CelebrationCombos />
 
       {/* 8. Treats for Any Occasion — 4-card occasion section */}
