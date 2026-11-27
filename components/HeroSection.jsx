@@ -1,10 +1,43 @@
 "use client";
 
-import React, { useRef } from 'react';
-import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone, Clock, Award, ShieldCheck } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone, Clock, Award, ShieldCheck, Play } from 'lucide-react';
 
 export default function HeroSection() {
-  const heroRef = useRef(null);
+  const videoRef = useRef(null);
+  const [isVideoFinished, setIsVideoFinished] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+
+  // When video nears end or completes, reveal the content
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    // Reveal content when video reaches the final moments (3.2s) or ends
+    if (video.currentTime >= 3.2 && !showContent) {
+      setShowContent(true);
+    }
+  };
+
+  const handleVideoEnded = () => {
+    setIsVideoFinished(true);
+    setShowContent(true);
+    // Loop gently once finished
+    if (videoRef.current) {
+      videoRef.current.loop = true;
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  // If user scrolls or taps, immediately show content without waiting
+  useEffect(() => {
+    const handleScrollOrTouch = () => {
+      if (window.scrollY > 20) {
+        setShowContent(true);
+      }
+    };
+    window.addEventListener('scroll', handleScrollOrTouch, { passive: true });
+    return () => window.removeEventListener('scroll', handleScrollOrTouch);
+  }, []);
 
   const scrollToNext = () => {
     const nextEl = document.getElementById('curated-showcase') || document.getElementById('bestsellers');
@@ -13,11 +46,14 @@ export default function HeroSection() {
     }
   };
 
+  const handleRevealNow = () => {
+    setShowContent(true);
+  };
+
   return (
     <section 
       id="hero" 
-      ref={heroRef}
-      className="hero-section-fluid"
+      className="hero-section-cinematic"
       style={{
         position: 'relative',
         width: '100%',
@@ -32,13 +68,15 @@ export default function HeroSection() {
         color: '#ffffff'
       }}
     >
-      {/* Native Hardware-Accelerated 60FPS Video Background (Zero lag, zero stuck scroll, smooth continuous motion) */}
+      {/* 60FPS Hardware-Accelerated Video Background: Plays cleanly first with NO text blocking it */}
       <video
+        ref={videoRef}
         autoPlay
-        loop
         muted
         playsInline
         poster="/hero-frames/frame_000.webp"
+        onTimeUpdate={handleTimeUpdate}
+        onEnded={handleVideoEnded}
         style={{
           position: 'absolute',
           inset: 0,
@@ -46,34 +84,38 @@ export default function HeroSection() {
           height: '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          zIndex: 1
+          zIndex: 1,
+          transition: 'filter 0.8s ease'
         }}
       >
         <source src="/videos/hero-scroll.mp4" type="video/mp4" />
       </video>
 
-      {/* Warm Golden Bakery Ambient Overlay (Replaces the dark/black gloomy aesthetic) */}
+      {/* Warm Ambient Bakery Overlay: Softly deepens when content appears */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'radial-gradient(circle at center, rgba(30, 14, 6, 0.25) 0%, rgba(20, 10, 4, 0.55) 70%, rgba(15, 7, 3, 0.75) 100%)',
+          background: showContent 
+            ? 'radial-gradient(circle at center, rgba(30, 14, 6, 0.35) 0%, rgba(20, 10, 4, 0.65) 70%, rgba(15, 7, 3, 0.85) 100%)'
+            : 'radial-gradient(circle at center, rgba(20, 10, 4, 0.1) 0%, rgba(15, 7, 3, 0.35) 100%)',
           zIndex: 2,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          transition: 'background 0.8s ease'
         }} 
       />
 
-      {/* Top & Bottom Warm Vignette Blends */}
+      {/* Top & Bottom Cinematic Edge Gradients */}
       <div 
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          height: '140px',
-          background: 'linear-gradient(to bottom, rgba(20, 10, 4, 0.75) 0%, transparent 100%)',
+          height: '120px',
+          background: 'linear-gradient(to bottom, rgba(18, 9, 3, 0.7) 0%, transparent 100%)',
           pointerEvents: 'none',
-          zIndex: 2
+          zIndex: 3
         }} 
       />
       <div 
@@ -82,14 +124,46 @@ export default function HeroSection() {
           bottom: 0,
           left: 0,
           right: 0,
-          height: '180px',
+          height: '160px',
           background: 'linear-gradient(to top, rgba(18, 9, 3, 0.85) 0%, transparent 100%)',
           pointerEvents: 'none',
-          zIndex: 2
+          zIndex: 3
         }} 
       />
 
-      {/* Centerpiece Hero Content (Warm, Distinct, Artisan Bakery Styling) */}
+      {/* Subtle indicator while video plays by itself before content appears */}
+      {!showContent && (
+        <div 
+          onClick={handleRevealNow}
+          style={{
+            position: 'absolute',
+            bottom: '36px',
+            zIndex: 15,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            padding: '8px 20px',
+            borderRadius: '999px',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            color: '#fed7aa',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            letterSpacing: '0.04em'
+          }}
+        >
+          <Sparkles size={14} color="#fb923c" />
+          <span>Watching Live Patisserie Pour &bull; Tap to explore menu ↓</span>
+        </div>
+      )}
+
+      {/* =========================================================================
+          HERO CONTENT: GENERATES & REVEALS PERFECTLY AFTER VIDEO PLAYS
+          ========================================================================= */}
       <div 
         style={{
           position: 'relative',
@@ -102,7 +176,12 @@ export default function HeroSection() {
           padding: '0 20px',
           maxWidth: '1200px',
           width: '100%',
-          marginTop: '-15px'
+          marginTop: '-15px',
+          opacity: showContent ? 1 : 0,
+          transform: showContent ? 'translateY(0) scale(1)' : 'translateY(30px) scale(0.96)',
+          pointerEvents: showContent ? 'auto' : 'none',
+          transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+          willChange: 'opacity, transform'
         }}
       >
         {/* Bakery Heritage Eyebrow Pill */}
@@ -121,7 +200,7 @@ export default function HeroSection() {
             fontWeight: 800,
             color: '#fed7aa',
             boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            marginBottom: '20px',
+            marginBottom: '18px',
             letterSpacing: '0.06em',
             textTransform: 'uppercase'
           }}
@@ -138,7 +217,7 @@ export default function HeroSection() {
             fontWeight: 800,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
-            margin: '0 0 8px 0',
+            margin: '0 0 6px 0',
             lineHeight: 1.05,
             background: 'linear-gradient(135deg, #ffffff 0%, #fff7ed 35%, #fed7aa 70%, #fb923c 100%)',
             WebkitBackgroundClip: 'text',
@@ -266,7 +345,7 @@ export default function HeroSection() {
           </a>
         </div>
 
-        {/* Feature Trust Pills (Live in Narsipatnam) */}
+        {/* Feature Trust Pills */}
         <div 
           style={{
             display: 'flex',
@@ -324,29 +403,32 @@ export default function HeroSection() {
       </div>
 
       {/* Bottom Scroll Cue */}
-      <div 
-        onClick={scrollToNext}
-        style={{
-          position: 'absolute',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 15,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '6px',
-          color: '#ffffff',
-          cursor: 'pointer',
-          textShadow: '0 2px 10px rgba(0,0,0,0.85)',
-          userSelect: 'none'
-        }}
-      >
-        <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fed7aa' }}>
-          Explore Signature Cakes &amp; Menu
-        </span>
-        <ChevronDown size={18} className="bounce-arrow" color="#fb923c" />
-      </div>
+      {showContent && (
+        <div 
+          onClick={scrollToNext}
+          style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 15,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            color: '#ffffff',
+            cursor: 'pointer',
+            textShadow: '0 2px 10px rgba(0,0,0,0.85)',
+            userSelect: 'none',
+            animation: 'fadeInUp 0.6s ease'
+          }}
+        >
+          <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fed7aa' }}>
+            Explore Signature Cakes &amp; Menu
+          </span>
+          <ChevronDown size={18} className="bounce-arrow" color="#fb923c" />
+        </div>
+      )}
     </section>
   );
 }
