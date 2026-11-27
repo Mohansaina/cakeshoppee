@@ -7,7 +7,16 @@ export default function Testimonials() {
   const marqueeReviews = [...TESTIMONIALS, ...TESTIMONIALS];
 
   return (
-    <section className="section testimonials-section" id="reviews">
+    <section 
+      className="section testimonials-section" 
+      id="reviews"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#f8fafc',
+        isolation: 'isolate'
+      }}
+    >
       <div className="container">
         
         <div className="section-header text-center">

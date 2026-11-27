@@ -119,7 +119,16 @@ export default function OurMenuSection({ onSelectCategory }) {
   });
 
   return (
-    <section className="our-menu-section" id="bestsellers">
+    <section 
+      className="our-menu-section" 
+      id="bestsellers"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#f8fafc',
+        isolation: 'isolate'
+      }}
+    >
       <div className="our-menu-inner">
 
         {/* Section Header */}

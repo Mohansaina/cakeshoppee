@@ -67,7 +67,16 @@ export default function OccasionTreatsSection({ onSelectCategory, onSearch }) {
   };
 
   return (
-    <section className="occasion-treats-section" id="occasions-collection">
+    <section 
+      className="occasion-treats-section" 
+      id="occasions-collection"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#fffbf5',
+        isolation: 'isolate'
+      }}
+    >
       <div className="occasion-inner-container">
         {/* Section Header */}
         <div className="occasion-header-center">

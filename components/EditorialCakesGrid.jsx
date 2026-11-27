@@ -196,9 +196,11 @@ export default function EditorialCakesGrid() {
       id="curated-showcase" 
       style={{
         position: 'relative',
+        zIndex: 10,
+        isolation: 'isolate',
         width: '100%',
         padding: '58px 0 68px 0',
-        background: 'linear-gradient(180deg, #fdfbf7 0%, #fff7ed 45%, #faf5ef 100%)',
+        background: '#fffbf5',
         color: '#1e293b',
         overflow: 'hidden'
       }}

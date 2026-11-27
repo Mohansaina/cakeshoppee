@@ -8,7 +8,9 @@ export default function HeroSection() {
   const videoRef = useRef(null);
   const [showContent, setShowContent] = useState(false);
 
-  // Ensure immediate video start on low data and mobile devices
+  const heroContainerRef = useRef(null);
+
+  // Ensure immediate video start on low data and mobile devices, and pause when scrolled out of view
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
@@ -16,11 +18,28 @@ export default function HeroSection() {
       video.defaultMuted = true;
       const playPromise = video.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          // Autoplay policy fallback
-        });
+        playPromise.catch(() => {});
       }
     }
+
+    // Pause video when out of viewport so GPU plane never leaks into subsequent sections
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!video) return;
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.05 }
+    );
+
+    if (heroContainerRef.current) {
+      observer.observe(heroContainerRef.current);
+    }
+
+    return () => observer.disconnect();
   }, []);
 
   // When video reaches end of pour cascade (~4.8s in 0.75x slow motion), smoothly reveal brand headline
@@ -56,6 +75,7 @@ export default function HeroSection() {
 
   return (
     <section 
+      ref={heroContainerRef}
       id="hero" 
       className="hero-section-cinematic"
       style={{
@@ -64,12 +84,16 @@ export default function HeroSection() {
         minHeight: '100vh',
         height: '100vh',
         overflow: 'hidden',
+        contain: 'paint',
+        isolation: 'isolate',
+        clipPath: 'inset(0)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         background: '#321c10',
-        color: '#ffffff'
+        color: '#ffffff',
+        zIndex: 1
       }}
     >
       {/* Instant Initial Background Image (Guarantees zero black screen even on slow network) */}
@@ -87,7 +111,7 @@ export default function HeroSection() {
         }}
       />
 
-      {/* Hardware-Accelerated Seamless Video Background (Preloaded, native 0.75x slow motion, zero stutter) */}
+      {/* Hardware-Accelerated Seamless Video Background (Preloaded, native 0.75x slow motion, strictly confined to hero) */}
       <video
         ref={videoRef}
         autoPlay
@@ -106,8 +130,7 @@ export default function HeroSection() {
           objectFit: 'cover',
           objectPosition: 'center',
           zIndex: 2,
-          backgroundColor: 'transparent',
-          transform: 'translateZ(0)'
+          backgroundColor: '#321c10'
         }}
       >
         <source src="/videos/hero-scroll.mp4" type="video/mp4" />

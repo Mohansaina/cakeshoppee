@@ -3,7 +3,16 @@ import { MapPin, Clock, Truck, Phone, Navigation, CheckCircle2 } from 'lucide-re
 
 export default function StoreLocator() {
   return (
-    <section className="section section-subtle find-us-section" id="find-us">
+    <section 
+      className="section section-subtle find-us-section" 
+      id="find-us"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#f8fafc',
+        isolation: 'isolate'
+      }}
+    >
       <div className="container">
         
         <div className="section-header text-center">

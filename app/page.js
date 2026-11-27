@@ -27,7 +27,7 @@ export default function HomePage() {
   };
 
   return (
-    <main>
+    <main style={{ position: 'relative', zIndex: 1, background: '#f8fafc', minHeight: '100vh', isolation: 'isolate' }}>
       {/* 2. Sticky Header with logo + nav */}
       <Header onSelectCategory={handleSelectCategory} onSearch={setSearchQuery} />
 

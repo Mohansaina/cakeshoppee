@@ -63,7 +63,16 @@ export default function CustomCakeBuilder() {
   };
 
   return (
-    <section className="custom-cake-section" id="custom-cake">
+    <section 
+      className="custom-cake-section" 
+      id="custom-cake"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#ffffff',
+        isolation: 'isolate'
+      }}
+    >
       <div className="container">
         <div className="custom-cake-wrapper">
           

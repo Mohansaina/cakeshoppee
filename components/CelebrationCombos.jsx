@@ -27,7 +27,16 @@ export default function CelebrationCombos() {
   };
 
   return (
-    <section className="combos-section" id="combos">
+    <section 
+      className="combos-section" 
+      id="combos"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#ffffff',
+        isolation: 'isolate'
+      }}
+    >
       <div className="container">
         
         <div className="section-head-bar">

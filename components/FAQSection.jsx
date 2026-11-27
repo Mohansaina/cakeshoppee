@@ -12,7 +12,16 @@ export default function FAQSection() {
   };
 
   return (
-    <section className="section faq-section" id="faq">
+    <section 
+      className="section faq-section" 
+      id="faq"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        background: '#ffffff',
+        isolation: 'isolate'
+      }}
+    >
       <div className="container">
         
         <div className="section-header text-center">
