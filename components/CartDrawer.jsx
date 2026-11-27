@@ -844,7 +844,7 @@ export default function CartDrawer() {
                       >
                         {isDetectingGps ? (
                           <>
-                            <Compass className="animate-spin" size={16} /> Detecting...
+                            <Compass className="animate-spin" size={16} /> Fetching address...
                           </>
                         ) : (
                           <>
@@ -1361,7 +1361,9 @@ export default function CartDrawer() {
           if (loc.pincode) setPincode(loc.pincode);
           if (loc.distanceKm) setDeliveryDistance(loc.distanceKm);
           if (loc.estimatedTime) setDeliveryEta(loc.estimatedTime);
-          if (!houseNumber || !houseNumber.trim()) {
+          if (loc.flatNumber || loc.houseNumber) {
+            setHouseNumber(loc.flatNumber || loc.houseNumber);
+          } else if (!houseNumber || !houseNumber.trim()) {
             setHouseNumber('Doorstep Map Pin');
           }
           if (validationError) setValidationError('');

@@ -77,52 +77,94 @@ export default function LocationPickerModal({
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
   const [currentCoords, setCurrentCoords] = useState(initialCoords || DEFAULT_CENTER);
-  const [addressPreview, setAddressPreview] = useState('Fetching exact address...');
+  const [addressPreview, setAddressPreview] = useState('Fetching address...');
   const [plusCodePreview, setPlusCodePreview] = useState('');
   const [distanceInfo, setDistanceInfo] = useState('');
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [gpsError, setGpsError] = useState('');
+  const [flatNumber, setFlatNumber] = useState('');
+  const [streetName, setStreetName] = useState('');
+  const [neighborhood, setNeighborhood] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [pincode, setPincode] = useState('531116');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
 
-  // Fetch address whenever coords change - ALWAYS IN ACCURATE WORDS
-  const fetchAddressForCoords = async (lat, lng) => {
-    // 1. Instantly resolve closest colony from high-accuracy local grid (Zero latency guarantee)
-    const localFallback = resolveLocalColony(lat, lng);
-    setAddressPreview(localFallback.formatted);
-
+  // Fetch reverse-geocoded address with debouncing and race-condition cancellation
+  const fetchAddressForCoords = (lat, lng) => {
+    // 1. Instantly set loading state and preview
     setIsLoadingAddress(true);
-    try {
-      const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.wordsAddress && data.wordsAddress !== 'Andhra Pradesh' && !data.wordsAddress.includes('Andhra Pradesh, Andhra Pradesh')) {
-          const cleanDisplay = data.wordsAddress || data.address || localFallback.formatted;
-          setAddressPreview(cleanDisplay);
-          if (data.plusCode) setPlusCodePreview(data.plusCode);
-          setDistanceInfo(`~${data.distanceKm} km from shop • ${data.estimatedTime || '20-30 mins'}`);
-          return data;
-        }
-      }
-    } catch (e) {
-      console.warn('Map geocode error:', e);
-    } finally {
-      setIsLoadingAddress(false);
+    setAddressPreview('Fetching address...');
+    setGpsError('');
+
+    // Cancel any in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
 
-    return {
-      success: true,
-      address: localFallback.formatted,
-      wordsAddress: localFallback.formatted,
-      area: localFallback.area,
-      street: localFallback.street,
-      landmark: localFallback.landmark,
-      pincode: '531116',
-      distanceKm: 1.5,
-      estimatedTime: '20-25 mins'
-    };
+    return new Promise((resolve) => {
+      debounceTimerRef.current = setTimeout(async () => {
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
+        const localFallback = resolveLocalColony(lat, lng);
+
+        try {
+          const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`, {
+            signal: controller.signal
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              const display = data.formattedAddress || data.address || data.wordsAddress || localFallback.formatted;
+              setAddressPreview(display);
+              if (data.plusCode) setPlusCodePreview(data.plusCode);
+              if (data.street) setStreetName(data.street);
+              if (data.area || data.neighborhood) setNeighborhood(data.area || data.neighborhood);
+              if (data.landmark) setLandmark(data.landmark);
+              if (data.pincode) setPincode(data.pincode);
+              setDistanceInfo(`~${data.distanceKm} km from bakery • ${data.estimatedTime || '20-30 mins'}`);
+              setIsLoadingAddress(false);
+              resolve(data);
+              return;
+            }
+          }
+        } catch (e) {
+          if (e.name === 'AbortError') return; // Cancelled by newer request
+          console.warn('Map geocode fetch error, using local colony grid:', e);
+        }
+
+        // Reliable fallback if API times out or network drops
+        setAddressPreview(localFallback.formatted);
+        setNeighborhood(localFallback.area);
+        setStreetName(localFallback.street);
+        setLandmark(localFallback.landmark);
+        setPincode('531116');
+        setDistanceInfo('~1.5 km from bakery • 20-25 mins');
+        setIsLoadingAddress(false);
+        resolve({
+          success: true,
+          address: localFallback.formatted,
+          wordsAddress: localFallback.formatted,
+          area: localFallback.area,
+          neighborhood: localFallback.area,
+          street: localFallback.street,
+          landmark: localFallback.landmark,
+          pincode: '531116',
+          distanceKm: 1.5,
+          estimatedTime: '20-25 mins'
+        });
+      }, 250); // 250ms debounce
+    });
   };
 
   // Initialize Leaflet Map
@@ -236,49 +278,36 @@ export default function LocationPickerModal({
     };
   }, [isOpen]);
 
-  // Handle GPS Auto-detect button inside the map - Bulletproof on mobile devices
+  // Handle GPS Auto-detect button inside the map - High accuracy with maximumAge: 0
   const handleLocateMe = () => {
-    if (!navigator.geolocation) return;
-    setIsLocatingUser(true);
-
-    let hasHandled = false;
-
-    const onPosSuccess = (pos) => {
-      if (hasHandled) return;
-      hasHandled = true;
-      const { latitude, longitude } = pos.coords;
-      setCurrentCoords({ lat: latitude, lng: longitude });
-      if (mapInstanceRef.current && markerRef.current) {
-        mapInstanceRef.current.setView([latitude, longitude], 17);
-        markerRef.current.setLatLng([latitude, longitude]);
-      }
-      fetchAddressForCoords(latitude, longitude);
-      setIsLocatingUser(false);
-    };
-
-    const onPosError = () => {
-      // Tier 2: Try network location with cached age up to 5 mins
-      navigator.geolocation.getCurrentPosition(
-        onPosSuccess,
-        () => {
-          if (hasHandled) return;
-          hasHandled = true;
-          setIsLocatingUser(false);
-        },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
-      );
-    };
-
-    // Tier 1: Try high accuracy with 60s cache
-    try {
-      navigator.geolocation.getCurrentPosition(
-        onPosSuccess,
-        onPosError,
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
-      );
-    } catch (e) {
-      setIsLocatingUser(false);
+    if (!navigator.geolocation) {
+      setGpsError('Geolocation is not supported by your browser.');
+      return;
     }
+    setIsLocatingUser(true);
+    setGpsError('');
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCurrentCoords({ lat: latitude, lng: longitude });
+        if (mapInstanceRef.current && markerRef.current) {
+          mapInstanceRef.current.setView([latitude, longitude], 17);
+          markerRef.current.setLatLng([latitude, longitude]);
+        }
+        fetchAddressForCoords(latitude, longitude);
+        setIsLocatingUser(false);
+      },
+      (err) => {
+        setIsLocatingUser(false);
+        if (err.code === 1) {
+          setGpsError('Location permission denied. Please drag the pin on the map.');
+        } else {
+          setGpsError('Could not get high-accuracy GPS fix. Please drag the pin on the map.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   // Fly to selected quick colony
@@ -328,12 +357,15 @@ export default function LocationPickerModal({
     onSelectLocation({
       lat: currentCoords.lat,
       lng: currentCoords.lng,
-      address: geoData?.wordsAddress || geoData?.address || addressPreview,
-      plusCode: geoData?.plusCode || '',
-      street: geoData?.street || '',
-      area: geoData?.area || '',
-      landmark: geoData?.landmark || '',
-      pincode: geoData?.pincode || '531116',
+      address: geoData?.formattedAddress || geoData?.wordsAddress || geoData?.address || addressPreview,
+      flatNumber: flatNumber.trim(),
+      houseNumber: flatNumber.trim(),
+      street: streetName || geoData?.street || '',
+      area: neighborhood || geoData?.area || geoData?.neighborhood || '',
+      neighborhood: neighborhood || geoData?.neighborhood || geoData?.area || '',
+      landmark: landmark || geoData?.landmark || '',
+      pincode: pincode || geoData?.pincode || '531116',
+      plusCode: plusCodePreview || geoData?.plusCode || '',
       distanceKm: geoData?.distanceKm || 0,
       estimatedTime: geoData?.estimatedTime || '20-30 mins'
     });
@@ -540,6 +572,20 @@ export default function LocationPickerModal({
           flexDirection: 'column',
           gap: '10px'
         }}>
+          {gpsError && (
+            <div style={{
+              background: '#fef2f2',
+              color: '#b91c1c',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              fontSize: '0.76rem',
+              fontWeight: 600
+            }}>
+              ⚠️ {gpsError}
+            </div>
+          )}
+
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
               <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857' }}>
@@ -552,7 +598,13 @@ export default function LocationPickerModal({
               )}
             </div>
             <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
-              {isLoadingAddress ? 'Detecting exact address...' : addressPreview}
+              {isLoadingAddress ? (
+                <span style={{ color: '#ea580c', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Compass className="animate-spin" size={15} /> Fetching address...
+                </span>
+              ) : (
+                addressPreview
+              )}
             </div>
             {plusCodePreview && !isLoadingAddress && (
               <div style={{ fontSize: '0.74rem', color: '#0369a1', fontWeight: 600, marginTop: '2px' }}>
@@ -561,19 +613,41 @@ export default function LocationPickerModal({
             )}
           </div>
 
+          {/* Separate Input Field for Flat / House / Building Number */}
+          <div>
+            <input
+              type="text"
+              placeholder="Flat / House / Building No. (e.g. D.No 4-21, 1st Floor)"
+              value={flatNumber}
+              onChange={(e) => setFlatNumber(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '8px',
+                border: '1.5px solid #cbd5e1',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                color: '#0f172a',
+                outline: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
           <button
             type="button"
             onClick={handleConfirmLocation}
+            disabled={isLoadingAddress}
             style={{
               width: '100%',
               padding: '12px',
-              background: '#16a34a',
+              background: isLoadingAddress ? '#94a3b8' : '#16a34a',
               color: '#ffffff',
               border: 'none',
               borderRadius: '10px',
               fontWeight: 800,
               fontSize: '0.9rem',
-              cursor: 'pointer',
+              cursor: isLoadingAddress ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -581,7 +655,7 @@ export default function LocationPickerModal({
               boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)'
             }}
           >
-            <Check size={18} /> Confirm This Exact Location
+            <Check size={18} /> Confirm This Delivery Address
           </button>
         </div>
 

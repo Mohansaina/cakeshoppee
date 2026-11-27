@@ -119,6 +119,7 @@ export async function GET(request) {
     // Scenario B: Reverse geocode coordinates
     if (!isNaN(lat) && !isNaN(lng)) {
       const distance = calculateDistance(BAKERY_LOCATION.lat, BAKERY_LOCATION.lng, lat, lng);
+      const plusCodeLocal = getGooglePlusCode(lat, lng);
       
       // Find closest landmark in our comprehensive Narsipatnam grid
       let closestLandmark = NARSIPATNAM_LANDMARKS[0];
@@ -131,6 +132,115 @@ export async function GET(request) {
         }
       }
 
+      // Check for available external Geocoding API keys
+      const GOOGLE_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const LOCATIONIQ_KEY = process.env.LOCATIONIQ_API_KEY;
+
+      // 1. PROVIDER 1: Google Maps Geocoding API (100% exact rooftop precision across India)
+      if (GOOGLE_API_KEY) {
+        try {
+          const gRes = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_API_KEY}&language=en`,
+            { next: { revalidate: 3600 } }
+          );
+          if (gRes.ok) {
+            const gData = await gRes.json();
+            if (gData.status === 'OK' && gData.results && gData.results.length > 0) {
+              const best = gData.results[0];
+              const comps = best.address_components || [];
+
+              const getComp = (types) => {
+                const found = comps.find(c => types.some(t => c.types.includes(t)));
+                return found ? found.long_name : '';
+              };
+
+              const streetNumber = getComp(['street_number']);
+              const premise = getComp(['premise', 'subpremise']);
+              const route = getComp(['route']);
+              const sublocality = getComp(['sublocality_level_1', 'sublocality', 'neighborhood']);
+              const locality = getComp(['locality']) || 'Narsipatnam';
+              const district = getComp(['administrative_area_level_2']) || 'Anakapalli';
+              const state = getComp(['administrative_area_level_1']) || 'Andhra Pradesh';
+              const postalCode = getComp(['postal_code']) || '531116';
+
+              const buildingPart = [premise, streetNumber].filter(Boolean).join(', ');
+              const areaPart = sublocality || closestLandmark.area;
+              const streetPart = route || closestLandmark.street;
+
+              const cleanWords = [buildingPart, streetPart, areaPart, locality].filter(Boolean).join(', ');
+              const cleanAddress = best.formatted_address || `${cleanWords} - ${postalCode}`;
+
+              return NextResponse.json({
+                success: true,
+                provider: 'google_maps',
+                address: cleanAddress,
+                wordsAddress: cleanWords,
+                plusCode: `${plusCodeLocal} ${locality}, ${state}`,
+                plusCodeLocal: plusCodeLocal,
+                area: areaPart,
+                village: locality,
+                mandal: locality,
+                street: streetPart,
+                landmark: closestLandmark.landmark,
+                pincode: postalCode,
+                lat: lat,
+                lng: lng,
+                distanceKm: distance,
+                estimatedTime: distance <= 1.5 ? "15-20 mins" : distance <= 3.5 ? "20-30 mins" : distance <= 8 ? "30-40 mins" : "45-60 mins",
+                isWithinDeliveryRange: distance <= 15,
+                mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
+              });
+            }
+          }
+        } catch (gErr) {
+          console.warn('Google Maps Geocode failed, falling back:', gErr);
+        }
+      }
+
+      // 2. PROVIDER 2: LocationIQ API (Free tier: 5,000 free requests/day)
+      if (LOCATIONIQ_KEY) {
+        try {
+          const lRes = await fetch(
+            `https://us1.locationiq.com/v1/reverse?key=${LOCATIONIQ_KEY}&lat=${lat}&lon=${lng}&format=json&accept-language=en`
+          );
+          if (lRes.ok) {
+            const lData = await lRes.json();
+            if (lData && lData.address) {
+              const la = lData.address;
+              const lArea = la.neighbourhood || la.suburb || la.village || closestLandmark.area;
+              const lStreet = la.road || closestLandmark.street;
+              const lTown = la.town || la.city || 'Narsipatnam';
+              const lPostcode = la.postcode || '531116';
+              const words = `${lStreet ? lStreet + ', ' : ''}${lArea}, ${lTown}`;
+
+              return NextResponse.json({
+                success: true,
+                provider: 'locationiq',
+                address: lData.display_name || `${words} - ${lPostcode}`,
+                wordsAddress: words,
+                plusCode: `${plusCodeLocal} ${lTown}, Andhra Pradesh`,
+                plusCodeLocal: plusCodeLocal,
+                area: lArea,
+                village: lTown,
+                mandal: lTown,
+                street: lStreet,
+                landmark: closestLandmark.landmark,
+                pincode: lPostcode,
+                lat: lat,
+                lng: lng,
+                distanceKm: distance,
+                estimatedTime: distance <= 1.5 ? "15-20 mins" : distance <= 3.5 ? "20-30 mins" : "30-40 mins",
+                isWithinDeliveryRange: distance <= 15,
+                mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
+              });
+            }
+          }
+        } catch (lErr) {
+          console.warn('LocationIQ geocode failed, falling back:', lErr);
+        }
+      }
+
+      // 3. PROVIDER 3: OpenStreetMap Nominatim + BigDataCloud (Free / No Key)
       let detectedStreet = '';
       let detectedNeighbourhood = '';
       let detectedVillage = '';
@@ -139,7 +249,6 @@ export async function GET(request) {
       let detectedState = 'Andhra Pradesh';
       let detectedPincode = '531116';
 
-      // 1. Try reverse geocoding via OpenStreetMap Nominatim with 4-second timeout
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 4000);
@@ -175,7 +284,7 @@ export async function GET(request) {
         // Fallback silently if Nominatim network times out
       }
 
-      // 2. Try BigDataCloud if neighbourhood is still empty
+      // Try BigDataCloud if neighbourhood is still empty
       if (!detectedNeighbourhood && !detectedStreet) {
         try {
           const controller2 = new AbortController();
@@ -200,10 +309,6 @@ export async function GET(request) {
         }
       }
 
-      // 3. Compute Google Plus Code
-      const plusCodeLocal = getGooglePlusCode(lat, lng);
-
-      // 4. Construct accurate, natural human-readable address
       // Filter out generic administrative, town, mandal, or highway names
       const GENERIC_EXCLUSIONS = [
         'narsipatnam urban', 'narsipatnam mandal', 'narsipatnam',
@@ -225,13 +330,10 @@ export async function GET(request) {
 
       // Check if coordinates fall within the Narsipatnam delivery cluster (<= 25 km)
       if (distance <= 25) {
-        // If OSM found an authentic specific village or colony (e.g. Ayyannapalem, Balighattam, Peddaboddepalli)
         const specificOsmArea = [detectedNeighbourhood, detectedVillage].find(n => !isBadName(n));
         
-        // Match against Narsipatnam 26-ward colony grid
         resolvedArea = closestLandmark.area;
         if (specificOsmArea && specificOsmArea.toLowerCase() !== 'narsipatnam') {
-          // Verify if specificOsmArea matches any alias
           const aliasMatch = NARSIPATNAM_LANDMARKS.find(l => 
             l.aliases.some(al => specificOsmArea.toLowerCase().includes(al))
           );
@@ -245,13 +347,11 @@ export async function GET(request) {
         }
         resolvedLandmark = closestLandmark.landmark;
 
-        // Clean redundant strings
         const streetPart = (resolvedStreet && resolvedStreet !== resolvedArea) ? `${resolvedStreet}, ` : '';
         wordsAddress = `${streetPart}${resolvedArea}, Narsipatnam`;
         finalAddress = `${streetPart}${resolvedArea}, Narsipatnam - 531116`;
         plusCodeFull = `${plusCodeLocal} Narsipatnam, Andhra Pradesh`;
       } else {
-        // Out-of-town / rural location
         const placeCandidate = [
           detectedVillage,
           detectedNeighbourhood,
@@ -267,6 +367,7 @@ export async function GET(request) {
 
       return NextResponse.json({
         success: true,
+        provider: 'osm_bdc_fallback',
         address: finalAddress,
         wordsAddress: wordsAddress,
         plusCode: plusCodeFull,
