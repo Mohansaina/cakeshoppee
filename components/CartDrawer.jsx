@@ -274,46 +274,36 @@ export default function CartDrawer() {
       // Calculate exact distance from Cake Shoppee bakery
       const dist = getDistanceKm(BAKERY_COORDS.lat, BAKERY_COORDS.lng, latitude, longitude);
       setDeliveryDistance(dist);
-      setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : dist <= 6 ? '25-35 mins' : '45-60 mins');
+      setDeliveryEta(dist <= 1.5 ? '15-20 mins' : dist <= 3 ? '20-25 mins' : dist <= 6 ? '25-35 mins' : dist <= 15 ? '45-60 mins' : 'Outside 15 km delivery zone');
 
       // Local Google Plus Code calculation (exact Open Location Code)
       const localCode = getGooglePlusCode(latitude, longitude);
+      setPlusCode(localCode);
 
-      // Instant high-accuracy local colony resolution (Zero latency guarantee)
-      const localFallback = resolveLocalColony(latitude, longitude);
-      let resolvedWords = localFallback.formatted;
-      let resolvedPlusCode = `${localCode} Narsipatnam, Andhra Pradesh`;
-
-      setDetectedAddress(resolvedWords);
-      setPlusCode(resolvedPlusCode);
-      setSelectedArea(localFallback.area);
-      setStreetName(localFallback.street);
-      setLandmark(localFallback.landmark);
-      setPincode('531116');
       if (!houseNumber || !houseNumber.trim()) {
         setHouseNumber('Doorstep GPS Location');
       }
 
-      // Query internal reverse geocoder API to enrich if possible
+      // Query live reverse geocoder API for true street, neighborhood & city
       try {
         const res = await fetch(`/api/geocode?lat=${latitude}&lng=${longitude}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && data.success && data.wordsAddress && !data.wordsAddress.includes('Andhra Pradesh, Andhra Pradesh') && data.wordsAddress !== 'Andhra Pradesh') {
-            resolvedWords = data.wordsAddress || data.address || localFallback.formatted;
-            resolvedPlusCode = data.plusCode || resolvedPlusCode;
+          if (data && data.success) {
+            const resolvedWords = data.address || data.wordsAddress || `GPS Spot (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
             setDetectedAddress(resolvedWords);
-            setPlusCode(resolvedPlusCode);
-            if (data.area && NARSIPATNAM_AREAS.includes(data.area)) {
-              setSelectedArea(data.area);
-            }
+            if (data.plusCode) setPlusCode(data.plusCode);
+            if (data.area) setSelectedArea(data.area);
             if (data.street) setStreetName(data.street);
             if (data.landmark) setLandmark(data.landmark);
             if (data.pincode) setPincode(data.pincode);
+            if (data.distanceKm !== undefined) setDeliveryDistance(data.distanceKm);
+            if (data.estimatedTime) setDeliveryEta(data.estimatedTime);
           }
         }
       } catch (err) {
-        console.warn('Geocode API fetch error, using local colony grid:', err);
+        console.warn('Geocode API fetch error:', err);
+        setDetectedAddress(`GPS Location (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`);
       }
 
       setIsDetectingGps(false);
@@ -323,12 +313,11 @@ export default function CartDrawer() {
     // Fallback if browser GPS fails, is denied, or blocked on non-SSL network
     const handleGpsFallback = async (reason) => {
       console.warn('GPS fallback triggered:', reason);
-      const local = resolveLocalColony(BAKERY_COORDS.lat, BAKERY_COORDS.lng);
       setGpsLocation(BAKERY_COORDS);
-      setDetectedAddress(local.formatted);
-      setSelectedArea(local.area);
-      setStreetName(local.street);
-      setLandmark(local.landmark);
+      setDetectedAddress('Main Road, Beside Himalaya Juice Center, Narsipatnam - 531116');
+      setSelectedArea('Abes Centre (Main Road)');
+      setStreetName('Main Road');
+      setLandmark('Beside Himalaya Juice Center');
       setPincode('531116');
       setDeliveryDistance(0.1);
       setDeliveryEta('15-20 mins');
@@ -336,7 +325,7 @@ export default function CartDrawer() {
         setHouseNumber('Doorstep Location');
       }
       setIsDetectingGps(false);
-      setGpsError(reason ? `${reason} Defaulted to Narsipatnam Center. Tap "Choose on Map" to drag to your doorstep.` : '');
+      setGpsError(reason ? `${reason} Defaulted to shop location. Tap "Choose on Map" to set your doorstep pin.` : '');
       if (validationError) setValidationError('');
     };
 

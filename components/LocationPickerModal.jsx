@@ -152,8 +152,6 @@ export default function LocationPickerModal({
         const controller = new AbortController();
         abortControllerRef.current = controller;
 
-        const localFallback = resolveLocalColony(lat, lng);
-
         try {
           const res = await fetch(`/api/geocode?lat=${lat}&lng=${lng}`, {
             signal: controller.signal
@@ -162,14 +160,19 @@ export default function LocationPickerModal({
           if (res.ok) {
             const data = await res.json();
             if (data && data.success) {
-              const display = data.formattedAddress || data.address || data.wordsAddress || localFallback.formatted;
+              const display = data.formattedAddress || data.address || data.wordsAddress || `Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
               setAddressPreview(display);
               if (data.plusCode) setPlusCodePreview(data.plusCode);
               if (data.street) setStreetName(data.street);
               if (data.area || data.neighborhood) setNeighborhood(data.area || data.neighborhood);
               if (data.landmark) setLandmark(data.landmark);
               if (data.pincode) setPincode(data.pincode);
-              setDistanceInfo(`~${data.distanceKm} km from bakery • ${data.estimatedTime || '20-30 mins'}`);
+              if (data.distanceKm !== undefined) {
+                const distText = data.distanceKm <= 15 
+                  ? `~${data.distanceKm} km from bakery • ${data.estimatedTime || '20-30 mins'}`
+                  : `~${data.distanceKm} km from bakery (Outside 15 km delivery zone)`;
+                setDistanceInfo(distText);
+              }
               setIsLoadingAddress(false);
               resolve(data);
               return;
@@ -177,28 +180,22 @@ export default function LocationPickerModal({
           }
         } catch (e) {
           if (e.name === 'AbortError') return; // Cancelled by newer request
-          console.warn('Map geocode fetch error, using local colony grid:', e);
+          console.warn('Map geocode fetch error:', e);
         }
 
-        // Reliable fallback if API times out or network drops
-        setAddressPreview(localFallback.formatted);
-        setNeighborhood(localFallback.area);
-        setStreetName(localFallback.street);
-        setLandmark(localFallback.landmark);
-        setPincode('531116');
-        setDistanceInfo('~1.5 km from bakery • 20-25 mins');
+        // Generic fallback if network fails
+        const fallbackText = `Doorstep Location (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+        setAddressPreview(fallbackText);
+        setNeighborhood('Doorstep Location');
         setIsLoadingAddress(false);
         resolve({
           success: true,
-          address: localFallback.formatted,
-          wordsAddress: localFallback.formatted,
-          area: localFallback.area,
-          neighborhood: localFallback.area,
-          street: localFallback.street,
-          landmark: localFallback.landmark,
-          pincode: '531116',
-          distanceKm: 1.5,
-          estimatedTime: '20-25 mins'
+          address: fallbackText,
+          wordsAddress: fallbackText,
+          area: 'Doorstep Location',
+          neighborhood: 'Doorstep Location',
+          lat,
+          lng
         });
       }, 250); // 250ms debounce
     });
