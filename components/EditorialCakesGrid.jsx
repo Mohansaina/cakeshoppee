@@ -332,65 +332,24 @@ export default function EditorialCakesGrid() {
                   willChange: 'transform, opacity',
                   userSelect: 'none',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: '16px'
                 }}
               >
-                <div style={{ position: 'relative', width: '100%', height: 'calc(100% - 64px)' }}>
-                  <Image
-                    src={cake.src}
-                    alt={cake.alt}
-                    fill
-                    priority={index <= 1}
-                    sizes="(max-width: 640px) 86vw, 400px"
-                    quality={95}
-                    style={{
-                      objectFit: 'contain',
-                      objectPosition: 'center',
-                      padding: '8px'
-                    }}
-                  />
-                </div>
-
-                {/* Sleek Bottom Title Pill */}
-                <div 
+                <Image
+                  src={cake.src}
+                  alt={cake.alt}
+                  fill
+                  priority={index <= 1}
+                  sizes="(max-width: 640px) 86vw, 400px"
+                  quality={95}
                   style={{
-                    width: '100%',
-                    height: '56px',
-                    borderRadius: '14px',
-                    background: '#fff7ed',
-                    border: '1px solid rgba(251, 146, 60, 0.3)',
-                    padding: '8px 14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px'
+                    objectFit: 'contain',
+                    objectPosition: 'center',
+                    padding: '14px'
                   }}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <h4 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {cake.title}
-                    </h4>
-                    <span style={{ fontSize: '0.72rem', color: '#ea580c', fontWeight: 700 }}>
-                      {cake.theme}
-                    </span>
-                  </div>
-                  <span 
-                    style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      color: '#ffffff',
-                      background: 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)',
-                      padding: '4px 10px',
-                      borderRadius: '999px',
-                      flexShrink: 0
-                    }}
-                  >
-                    Custom Order
-                  </span>
-                </div>
+                />
               </div>
             ))}
           </div>
@@ -462,10 +421,6 @@ export default function EditorialCakesGrid() {
               />
             ))}
           </div>
-
-          <span style={{ fontSize: '0.74rem', color: '#94a3b8', fontWeight: 600, letterSpacing: '0.04em' }}>
-            Scroll or swipe to view collection ({activeIdx + 1}/{SIGNATURE_CAKES.length})
-          </span>
         </div>
       </div>
     </section>

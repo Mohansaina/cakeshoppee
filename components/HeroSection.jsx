@@ -16,6 +16,7 @@ export default function HeroSection() {
     if (video) {
       video.muted = true;
       video.defaultMuted = true;
+      video.playbackRate = 0.85;
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise.catch(() => {});
@@ -368,27 +369,22 @@ export default function HeroSection() {
       {showContent && (
         <div 
           onClick={scrollToNext}
+          aria-label="Scroll to menu"
           style={{
             position: 'absolute',
-            bottom: '24px',
+            bottom: '22px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 15,
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '6px',
-            color: '#ffffff',
+            justifyContent: 'center',
             cursor: 'pointer',
-            textShadow: '0 2px 10px rgba(0,0,0,0.85)',
             userSelect: 'none',
             animation: 'fadeInUp 0.6s ease'
           }}
         >
-          <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#fed7aa' }}>
-            Explore Signature Cakes &amp; Menu
-          </span>
-          <ChevronDown size={18} className="bounce-arrow" color="#fb923c" />
+          <ChevronDown size={22} className="bounce-arrow" color="#fed7aa" />
         </div>
       )}
     </section>

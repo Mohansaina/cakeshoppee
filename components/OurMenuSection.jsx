@@ -62,7 +62,6 @@ export default function OurMenuSection({ onSelectCategory }) {
   const { addToCart } = useCart();
   const [selectedCat, setSelectedCat] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [egglessOnly, setEgglessOnly] = useState(false);
   const [addedItemMap, setAddedItemMap] = useState({});
   const gridRef = useRef(null);
 
@@ -114,8 +113,7 @@ export default function OurMenuSection({ onSelectCategory }) {
       p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.flavorNotes &&
         p.flavorNotes.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesEggless = egglessOnly ? p.eggless : true;
-    return matchesCat && matchesSearch && matchesEggless;
+    return matchesCat && matchesSearch;
   });
 
   return (
@@ -206,19 +204,6 @@ export default function OurMenuSection({ onSelectCategory }) {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search products"
               />
-            </div>
-
-            <div className="toggle-group">
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={egglessOnly}
-                  onChange={(e) => setEgglessOnly(e.target.checked)}
-                  aria-label="Show eggless only"
-                />
-                <span className="toggle-slider" />
-              </label>
-              <span className="toggle-label">🌱 100% Eggless Only</span>
             </div>
 
             {selectedCat !== "all" && (
