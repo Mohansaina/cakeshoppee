@@ -81,6 +81,86 @@ function getGooglePlusCode(latitude, longitude) {
   return code.slice(4) + gridChar;
 }
 
+// Live reverse geocoding engine combining Photon (POI rich), Nominatim & local municipal grid
+async function resolveCoordinatesLive(lat, lng) {
+  // 1. Try Photon Komoot (Real POIs: hospitals, shops, theatres, colonies)
+  try {
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 3500);
+    const pRes = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 CakeShoppee/2.0' }
+    });
+    clearTimeout(tId);
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      if (pData && pData.features && pData.features.length > 0) {
+        const p = pData.features[0].properties;
+        const name = p.name && p.name !== 'Narsipatnam' && p.name !== 'Narsipatnam Urban' && p.name !== 'Narsipatnam Mandal' ? p.name : '';
+        const street = p.street || '';
+        const locality = p.locality && !p.locality.includes('Mandal') && p.locality !== 'Narsipatnam Urban' ? p.locality : '';
+        const town = p.city || p.town || 'Narsipatnam';
+        const postcode = p.postcode || '531116';
+        const parts = [name, street, locality, town].filter(Boolean);
+        const unique = [...new Set(parts)];
+        if (unique.length > 0) {
+          return {
+            name,
+            street,
+            area: locality || name || town,
+            town,
+            postcode,
+            formatted: `${unique.join(', ')} - ${postcode}`,
+            words: unique.join(', ')
+          };
+        }
+      }
+    }
+  } catch (err) {
+    // Continue to next provider
+  }
+
+  // 2. Try OpenStreetMap Nominatim
+  try {
+    const controller = new AbortController();
+    const tId = setTimeout(() => controller.abort(), 3500);
+    const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'CakeShoppeeBakery/2.0 (order@cakeshoppee.com; Narsipatnam)',
+        'Accept-Language': 'en'
+      }
+    });
+    clearTimeout(tId);
+    if (nomRes.ok) {
+      const nData = await nomRes.json();
+      if (nData && nData.address) {
+        const a = nData.address;
+        const road = a.road && !/^(SH|MDR|NH|State Highway)/i.test(a.road) ? a.road : '';
+        const suburb = a.suburb || a.neighbourhood || '';
+        const town = a.town || a.city || a.village || 'Narsipatnam';
+        const postcode = a.postcode || '531116';
+        const parts = [road, suburb, town].filter(Boolean);
+        if (parts.length > 0) {
+          return {
+            name: nData.name || '',
+            street: road,
+            area: suburb || town,
+            town,
+            postcode,
+            formatted: `${parts.join(', ')} - ${postcode}`,
+            words: parts.join(', ')
+          };
+        }
+      }
+    }
+  } catch (err) {
+    // Continue
+  }
+
+  return null;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -182,22 +262,42 @@ export async function GET(request) {
           }
         }
 
-        const cleanPlace = placeName && !placeName.startsWith('Location (') ? placeName : `${closestLandmark.street}, ${closestLandmark.area}, Narsipatnam`;
+        // Try live reverse geocode engine if placeName was not in the URL path
+        let finalPlaceText = placeName && !placeName.startsWith('Location (') ? placeName : '';
+        let resolvedStreet = closestLandmark.street;
+        let resolvedArea = closestLandmark.area;
+        let resolvedPincode = "531116";
+
+        if (!finalPlaceText) {
+          const live = await resolveCoordinatesLive(parsedLat, parsedLng);
+          if (live && live.words) {
+            finalPlaceText = live.words;
+            if (live.street) resolvedStreet = live.street;
+            if (live.area) resolvedArea = live.area;
+            if (live.postcode) resolvedPincode = live.postcode;
+          }
+        }
+
+        if (!finalPlaceText) {
+          finalPlaceText = `${closestLandmark.street}, ${closestLandmark.area}, Narsipatnam`;
+        }
+
+        const cleanAddress = finalPlaceText.includes('Narsipatnam') ? `${finalPlaceText} - ${resolvedPincode}` : `${finalPlaceText}, Narsipatnam - ${resolvedPincode}`;
         const mapsLink = `https://maps.google.com/?q=${parsedLat},${parsedLng}`;
 
         return NextResponse.json({
           success: true,
           fromGoogleMapsLink: true,
           provider: 'google_maps_link',
-          address: cleanPlace.includes('Narsipatnam') ? `${cleanPlace} - 531116` : `${cleanPlace}, Narsipatnam - 531116`,
-          wordsAddress: cleanPlace,
-          placeName: cleanPlace,
+          address: cleanAddress,
+          wordsAddress: finalPlaceText,
+          placeName: finalPlaceText,
           plusCode: `${plusCode} Narsipatnam, Andhra Pradesh`,
           plusCodeLocal: plusCode,
-          area: closestLandmark.area,
-          street: closestLandmark.street,
+          area: resolvedArea,
+          street: resolvedStreet,
           landmark: closestLandmark.landmark,
-          pincode: "531116",
+          pincode: resolvedPincode,
           lat: parsedLat,
           lng: parsedLng,
           distanceKm: dist,
@@ -369,7 +469,36 @@ export async function GET(request) {
         }
       }
 
-      // 3. PROVIDER 3: OpenStreetMap Nominatim + BigDataCloud (Free / No Key)
+      // 3. PROVIDER 3: Live Reverse Geocode Engine (Photon POIs + Nominatim + Grid)
+      const liveEngine = await resolveCoordinatesLive(lat, lng);
+      if (liveEngine && liveEngine.words) {
+        const liveArea = liveEngine.area || closestLandmark.area;
+        const liveStreet = liveEngine.street || closestLandmark.street;
+        const liveWords = liveEngine.words;
+        const liveAddress = liveWords.includes('Narsipatnam') ? `${liveWords} - ${liveEngine.postcode || '531116'}` : `${liveWords}, Narsipatnam - ${liveEngine.postcode || '531116'}`;
+
+        return NextResponse.json({
+          success: true,
+          provider: 'photon_osm_live',
+          address: liveAddress,
+          wordsAddress: liveWords,
+          plusCode: `${plusCodeLocal} Narsipatnam, Andhra Pradesh`,
+          plusCodeLocal: plusCodeLocal,
+          area: liveArea,
+          village: liveEngine.town || 'Narsipatnam',
+          mandal: 'Narsipatnam',
+          street: liveStreet,
+          landmark: liveEngine.name || closestLandmark.landmark,
+          pincode: liveEngine.postcode || '531116',
+          lat: lat,
+          lng: lng,
+          distanceKm: distance,
+          estimatedTime: distance <= 1.5 ? "15-20 mins" : distance <= 3.5 ? "20-30 mins" : distance <= 8 ? "30-40 mins" : "45-60 mins",
+          isWithinDeliveryRange: distance <= 15,
+          mapsUrl: `https://maps.google.com/?q=${lat},${lng}`
+        });
+      }
+
       let detectedStreet = '';
       let detectedNeighbourhood = '';
       let detectedVillage = '';

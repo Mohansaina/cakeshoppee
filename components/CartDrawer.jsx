@@ -1003,9 +1003,29 @@ export default function CartDrawer() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#065f46', lineHeight: 1.35, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>📍 {detectedAddress || `${selectedArea}, Andhra Pradesh`}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div>
+                          <label style={{ fontSize: '0.74rem', fontWeight: 800, color: '#065f46', display: 'block', marginBottom: '3px' }}>
+                            📍 Delivery Location Address (Editable):
+                          </label>
+                          <input
+                            type="text"
+                            value={detectedAddress}
+                            onChange={(e) => setDetectedAddress(e.target.value)}
+                            placeholder="Exact address or place name..."
+                            style={{
+                              width: '100%',
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              border: '1.5px solid #10b981',
+                              fontSize: '0.84rem',
+                              fontWeight: 700,
+                              color: '#065f46',
+                              background: '#f0fdf4',
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                          />
                         </div>
 
                         {/* Direct Google Maps Link Preview Box */}

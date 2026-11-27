@@ -745,8 +745,8 @@ export default function LocationPickerModal({
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857' }}>
-                📍 DETECTED ADDRESS
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#047857', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                📍 DELIVERY ADDRESS TEXT (Auto-fetched & Editable):
               </span>
               {distanceInfo && (
                 <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#ea580c', background: '#fff7ed', padding: '1px 6px', borderRadius: '4px' }}>
@@ -754,15 +754,28 @@ export default function LocationPickerModal({
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.4 }}>
-              {isLoadingAddress ? (
-                <span style={{ color: '#ea580c', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Compass className="animate-spin" size={15} /> Fetching address...
-                </span>
-              ) : (
-                addressPreview
-              )}
-            </div>
+            
+            <textarea
+              rows={2}
+              value={isLoadingAddress ? 'Fetching address from Google Maps link / coordinates...' : addressPreview}
+              onChange={(e) => setAddressPreview(e.target.value)}
+              placeholder="Doorstep delivery address text..."
+              disabled={isLoadingAddress}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: '8px',
+                border: '1.5px solid #10b981',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                color: '#0f172a',
+                background: isLoadingAddress ? '#f8fafc' : '#f0fdf4',
+                outline: 'none',
+                resize: 'none',
+                boxSizing: 'border-box'
+              }}
+            />
+
             {plusCodePreview && !isLoadingAddress && (
               <div style={{ fontSize: '0.74rem', color: '#0369a1', fontWeight: 600, marginTop: '2px' }}>
                 🌐 Plus Code: {plusCodePreview}
