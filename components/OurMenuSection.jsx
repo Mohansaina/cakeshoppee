@@ -193,9 +193,23 @@ export default function OurMenuSection({ onSelectCategory }) {
         </div>
 
         {/* Toolbar */}
-        <div className="our-menu-toolbar" ref={gridRef} style={{ background: '#ffffff', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', padding: '16px 20px', marginBottom: '28px' }}>
-          <div className="our-menu-toolbar-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <div className="search-box" style={{ flex: '1 1 260px' }}>
+        <div className="our-menu-toolbar" ref={gridRef} style={{ background: '#ffffff', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', padding: '12px 18px', marginBottom: '24px' }}>
+          <div className="our-menu-toolbar-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+            <div 
+              className="search-box" 
+              style={{ 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                height: '44px',
+                maxHeight: '44px',
+                width: '100%',
+                maxWidth: '520px',
+                borderRadius: '999px',
+                padding: '0 18px',
+                boxSizing: 'border-box'
+              }}
+            >
               <Search size={18} color="#947e74" />
               <input
                 type="text"
@@ -203,6 +217,14 @@ export default function OurMenuSection({ onSelectCategory }) {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 aria-label="Search products"
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  outline: 'none',
+                  fontSize: '14px',
+                  color: '#334155',
+                  width: '100%'
+                }}
               />
             </div>
 
