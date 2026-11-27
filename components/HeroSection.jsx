@@ -1,29 +1,40 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone, Clock, Award, ShieldCheck, Play } from 'lucide-react';
+import Image from 'next/image';
+import { Sparkles, ChevronDown, Cake, UtensilsCrossed, Phone, Clock, Award, ShieldCheck } from 'lucide-react';
 
 export default function HeroSection() {
   const videoRef = useRef(null);
-  const [isVideoFinished, setIsVideoFinished] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
-  // When video nears end or completes, reveal the content
+  // Set video speed to cinematic 0.75x
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.75;
+    }
+  };
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.playbackRate = 0.75;
+    }
+  }, []);
+
+  // When video nears end (at 0.75x speed, ~4s into pour), reveal the content
   const handleTimeUpdate = () => {
     const video = videoRef.current;
     if (!video) return;
-    // Reveal content when video reaches the final moments (3.2s) or ends
-    if (video.currentTime >= 3.2 && !showContent) {
+    if (video.currentTime >= 4.0 && !showContent) {
       setShowContent(true);
     }
   };
 
   const handleVideoEnded = () => {
-    setIsVideoFinished(true);
     setShowContent(true);
-    // Loop gently once finished
     if (videoRef.current) {
       videoRef.current.loop = true;
+      videoRef.current.playbackRate = 0.75;
       videoRef.current.play().catch(() => {});
     }
   };
@@ -64,19 +75,38 @@ export default function HeroSection() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#1a0e07',
+        background: '#361d10',
         color: '#ffffff'
       }}
     >
-      {/* 60FPS Hardware-Accelerated Video Background: Plays cleanly first with NO text blocking it */}
+      {/* Instant Initial Background Image (Guarantees ZERO black screen flash at the start) */}
+      <Image
+        src="/hero-frames/frame_000.webp"
+        alt="Cake Shoppee Live Cake Kitchen Narsipatnam"
+        fill
+        priority
+        quality={95}
+        sizes="100vw"
+        style={{
+          objectFit: 'cover',
+          objectPosition: 'center',
+          zIndex: 1
+        }}
+      />
+
+      {/* 60FPS Video Background Playing at 0.75x Speed */}
       <video
         ref={videoRef}
         autoPlay
         muted
         playsInline
         poster="/hero-frames/frame_000.webp"
+        onLoadedMetadata={handleLoadedMetadata}
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleVideoEnded}
+        onPlay={() => {
+          if (videoRef.current) videoRef.current.playbackRate = 0.75;
+        }}
         style={{
           position: 'absolute',
           inset: 0,
@@ -84,8 +114,8 @@ export default function HeroSection() {
           height: '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          zIndex: 1,
-          transition: 'filter 0.8s ease'
+          zIndex: 2,
+          backgroundColor: 'transparent'
         }}
       >
         <source src="/videos/hero-scroll.mp4" type="video/mp4" />
@@ -98,8 +128,8 @@ export default function HeroSection() {
           inset: 0,
           background: showContent 
             ? 'radial-gradient(circle at center, rgba(30, 14, 6, 0.35) 0%, rgba(20, 10, 4, 0.65) 70%, rgba(15, 7, 3, 0.85) 100%)'
-            : 'radial-gradient(circle at center, rgba(20, 10, 4, 0.1) 0%, rgba(15, 7, 3, 0.35) 100%)',
-          zIndex: 2,
+            : 'radial-gradient(circle at center, rgba(20, 10, 4, 0.08) 0%, rgba(15, 7, 3, 0.3) 100%)',
+          zIndex: 3,
           pointerEvents: 'none',
           transition: 'background 0.8s ease'
         }} 
@@ -115,7 +145,7 @@ export default function HeroSection() {
           height: '120px',
           background: 'linear-gradient(to bottom, rgba(18, 9, 3, 0.7) 0%, transparent 100%)',
           pointerEvents: 'none',
-          zIndex: 3
+          zIndex: 4
         }} 
       />
       <div 
@@ -127,11 +157,11 @@ export default function HeroSection() {
           height: '160px',
           background: 'linear-gradient(to top, rgba(18, 9, 3, 0.85) 0%, transparent 100%)',
           pointerEvents: 'none',
-          zIndex: 3
+          zIndex: 4
         }} 
       />
 
-      {/* Subtle indicator while video plays by itself before content appears */}
+      {/* Subtle indicator while video plays at 0.75x before content appears */}
       {!showContent && (
         <div 
           onClick={handleRevealNow}
@@ -162,7 +192,7 @@ export default function HeroSection() {
       )}
 
       {/* =========================================================================
-          HERO CONTENT: GENERATES & REVEALS PERFECTLY AFTER VIDEO PLAYS
+          HERO CONTENT: REVEALS ELEGANTLY AFTER THE POUR COMPLETES
           ========================================================================= */}
       <div 
         style={{
