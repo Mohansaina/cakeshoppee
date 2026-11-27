@@ -266,13 +266,13 @@ export default function OurMenuSection({ onSelectCategory }) {
               const { weight, price } = getItemWeightAndPrice(product);
               return (
                 <div key={product.id} className="product-card" style={{ position: 'relative', background: '#ffffff', overflow: 'hidden' }}>
-                  <div className="product-thumb" style={{ position: 'relative', width: '100%', height: '190px', overflow: 'hidden', background: '#f8fafc' }}>
+                  <div className="product-thumb" style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', overflow: 'hidden', background: '#f8fafc' }}>
                     <Image
                       src={product.image}
                       alt={product.name}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: "cover", objectPosition: "center" }}
                     />
                   </div>
 

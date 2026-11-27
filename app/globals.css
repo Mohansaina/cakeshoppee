@@ -901,7 +901,7 @@ button, input, select, textarea {
 }
 .product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
 
-.product-thumb { position: relative; width: 100%; height: 200px; overflow: hidden; background: #fce7f3; }
+.product-thumb { position: relative; width: 100%; aspect-ratio: 1 / 1; height: auto; overflow: hidden; background: #f8fafc; }
 
 .diet-badge,
 .product-tag,
@@ -933,14 +933,14 @@ button, input, select, textarea {
 
 @media (max-width: 768px) {
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .product-thumb { height: 150px; }
+  .product-thumb { aspect-ratio: 1 / 1; height: auto; }
   .filter-pills { gap: 6px; }
   .filter-btn { font-size: 12px; padding: 6px 12px; }
 }
 
 @media (max-width: 480px) {
   .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .product-thumb { height: 135px; }
+  .product-thumb { aspect-ratio: 1 / 1; height: auto; }
   .product-details { padding: 10px 8px 12px; }
   .product-title { font-size: 13px; margin-bottom: 4px; font-weight: 700; }
   .product-desc { font-size: 11px; line-height: 1.3; -webkit-line-clamp: 1; margin-bottom: 8px; }
