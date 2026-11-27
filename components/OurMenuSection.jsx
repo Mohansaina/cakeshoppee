@@ -144,19 +144,8 @@ export default function OurMenuSection({ onSelectCategory }) {
           </p>
         </div>
 
-        {/* Clean, Normal Category Pills (Strict Dimensions - Zero Standstill Background Bleed) */}
-        <div 
-          role="tablist" 
-          aria-label="Filter by category"
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '12px',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: '32px'
-          }}
-        >
+        {/* Visual Category Photo Cards (Desktop Grid & Smooth Touch-Swipeable Mobile Strip) */}
+        <div className="our-menu-cat-strip" role="tablist" aria-label="Filter by category">
           {CATEGORIES.map((cat) => {
             const isActive = selectedCat === cat.id;
             const count = cat.id === "all"
@@ -169,52 +158,37 @@ export default function OurMenuSection({ onSelectCategory }) {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
+                className={`our-menu-cat-tile ${isActive ? 'active' : ''}`}
                 onClick={() => handleSelectCat(cat.id)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '9px',
-                  padding: '7px 16px 7px 8px',
-                  borderRadius: '999px',
-                  background: isActive ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ffffff',
-                  color: isActive ? '#ffffff' : '#334155',
-                  border: isActive ? '1.5px solid #ea580c' : '1.5px solid #e2e8f0',
-                  boxShadow: isActive ? '0 4px 16px rgba(234, 88, 12, 0.28)' : '0 2px 8px rgba(0,0,0,0.04)',
-                  cursor: 'pointer',
-                  fontSize: '0.88rem',
-                  fontWeight: 700,
-                  transition: 'all 0.2s ease',
-                  userSelect: 'none'
-                }}
+                title={cat.description}
               >
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  flexShrink: 0,
-                  background: '#f1f5f9'
-                }}>
+                <div 
+                  className="our-menu-cat-img-wrap"
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: '#f1f5f9'
+                  }}
+                >
                   <Image
                     src={cat.image}
                     alt={cat.label}
-                    width={32}
-                    height={32}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    fill
+                    sizes="(max-width: 640px) 115px, 160px"
+                    className="our-menu-cat-img"
+                    style={{ objectFit: 'cover' }}
                   />
+                  <div className="our-menu-cat-overlay" />
+                  <span className="our-menu-cat-floating-emoji">{cat.emoji}</span>
+                  {isActive && <div className="our-menu-cat-active-ring" />}
                 </div>
-                <span>{cat.label}</span>
-                <span style={{
-                  background: isActive ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
-                  color: isActive ? '#ffffff' : '#64748b',
-                  fontSize: '0.72rem',
-                  padding: '2px 7px',
-                  borderRadius: '999px',
-                  fontWeight: 800
-                }}>
-                  {count}
-                </span>
+                <div className="our-menu-cat-label">
+                  <span className="our-menu-cat-name">{cat.label}</span>
+                  <span className="our-menu-cat-count">{count} Items</span>
+                </div>
               </button>
             );
           })}
