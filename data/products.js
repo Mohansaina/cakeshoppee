@@ -13,7 +13,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Classic Veg",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/tomotapizza8inches.jpg",
+    "image": "/images/menu/pizza-tomato.jpeg",
     "description": "pizza with fresh tomato and cheese",
     "flavorNotes": "Fresh Tomato & Mozzarella Cheese"
   },
@@ -31,7 +31,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Spicy",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/cheese-and-chilli-pizza-8-inches.jpg",
+    "image": "/images/menu/pizza-cheese-chilli.jpeg",
     "description": "pizza with cheese and green chillies",
     "flavorNotes": "Green Chillies & Melted Cheese"
   },
@@ -49,7 +49,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Popular",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/vegetablepizza8inches.jpg",
+    "image": "/images/menu/pizza-vegetarian.jpeg",
     "description": "Classic mixed vegetable pizza",
     "flavorNotes": "Crunchy Mixed Veggies & Cheese"
   },
@@ -67,7 +67,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Sweet Corn",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/sweetcornpizza8inches.jpg",
+    "image": "/images/menu/pizza-sweet-corn.jpeg",
     "description": "pizza topped with sweet corn",
     "flavorNotes": "Golden Sweet Corn & Mozzarella"
   },
@@ -85,7 +85,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Crisp Corn",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/sweetcornpizza8inches.jpg",
+    "image": "/images/menu/pizza-baby-corn.jpeg",
     "description": "pizza topped with crisp baby corn",
     "flavorNotes": "Crisp Baby Corn & Cheese"
   },
@@ -103,7 +103,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Fresh Mushroom",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/mushroompizza8inches.jpg",
+    "image": "/images/menu/pizza-mushroom.jpeg",
     "description": "pizza topped with fresh mushrooms",
     "flavorNotes": "Fresh Sliced Mushrooms & Herbs"
   },
@@ -121,7 +121,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Fresh Paneer",
     "prepTime": "15 Mins",
-    "image": "/images/menu/pannerpizza8inches.jpg",
+    "image": "/images/menu/pizza-paneer.jpeg",
     "description": "pizza topped with fresh cottage cheese paneer",
     "flavorNotes": "Tender Paneer Cubes & Mozzarella"
   },
@@ -139,7 +139,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tandoori Special",
     "prepTime": "15 Mins",
-    "image": "/images/menu/tandoori-paneer-pizza-8-inches.jpg",
+    "image": "/images/menu/pizza-tandoori-paneer.jpeg",
     "description": "pizza with spicy tandoori paneer",
     "flavorNotes": "Spicy Marinated Tandoori Paneer"
   },
@@ -157,7 +157,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Loaded Supreme",
     "prepTime": "15 Mins",
-    "image": "/images/menu/vegetariansupremepizza8-inches.jpg",
+    "image": "/images/menu/pizza-veg-supreme.jpeg",
     "description": "Loaded veg supreme pizza",
     "flavorNotes": "Loaded Veggies, Olives & Double Cheese"
   },
@@ -175,7 +175,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tender Chicken",
     "prepTime": "15 Mins",
-    "image": "/images/menu/chickenpizza8inches.jpg",
+    "image": "/images/menu/pizza-chicken.jpeg",
     "description": "pizza topped with tender chicken",
     "flavorNotes": "Tender Seasoned Chicken Chunks"
   },
@@ -193,7 +193,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tikka Special",
     "prepTime": "15 Mins",
-    "image": "/images/menu/chicken-tikka-pizza-8inches.jpg",
+    "image": "/images/menu/pizza-chicken-tikka.jpeg",
     "description": "Tandoori chicken tikka topped pizza",
     "flavorNotes": "Smoky Tandoori Chicken Tikka"
   },
@@ -211,7 +211,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Loaded Supreme",
     "prepTime": "15 Mins",
-    "image": "/images/menu/chicken-supreme-pizza-8-inches.jpg",
+    "image": "/images/menu/pizza-chicken-supreme.jpeg",
     "description": "Loaded chicken supreme pizza",
     "flavorNotes": "Loaded Chicken, Herbs & Extra Cheese"
   },
@@ -229,7 +229,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Spicy Chilli",
     "prepTime": "15 Mins",
-    "image": "/images/menu/chilli-chicken-pizza-8-inches.jpg",
+    "image": "/images/menu/pizza-chilli-chicken.jpeg",
     "description": "Spicy chilli chicken topped pizza",
     "flavorNotes": "Spicy Indo-Chinese Chilli Chicken"
   },
@@ -247,7 +247,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Classic",
     "prepTime": "10 Mins",
-    "image": "/images/menu/vegetarian-burger.jpg",
+    "image": "/images/menu/burger-veg.jpeg",
     "description": "Classic veg patty burger with fresh veggies",
     "flavorNotes": "Crisp Veg Patty, Fresh Lettuce & Mayo"
   },
@@ -265,7 +265,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Cheesy",
     "prepTime": "10 Mins",
-    "image": "/images/menu/vegetarian-cheese-burger.jpg",
+    "image": "/images/menu/burger-veg-cheese.jpeg",
     "description": "Veg burger topped with melted cheese slice",
     "flavorNotes": "Crisp Veg Patty & Melted Cheese"
   },
@@ -283,7 +283,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Paneer Patty",
     "prepTime": "10-12 Mins",
-    "image": "/images/menu/paneer-burger.jpg",
+    "image": "/images/menu/burger-paneer.jpeg",
     "description": "Spiced cottage cheese paneer patty burger",
     "flavorNotes": "Spiced Paneer Patty & Special Sauce"
   },
@@ -301,7 +301,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Grilled Chicken",
     "prepTime": "10-12 Mins",
-    "image": "/images/menu/chicken-burger.jpg",
+    "image": "/images/menu/burger-chicken.jpeg",
     "description": "Classic grilled chicken patty burger",
     "flavorNotes": "Grilled Chicken Patty & Creamy Mayo"
   },
@@ -319,7 +319,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Extra Cheese",
     "prepTime": "10-12 Mins",
-    "image": "/images/menu/chicken-cheese-burger.jpg",
+    "image": "/images/menu/burger-chicken-cheese.jpeg",
     "description": "Chicken burger with extra melted cheese",
     "flavorNotes": "Chicken Patty with Extra Melted Cheese"
   },
@@ -337,7 +337,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tandoori Tikka",
     "prepTime": "10-12 Mins",
-    "image": "/images/menu/chicken-tikka-burger.jpg",
+    "image": "/images/menu/burger-chicken-tikka.jpeg",
     "description": "Juicy tandoori chicken tikka burger",
     "flavorNotes": "Juicy Tandoori Tikka & Mint Mayo"
   },
@@ -355,7 +355,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Fresh Grilled",
     "prepTime": "8 Mins",
-    "image": "/images/menu/vegetarian-sandwich.jpg",
+    "image": "/images/menu/sandwich-veg.jpeg",
     "description": "Fresh grilled vegetable sandwich",
     "flavorNotes": "Grilled Fresh Vegetables & Butter"
   },
@@ -373,7 +373,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Sweet Corn & Cheese",
     "prepTime": "8-10 Mins",
-    "image": "/images/menu/corn-sandwich.jpg",
+    "image": "/images/menu/sandwich-corn.jpeg",
     "description": "Sweet corn and cheese grilled sandwich",
     "flavorNotes": "Sweet Corn & Melted Cheese"
   },
@@ -391,7 +391,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Paneer Grilled",
     "prepTime": "8-10 Mins",
-    "image": "/images/menu/paneer-sandwich.jpg",
+    "image": "/images/menu/sandwich-paneer.jpeg",
     "description": "Grilled paneer and veggie sandwich",
     "flavorNotes": "Grilled Spiced Paneer & Veggies"
   },
@@ -409,7 +409,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Shredded Chicken",
     "prepTime": "10 Mins",
-    "image": "/images/menu/chicken-club-sandwich.jpg",
+    "image": "/images/menu/sandwich-chicken.jpeg",
     "description": "Tender shredded chicken sandwich",
     "flavorNotes": "Tender Shredded Chicken & Mayo"
   },
@@ -427,7 +427,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Chicken & Corn",
     "prepTime": "10 Mins",
-    "image": "/images/menu/chicken-corn-sandwich.jpg",
+    "image": "/images/menu/sandwich-chicken-corn.jpeg",
     "description": "Chicken and sweet corn sandwich",
     "flavorNotes": "Chicken Strips & Golden Sweet Corn"
   },
@@ -445,7 +445,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Triple Decker",
     "prepTime": "12 Mins",
-    "image": "/images/menu/chicken-club-sandwich.jpg",
+    "image": "/images/menu/sandwich-chicken-club.jpeg",
     "description": "Triple-decker loaded chicken club sandwich",
     "flavorNotes": "Triple-Decker Loaded Chicken & Cheese"
   },
@@ -463,7 +463,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tandoori Tikka",
     "prepTime": "10 Mins",
-    "image": "/images/menu/chicken-tikka-sandwich.jpg",
+    "image": "/images/menu/sandwich-chicken-tikka.jpeg",
     "description": "Spicy grilled chicken tikka sandwich",
     "flavorNotes": "Spicy Grilled Chicken Tikka Cubes"
   },
@@ -481,7 +481,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Stir Fried",
     "prepTime": "12 Mins",
-    "image": "/images/menu/vegetarian-fried-rice.jpg",
+    "image": "/images/menu/chinese-veg-fried-rice.jpeg",
     "description": "Yummy Veg stir-fried rice",
     "flavorNotes": "Aromatic Stir Fried Rice & Veggies"
   },
@@ -499,7 +499,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Stir Fried",
     "prepTime": "12 Mins",
-    "image": "/images/menu/vegetarian-noodles.jpg",
+    "image": "/images/menu/chinese-veg-noodles.jpeg",
     "description": "Yummy Veg stir-fried noodles",
     "flavorNotes": "Wok Tossed Veggies & Noodles"
   },
@@ -517,7 +517,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Tender Paneer",
     "prepTime": "12 Mins",
-    "image": "/images/menu/paneer-noodles.jpg",
+    "image": "/images/menu/chinese-paneer-noodles.jpeg",
     "description": "A Delicious Combination Of Tender Paneer And Flavorful Noodles",
     "flavorNotes": "Tender Paneer & Flavorful Noodles"
   },
@@ -535,7 +535,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Paneer Delight",
     "prepTime": "12 Mins",
-    "image": "/images/menu/paneer-fried-rice.jpg",
+    "image": "/images/menu/chinese-paneer-fried-rice.jpeg",
     "description": "A Culinary Delight That Blends The Essence Of Indian Cuisine With The Global Appeal Of Fried Rice",
     "flavorNotes": "Golden Paneer Cubes & Fragrant Rice"
   },
@@ -553,7 +553,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Scrambled Egg",
     "prepTime": "10 Mins",
-    "image": "/images/menu/egg-fried-rice.jpg",
+    "image": "/images/menu/chinese-egg-fried-rice.jpeg",
     "description": "A Classic Comfort Dish of Aromatic Rice Stir Fried with Scrambled Eggs",
     "flavorNotes": "Scrambled Eggs, Pepper & Rice"
   },
@@ -571,7 +571,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Egg Tossed",
     "prepTime": "10 Mins",
-    "image": "/images/menu/egg-noodles.jpg",
+    "image": "/images/menu/chinese-egg-noodles.jpeg",
     "description": "Yummy Veg stir-fried noodles with egg",
     "flavorNotes": "Tossed Egg Strands & Hakka Noodles"
   },
@@ -589,7 +589,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Top Rated",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/chicken-fried-rice.jpg",
+    "image": "/images/menu/chinese-chicken-fried-rice.jpeg",
     "description": "A Deliciously Tangy Preparation With Chicken Pieces And Flavored Rice",
     "flavorNotes": "Chicken Pieces & Flavored Wok Rice"
   },
@@ -607,7 +607,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Flavour Packed",
     "prepTime": "12-15 Mins",
-    "image": "/images/menu/chicken-noodles.jpg",
+    "image": "/images/menu/chinese-chicken-noodles.jpeg",
     "description": "A Delicious Flavour Packed Meal Of Stir Fried Noodles Chicken Veggies And Sauces",
     "flavorNotes": "Chicken, Vegetables & Rich Sauces"
   },
@@ -625,7 +625,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Hot & Flaky",
     "prepTime": "Ready Counter",
-    "image": "/images/menu/vegetarian-puff.jpg",
+    "image": "/images/menu/snack-veg-puff.jpeg",
     "description": "Flaky pastry stuffed with spiced veg filling",
     "flavorNotes": "Golden Flaky Pastry & Spiced Veggies"
   },
@@ -643,7 +643,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Hot & Flaky",
     "prepTime": "Ready Counter",
-    "image": "/images/menu/egg-puff.jpg",
+    "image": "/images/menu/snack-egg-puff.jpeg",
     "description": "Flaky pastry filled with seasoned egg",
     "flavorNotes": "Crisp Puff Pastry & Seasoned Boiled Egg"
   },
@@ -661,7 +661,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Crispy Salted",
     "prepTime": "8 Mins",
-    "image": "/images/menu/french-fries.jpg",
+    "image": "/images/menu/snack-french-fries.jpeg",
     "description": "Crispy golden salted french fries",
     "flavorNotes": "Golden Salted French Fries"
   },
@@ -679,7 +679,7 @@ export const PRODUCTS = [
     "bestseller": false,
     "tag": "Spiced Bites",
     "prepTime": "8 Mins",
-    "image": "/images/menu/potato-pops.jpg",
+    "image": "/images/menu/snack-potato-pops.jpeg",
     "description": "Bite-sized crispy spiced potato bites",
     "flavorNotes": "Bite-Sized Crunchy Spiced Potato"
   },
@@ -697,7 +697,7 @@ export const PRODUCTS = [
     "bestseller": true,
     "tag": "Deep Fried",
     "prepTime": "10 Mins",
-    "image": "/images/menu/chicken-nuggets.jpg",
+    "image": "/images/menu/snack-chicken-nuggets.jpeg",
     "description": "Crispy deep-fried chicken nuggets",
     "flavorNotes": "Crispy Golden Crumb & Juicy Chicken"
   },
