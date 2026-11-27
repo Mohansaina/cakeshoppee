@@ -77,8 +77,20 @@ export default function Header({ onSelectCategory, onSearch }) {
 
         {/* ── Right Actions ── */}
         <div className="mgn-hdr-right">
-          {/* Pink pill CTA — matches Magnolia "ORDER ASAP" */}
-          <a href="tel:7660948403" className="mgn-hdr-cta">Order Now</a>
+          {/* Pink pill CTA — redirects instantly to the menu so customers can order easily */}
+          <a 
+            href="#bestsellers" 
+            className="mgn-hdr-cta"
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById('bestsellers');
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            }}
+          >
+            Order Now
+          </a>
 
           <button className="mgn-hdr-icon mgn-hdr-icon-desktop-only" aria-label="Search" onClick={handleSearchClick}>
             <Search size={18} />

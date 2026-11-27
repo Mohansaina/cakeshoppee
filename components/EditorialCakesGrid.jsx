@@ -1,159 +1,126 @@
 "use client";
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 const SIGNATURE_CAKES = [
   {
     id: 1,
     src: "/images/bespoke-theme-1.jpg",
-    alt: "Signature Theme Cake 1 - Cake Shoppee",
+    alt: "Signature Cocomelon Rainbow 2-Tier Theme Cake - Cake Shoppee",
     glowColor: "rgba(251, 146, 60, 0.24)"
   },
   {
     id: 2,
     src: "/images/bespoke-theme-2.jpg",
-    alt: "Signature Theme Cake 2 - Cake Shoppee",
+    alt: "Signature Jungle Safari 3D Animals Theme Cake - Cake Shoppee",
     glowColor: "rgba(34, 197, 94, 0.22)"
   },
   {
     id: 3,
     src: "/images/bespoke-theme-3.jpg",
-    alt: "Signature Theme Cake 3 - Cake Shoppee",
+    alt: "Signature Lavender & 24K Edible Gold Theme Cake - Cake Shoppee",
     glowColor: "rgba(192, 132, 252, 0.24)"
   },
   {
     id: 4,
     src: "/images/bespoke-theme-4.jpg",
-    alt: "Signature Theme Cake 4 - Cake Shoppee",
+    alt: "Signature Turquoise Drip Teddy Bear Theme Cake - Cake Shoppee",
     glowColor: "rgba(56, 189, 248, 0.22)"
   },
   {
     id: 5,
     src: "/images/bespoke-wedding-cake.jpg",
-    alt: "Signature Theme Cake 5 - Cake Shoppee",
+    alt: "Signature Grand Royal 2-Tier Wedding Cake - Cake Shoppee",
     glowColor: "rgba(244, 114, 182, 0.24)"
   }
 ];
 
+// Duplicate 4 times to produce an unbroken, seamless continuous loop (20 cards)
+const LOOP_CARDS = [
+  ...SIGNATURE_CAKES,
+  ...SIGNATURE_CAKES,
+  ...SIGNATURE_CAKES,
+  ...SIGNATURE_CAKES
+];
+
 export default function EditorialCakesGrid() {
-  const cardRefs = useRef([]);
-  const dotRefs = useRef([]);
-  const stageGlowRef = useRef(null);
-
-  const targetIndexRef = useRef(0);
-  const currentProgressRef = useRef(0);
+  const trackRef = useRef(null);
   const animFrameIdRef = useRef(null);
-  const isHoveredRef = useRef(false);
-  const touchStartXRef = useRef(0);
 
-  const [activeIdx, setActiveIdx] = useState(0);
+  // Motion physics refs
+  const currentXRef = useRef(0);
+  const targetXOffsetRef = useRef(0);
+  const isPausedRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragLastXRef = useRef(0);
+  const dragVelocityRef = useRef(0);
+  const singleSetWidthRef = useRef(0);
 
-  const setCardRef = (el, idx) => {
-    cardRefs.current[idx] = el;
-  };
+  const [isHovered, setIsHovered] = useState(false);
 
-  const setDotRef = (el, idx) => {
-    dotRefs.current[idx] = el;
-  };
-
-  const nextSlide = useCallback(() => {
-    targetIndexRef.current += 1;
+  // Measure card item + gap to compute exact single-set width for infinite wrapping
+  const updateMetrics = useCallback(() => {
+    if (!trackRef.current) return;
+    const firstCard = trackRef.current.children[0];
+    if (firstCard) {
+      const cardRect = firstCard.getBoundingClientRect();
+      // On desktop gap is 26px, mobile 18px
+      const style = window.getComputedStyle(trackRef.current);
+      const gap = parseFloat(style.gap) || 24;
+      const itemWidth = cardRect.width + gap;
+      singleSetWidthRef.current = itemWidth * SIGNATURE_CAKES.length;
+    }
   }, []);
 
-  const prevSlide = useCallback(() => {
-    targetIndexRef.current -= 1;
-  }, []);
-
-  const goToSlide = useCallback((targetI) => {
-    const total = SIGNATURE_CAKES.length;
-    const currentInt = Math.round(targetIndexRef.current);
-    const currentModulo = ((currentInt % total) + total) % total;
-    let diff = targetI - currentModulo;
-
-    // Choose shortest path on circular loop
-    if (diff > total / 2) diff -= total;
-    if (diff < -total / 2) diff += total;
-
-    targetIndexRef.current = currentInt + diff;
-  }, []);
-
-  // 1. Automatic series progression timer (advances every 3.2s when not hovered/touched)
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isHoveredRef.current) {
-        nextSlide();
-      }
-    }, 3200);
+    updateMetrics();
+    window.addEventListener('resize', updateMetrics);
+    return () => window.removeEventListener('resize', updateMetrics);
+  }, [updateMetrics]);
 
-    return () => clearInterval(timer);
-  }, [nextSlide]);
-
-  // 2. Silky 60fps Spring Render Loop for continuous circular series motion
+  // Silky 60fps continuous traveling motion loop
   useEffect(() => {
     let active = true;
-    const totalCards = SIGNATURE_CAKES.length;
 
-    const renderLoop = () => {
-      const diff = targetIndexRef.current - currentProgressRef.current;
-      if (Math.abs(diff) > 0.0005) {
-        currentProgressRef.current += diff * 0.085;
-      } else {
-        currentProgressRef.current = targetIndexRef.current;
-      }
+    const baseSpeed = 0.95; // Steady, luxurious travel pace in pixels per frame
 
-      const activeInt = ((Math.round(currentProgressRef.current) % totalCards) + totalCards) % totalCards;
-      setActiveIdx(activeInt);
-
-      // Ambient dynamic glow behind active cake
-      if (stageGlowRef.current) {
-        const activeCake = SIGNATURE_CAKES[activeInt];
-        stageGlowRef.current.style.background = `radial-gradient(circle at 50% 50%, ${activeCake.glowColor} 0%, rgba(255, 255, 255, 0) 70%)`;
-      }
-
-      // Render cards in circular series
-      SIGNATURE_CAKES.forEach((_, i) => {
-        const cardEl = cardRefs.current[i];
-        if (!cardEl) return;
-
-        // Mathematical circular offset from current progress in [-totalCards/2, totalCards/2]
-        let offset = (i - (currentProgressRef.current % totalCards)) % totalCards;
-        if (offset > totalCards / 2) offset -= totalCards;
-        if (offset < -totalCards / 2) offset += totalCards;
-
-        if (Math.abs(offset) >= 1.45) {
-          cardEl.style.opacity = '0';
-          cardEl.style.transform = `translate3d(${offset > 0 ? 115 : -115}%, 0, 0) scale(0.82)`;
-          cardEl.style.pointerEvents = 'none';
-        } else {
-          const translateX = offset * 105;
-          const scale = Math.max(0.84, 1 - Math.abs(offset) * 0.12);
-          const opacity = Math.max(0, 1 - Math.pow(Math.abs(offset), 1.35) * 1.05);
-          const rotate = offset * -3.2;
-
-          cardEl.style.opacity = opacity;
-          cardEl.style.transform = `translate3d(${translateX}%, 0, 0) scale(${scale}) rotate(${rotate}deg)`;
-          cardEl.style.zIndex = Math.round((1.5 - Math.abs(offset)) * 20);
-          cardEl.style.pointerEvents = Math.abs(offset) < 0.35 ? 'auto' : 'none';
+    const loop = () => {
+      if (!isDraggingRef.current) {
+        // If not dragged or paused, travel forward continuously
+        if (!isPausedRef.current) {
+          currentXRef.current -= baseSpeed;
         }
 
-        // Progress indicators
-        const dotEl = dotRefs.current[i];
-        if (dotEl) {
-          const isSelected = i === activeInt;
-          dotEl.style.opacity = isSelected ? '1' : '0.28';
-          dotEl.style.width = isSelected ? '26px' : '8px';
-          dotEl.style.background = isSelected ? '#ea580c' : 'rgba(234, 88, 12, 0.45)';
+        // Apply any manual step smoothly (from prev/next arrow buttons)
+        if (Math.abs(targetXOffsetRef.current) > 0.1) {
+          const step = targetXOffsetRef.current * 0.12;
+          currentXRef.current += step;
+          targetXOffsetRef.current -= step;
         }
-      });
+      }
+
+      // Infinite modular wrap: when 1 full set of 5 cards passes, wrap seamlessly
+      const singleSetWidth = singleSetWidthRef.current || 1600;
+      if (currentXRef.current <= -singleSetWidth) {
+        currentXRef.current += singleSetWidth;
+      } else if (currentXRef.current > 0) {
+        currentXRef.current -= singleSetWidth;
+      }
+
+      // Hardware accelerated translation
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translate3d(${currentXRef.current}px, 0, 0)`;
+      }
 
       if (active) {
-        animFrameIdRef.current = requestAnimationFrame(renderLoop);
+        animFrameIdRef.current = requestAnimationFrame(loop);
       }
     };
 
-    animFrameIdRef.current = requestAnimationFrame(renderLoop);
+    animFrameIdRef.current = requestAnimationFrame(loop);
 
     return () => {
       active = false;
@@ -161,27 +128,67 @@ export default function EditorialCakesGrid() {
     };
   }, []);
 
-  const handleCardClick = () => {
-    const el = document.getElementById('custom-cake') || document.getElementById('bestsellers');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  // Arrow button handlers: step the series forward or backward
+  const handlePrev = () => {
+    const cardStep = (singleSetWidthRef.current / SIGNATURE_CAKES.length) || 330;
+    targetXOffsetRef.current += cardStep;
+  };
+
+  const handleNext = () => {
+    const cardStep = (singleSetWidthRef.current / SIGNATURE_CAKES.length) || 330;
+    targetXOffsetRef.current -= cardStep;
+  };
+
+  // Drag & Swipe Interaction (Desktop & Touch)
+  const handleMouseDown = (e) => {
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragLastXRef.current = e.clientX;
+    dragVelocityRef.current = 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current) return;
+    const delta = e.clientX - dragLastXRef.current;
+    dragLastXRef.current = e.clientX;
+    dragVelocityRef.current = delta;
+    currentXRef.current += delta;
+  };
+
+  const handleMouseUp = () => {
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false;
+      targetXOffsetRef.current += dragVelocityRef.current * 8;
+    }
   };
 
   const handleTouchStart = (e) => {
-    isHoveredRef.current = true;
-    touchStartXRef.current = e.touches[0].clientX;
+    isDraggingRef.current = true;
+    isPausedRef.current = true;
+    dragStartXRef.current = e.touches[0].clientX;
+    dragLastXRef.current = e.touches[0].clientX;
+    dragVelocityRef.current = 0;
   };
 
-  const handleTouchEnd = (e) => {
-    isHoveredRef.current = false;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartXRef.current - touchEndX;
-    if (Math.abs(diff) > 40) {
-      if (diff > 0) {
-        nextSlide();
-      } else {
-        prevSlide();
-      }
-    }
+  const handleTouchMove = (e) => {
+    if (!isDraggingRef.current) return;
+    const delta = e.touches[0].clientX - dragLastXRef.current;
+    dragLastXRef.current = e.touches[0].clientX;
+    dragVelocityRef.current = delta;
+    currentXRef.current += delta;
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    isPausedRef.current = false;
+    targetXOffsetRef.current += dragVelocityRef.current * 8;
+  };
+
+  const handleCardClick = () => {
+    // Only trigger if user clicked, not dragged
+    if (Math.abs(dragVelocityRef.current) > 3) return;
+    const el = document.getElementById('custom-cake') || document.getElementById('bestsellers');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -190,32 +197,31 @@ export default function EditorialCakesGrid() {
       style={{
         position: 'relative',
         width: '100%',
-        padding: '56px 0 64px 0',
+        padding: '58px 0 68px 0',
         background: 'linear-gradient(180deg, #fdfbf7 0%, #fff7ed 45%, #faf5ef 100%)',
         color: '#1e293b',
         overflow: 'hidden'
       }}
-      onMouseEnter={() => { isHoveredRef.current = true; }}
-      onMouseLeave={() => { isHoveredRef.current = false; }}
     >
       {/* Dynamic Warm Ambient Glow Backdrop */}
       <div 
-        ref={stageGlowRef}
         style={{
           position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.22) 0%, rgba(255, 255, 255, 0) 70%)',
+          top: '35%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '85vw',
+          height: '520px',
+          background: 'radial-gradient(circle at center, rgba(251, 146, 60, 0.16) 0%, rgba(254, 215, 170, 0.08) 50%, rgba(255, 255, 255, 0) 75%)',
           pointerEvents: 'none',
-          zIndex: 1,
-          transition: 'background 0.5s ease',
-          willChange: 'background'
+          zIndex: 1
         }} 
       />
 
-      <div className="container" style={{ position: 'relative', zIndex: 10, maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%' }}>
         
         {/* Standard Section Header matching the rest of the site */}
-        <div className="section-header text-center" style={{ marginBottom: '32px' }}>
+        <div className="section-header text-center" style={{ marginBottom: '36px', padding: '0 20px' }}>
           <span className="handwritten">Curated Masterpieces</span>
           <br />
           <span className="section-badge">SIGNATURE GALLERY</span>
@@ -227,172 +233,223 @@ export default function EditorialCakesGrid() {
           </p>
         </div>
 
-        {/* Automatic Series Stage */}
+        {/* Traveling Series Track Stage with Left & Right Vignette Gradients */}
         <div 
           style={{
             position: 'relative',
             width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '10px 0 20px 0'
+            overflow: 'hidden',
+            padding: '24px 0 32px 0',
+            cursor: isDraggingRef.current ? 'grabbing' : 'grab',
+            userSelect: 'none'
           }}
+          onMouseEnter={() => { isPausedRef.current = true; setIsHovered(true); }}
+          onMouseLeave={() => { isPausedRef.current = false; setIsHovered(false); handleMouseUp(); }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Previous Arrow Button */}
-          <button
-            onClick={prevSlide}
-            aria-label="Previous signature cake"
-            style={{
-              position: 'absolute',
-              left: 'clamp(10px, 4vw, 36px)',
-              zIndex: 35,
-              width: '44px',
-              height: '44px',
-              borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.92)',
-              border: '1.5px solid rgba(251, 146, 60, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#c2410c',
-              boxShadow: '0 6px 20px rgba(67, 34, 18, 0.12)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              transition: 'all 0.25s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.08)';
-              e.currentTarget.style.background = '#ffffff';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(234, 88, 12, 0.25)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(67, 34, 18, 0.12)';
-            }}
-          >
-            <ChevronLeft size={22} strokeWidth={2.4} />
-          </button>
-
-          {/* Picture Stage: Natural 3:4 Vertical Framing (Clean, Zero Unwanted Text) */}
+          {/* Left Soft Fade Vignette */}
           <div 
             style={{
-              position: 'relative',
-              width: 'min(88vw, 420px)',
-              height: 'min(68vh, 520px)',
-              zIndex: 10,
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 'clamp(40px, 8vw, 120px)',
+              background: 'linear-gradient(to right, #fdfbf7 0%, rgba(253, 251, 247, 0) 100%)',
+              zIndex: 25,
+              pointerEvents: 'none'
+            }} 
+          />
+
+          {/* Right Soft Fade Vignette */}
+          <div 
+            style={{
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: 'clamp(40px, 8vw, 120px)',
+              background: 'linear-gradient(to left, #faf5ef 0%, rgba(250, 245, 239, 0) 100%)',
+              zIndex: 25,
+              pointerEvents: 'none'
+            }} 
+          />
+
+          {/* Traveling Track of Cards Moving in Continuous Series */}
+          <div 
+            ref={trackRef}
+            style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              gap: 'clamp(18px, 2.2vw, 28px)',
+              width: 'max-content',
+              willChange: 'transform'
             }}
           >
-            {SIGNATURE_CAKES.map((cake, index) => (
+            {LOOP_CARDS.map((cake, index) => (
               <div
-                key={cake.id}
-                ref={(el) => setCardRef(el, index)}
+                key={`cake-series-${index}`}
                 onClick={handleCardClick}
                 style={{
-                  position: 'absolute',
-                  inset: 0,
+                  position: 'relative',
+                  width: 'clamp(260px, 24vw, 330px)',
+                  height: 'clamp(370px, 34vw, 470px)',
+                  flexShrink: 0,
                   borderRadius: '26px',
                   overflow: 'hidden',
-                  cursor: 'pointer',
                   background: '#ffffff',
                   border: '2px solid rgba(251, 146, 60, 0.28)',
-                  boxShadow: '0 24px 60px rgba(67, 34, 18, 0.13), 0 4px 18px rgba(0, 0, 0, 0.04)',
-                  willChange: 'transform, opacity',
-                  userSelect: 'none',
+                  boxShadow: '0 20px 48px rgba(67, 34, 18, 0.10), 0 4px 14px rgba(0, 0, 0, 0.04)',
+                  transition: 'transform 0.35s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.35s ease, border-color 0.35s ease',
+                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   padding: '16px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-8px) scale(1.03)';
+                  e.currentTarget.style.boxShadow = '0 28px 60px rgba(234, 88, 12, 0.20), 0 6px 18px rgba(0, 0, 0, 0.06)';
+                  e.currentTarget.style.borderColor = 'rgba(234, 88, 12, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 20px 48px rgba(67, 34, 18, 0.10), 0 4px 14px rgba(0, 0, 0, 0.04)';
+                  e.currentTarget.style.borderColor = 'rgba(251, 146, 60, 0.28)';
                 }}
               >
                 <Image
                   src={cake.src}
                   alt={cake.alt}
                   fill
-                  priority={index <= 1}
-                  sizes="(max-width: 640px) 88vw, 420px"
+                  sizes="(max-width: 640px) 260px, 330px"
                   quality={95}
+                  priority={index < 4}
                   style={{
                     objectFit: 'contain',
                     objectPosition: 'center',
-                    padding: '14px'
+                    padding: '16px',
+                    userSelect: 'none',
+                    pointerEvents: 'none'
                   }}
                 />
               </div>
             ))}
           </div>
 
-          {/* Next Arrow Button */}
+          {/* Left Arrow Button */}
           <button
-            onClick={nextSlide}
-            aria-label="Next signature cake"
+            onClick={handlePrev}
+            aria-label="Travel backward in series"
             style={{
               position: 'absolute',
-              right: 'clamp(10px, 4vw, 36px)',
+              left: 'clamp(12px, 3vw, 36px)',
+              top: '50%',
+              transform: 'translateY(-50%)',
               zIndex: 35,
-              width: '44px',
-              height: '44px',
+              width: '46px',
+              height: '46px',
               borderRadius: '50%',
-              background: 'rgba(255, 255, 255, 0.92)',
+              background: 'rgba(255, 255, 255, 0.94)',
               border: '1.5px solid rgba(251, 146, 60, 0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               color: '#c2410c',
-              boxShadow: '0 6px 20px rgba(67, 34, 18, 0.12)',
+              boxShadow: '0 8px 24px rgba(67, 34, 18, 0.15)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
               transition: 'all 0.25s ease'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.08)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
               e.currentTarget.style.background = '#ffffff';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(234, 88, 12, 0.25)';
+              e.currentTarget.style.boxShadow = '0 10px 28px rgba(234, 88, 12, 0.3)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(67, 34, 18, 0.12)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.94)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(67, 34, 18, 0.15)';
             }}
           >
-            <ChevronRight size={22} strokeWidth={2.4} />
+            <ChevronLeft size={24} strokeWidth={2.4} />
+          </button>
+
+          {/* Right Arrow Button */}
+          <button
+            onClick={handleNext}
+            aria-label="Travel forward in series"
+            style={{
+              position: 'absolute',
+              right: 'clamp(12px, 3vw, 36px)',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 35,
+              width: '46px',
+              height: '46px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.94)',
+              border: '1.5px solid rgba(251, 146, 60, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#c2410c',
+              boxShadow: '0 8px 24px rgba(67, 34, 18, 0.15)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              transition: 'all 0.25s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+              e.currentTarget.style.background = '#ffffff';
+              e.currentTarget.style.boxShadow = '0 10px 28px rgba(234, 88, 12, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.94)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(67, 34, 18, 0.15)';
+            }}
+          >
+            <ChevronRight size={24} strokeWidth={2.4} />
           </button>
         </div>
 
-        {/* Series Progress Dots Pill */}
+        {/* Subtle Interactive Cue Below */}
         <div 
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '8px',
-            marginTop: '20px',
-            zIndex: 40
+            marginTop: '8px',
+            padding: '0 20px',
+            textAlign: 'center'
           }}
         >
-          {SIGNATURE_CAKES.map((cake, i) => (
-            <div 
-              key={`dot-${cake.id}`}
-              ref={(el) => setDotRef(el, i)}
-              style={{
-                height: '8px',
-                width: i === 0 ? '26px' : '8px',
-                borderRadius: '999px',
-                background: i === 0 ? '#ea580c' : 'rgba(234, 88, 12, 0.45)',
-                transition: 'all 0.3s cubic-bezier(0.25, 1, 0.5, 1)',
-                cursor: 'pointer'
-              }}
-              onClick={() => goToSlide(i)}
-              aria-label={`Jump to cake ${i + 1}`}
-            />
-          ))}
+          <div 
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'rgba(255, 255, 255, 0.92)',
+              border: '1px solid rgba(251, 146, 60, 0.25)',
+              padding: '6px 18px',
+              borderRadius: '999px',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: '#9a3412',
+              boxShadow: '0 4px 14px rgba(234, 88, 12, 0.06)'
+            }}
+          >
+            <Sparkles size={14} color="#ea580c" />
+            <span>Hover or drag to pause &bull; Tap any creation to customise live</span>
+          </div>
         </div>
 
       </div>
