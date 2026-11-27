@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Image from "next/image";
-import { Search, Eye, Plus, Check } from "lucide-react";
+import { Search, Plus, Check } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import { useCart } from "@/context/CartContext";
 
@@ -59,7 +59,7 @@ const CATEGORIES = [
 ];
 
 export default function OurMenuSection({ onSelectCategory }) {
-  const { addToCart, setQuickViewProduct } = useCart();
+  const { addToCart } = useCart();
   const [selectedCat, setSelectedCat] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [egglessOnly, setEgglessOnly] = useState(false);
@@ -126,58 +126,104 @@ export default function OurMenuSection({ onSelectCategory }) {
         position: 'relative',
         zIndex: 10,
         background: '#f8fafc',
-        isolation: 'isolate'
+        isolation: 'isolate',
+        overflow: 'hidden',
+        padding: '64px 0 80px 0'
       }}
     >
-      <div className="our-menu-inner">
+      <div className="our-menu-inner" style={{ position: 'relative', zIndex: 1, maxWidth: '1280px', margin: '0 auto', padding: '0 24px' }}>
 
         {/* Section Header */}
-        <div className="our-menu-header">
+        <div className="our-menu-header" style={{ textAlign: 'center', marginBottom: '36px' }}>
           <span className="our-menu-eyebrow">Fresh Kitchen &amp; Fast Food Menu</span>
-          <span className="section-badge">ONLINE MENU &amp; INSTANT ORDERING</span>
-          <h2 className="our-menu-title">Fresh Pizzas, Burgers &amp; Fast Food</h2>
-          <p className="our-menu-subtitle">
+          <br />
+          <span className="section-badge" style={{ marginTop: '4px' }}>ONLINE MENU &amp; INSTANT ORDERING</span>
+          <h2 className="our-menu-title" style={{ margin: '8px 0 10px 0' }}>Fresh Pizzas, Burgers &amp; Fast Food</h2>
+          <p className="our-menu-subtitle" style={{ margin: '0 auto', maxWidth: '640px' }}>
             Oven-hot 8-inch pizzas, crispy burgers, toasted sandwiches, wok noodles &amp; fried rice with local door delivery in Narsipatnam town.
           </p>
         </div>
 
-        {/* Normal Category Tiles */}
-        <div className="our-menu-cat-strip" role="tablist" aria-label="Filter by category">
+        {/* Clean, Normal Category Pills (Strict Dimensions - Zero Standstill Background Bleed) */}
+        <div 
+          role="tablist" 
+          aria-label="Filter by category"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '12px',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: '32px'
+          }}
+        >
           {CATEGORIES.map((cat) => {
             const isActive = selectedCat === cat.id;
+            const count = cat.id === "all"
+              ? PRODUCTS.length
+              : PRODUCTS.filter((p) => p.category === cat.id).length;
+
             return (
               <button
                 key={cat.id}
+                type="button"
                 role="tab"
                 aria-selected={isActive}
-                className={"our-menu-cat-tile" + (isActive ? " active" : "")}
                 onClick={() => handleSelectCat(cat.id)}
-                title={cat.description}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '9px',
+                  padding: '7px 16px 7px 8px',
+                  borderRadius: '999px',
+                  background: isActive ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : '#ffffff',
+                  color: isActive ? '#ffffff' : '#334155',
+                  border: isActive ? '1.5px solid #ea580c' : '1.5px solid #e2e8f0',
+                  boxShadow: isActive ? '0 4px 16px rgba(234, 88, 12, 0.28)' : '0 2px 8px rgba(0,0,0,0.04)',
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                  userSelect: 'none'
+                }}
               >
-                <div className="our-menu-cat-img-wrap">
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  flexShrink: 0,
+                  background: '#f1f5f9'
+                }}>
                   <Image
                     src={cat.image}
                     alt={cat.label}
-                    fill
-                    sizes="(max-width: 640px) 40vw, 160px"
-                    className="our-menu-cat-img"
+                    width={32}
+                    height={32}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
-                  <div className="our-menu-cat-overlay" />
-                  {isActive && <div className="our-menu-cat-active-ring" />}
                 </div>
-                <div className="our-menu-cat-label">
-                  <span className="our-menu-cat-emoji">{cat.emoji}</span>
-                  <span className="our-menu-cat-name">{cat.label}</span>
-                </div>
+                <span>{cat.label}</span>
+                <span style={{
+                  background: isActive ? 'rgba(255,255,255,0.25)' : '#f1f5f9',
+                  color: isActive ? '#ffffff' : '#64748b',
+                  fontSize: '0.72rem',
+                  padding: '2px 7px',
+                  borderRadius: '999px',
+                  fontWeight: 800
+                }}>
+                  {count}
+                </span>
               </button>
             );
           })}
         </div>
 
         {/* Toolbar */}
-        <div className="our-menu-toolbar" ref={gridRef}>
-          <div className="our-menu-toolbar-inner">
-            <div className="search-box">
+        <div className="our-menu-toolbar" ref={gridRef} style={{ background: '#ffffff', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', padding: '16px 20px', marginBottom: '28px' }}>
+          <div className="our-menu-toolbar-inner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="search-box" style={{ flex: '1 1 260px' }}>
               <Search size={18} color="#947e74" />
               <input
                 type="text"
@@ -238,8 +284,8 @@ export default function OurMenuSection({ onSelectCategory }) {
             filteredProducts.map((product) => {
               const { weight, price } = getItemWeightAndPrice(product);
               return (
-                <div key={product.id} className="product-card">
-                  <div className="product-thumb">
+                <div key={product.id} className="product-card" style={{ position: 'relative', background: '#ffffff', overflow: 'hidden' }}>
+                  <div className="product-thumb" style={{ position: 'relative', width: '100%', height: '190px', overflow: 'hidden', background: '#f8fafc' }}>
                     <Image
                       src={product.image}
                       alt={product.name}
